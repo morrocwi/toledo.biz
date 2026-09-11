@@ -296,6 +296,18 @@ def resolve_execution_route(
         and third_party not in {"HIGH"}
     )
 
+    # Market-facing action has stronger requirements than a generic world test.
+    # It must be positively grounded as bounded/reversible rather than inferred
+    # safe merely because risk/authority fields are missing.
+    market_forward_allowed = (
+        forward_allowed
+        and market_signal
+        and signature_endorsed
+        and authority_need == "NONE"
+        and irreversibility == "LOW"
+        and third_party == "LOW"
+    )
+
     if forward_allowed:
         _add_requirement(
             requirements,
@@ -304,13 +316,13 @@ def resolve_execution_route(
             reason="a bounded reversible action can generate real-world information without waiting for unnecessary escalation",
             basis="no blocking hard gate",
         )
-        if market_signal:
+        if market_forward_allowed:
             _add_requirement(
                 requirements,
                 "BOUNDED_MARKET_TEST",
                 requiredness="CANDIDATE",
-                reason="market/world contact can be used as evidence when the experiment is bounded and reversible",
-                basis="market signal + no blocking hard gate",
+                reason="market/world contact can be used as evidence because boundedness, reversibility, low third-party exposure, and absence of authority need are positively established",
+                basis="endorsed low-risk market state",
             )
 
     if hard_escalation:
@@ -332,7 +344,7 @@ def resolve_execution_route(
         route_mode = "EXTERNAL_REQUIRED"
     elif unresolved_authority_candidate:
         route_mode = "AUTHORITY_UNRESOLVED"
-    elif forward_allowed and market_signal:
+    elif market_forward_allowed:
         route_mode = "PARALLEL_OR_FORWARD_EXPERIMENT"
     else:
         route_mode = "MINIMUM_SUFFICIENT_FLEXIBLE"
@@ -341,7 +353,7 @@ def resolve_execution_route(
     knowledge_class = "K*_I" if external_used and return_gate == "PASS" else "K*_0"
 
     return {
-        "matrix_version": "0.1.1",
+        "matrix_version": "0.1.2",
         "phase": phase,
         "phase_semantics": "ROUTING_CONTEXT_NOT_MANDATORY_SEQUENCE",
         "route_mode": route_mode,
@@ -379,8 +391,8 @@ def resolve_execution_route(
         "requirements": requirements,
         "forward_experiment": {
             "allowed": forward_allowed,
-            "market_test_candidate": bool(forward_allowed and market_signal),
-            "rule": "bounded/reversible world or market action may run before later expert/institution phases when no hard safety, endorsed authority, unresolved authority candidate, permission, credential, return, or dependency gate blocks it",
+            "market_test_candidate": market_forward_allowed,
+            "rule": "bounded/reversible world action may run when no blocking gate exists; market-facing tests additionally require an endorsed LOW-irreversibility, LOW-third-party, authority_need=NONE state",
             "not_a_phase_skip_claim": True,
         },
         "hard_gate_reasons": list(hard_reasons or []),
