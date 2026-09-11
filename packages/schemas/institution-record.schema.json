@@ -1,0 +1,53 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://toledo.biz/schemas/institution-record.schema.json",
+  "title": "Toledo Institution Capability Record",
+  "type": "object",
+  "additionalProperties": false,
+  "required": [
+    "institution_id",
+    "institution_name",
+    "mechanism_name",
+    "institution_class",
+    "phase_fit",
+    "citizen_accessibility",
+    "capability",
+    "entry_channel",
+    "source_url",
+    "last_verified"
+  ],
+  "properties": {
+    "institution_id": {"type": "string", "minLength": 1},
+    "institution_name": {"type": "string", "minLength": 1},
+    "mechanism_name": {"type": "string", "minLength": 1},
+    "country": {"type": "string", "minLength": 2},
+    "jurisdiction": {"type": ["string", "null"]},
+    "institution_class": {
+      "type": "string",
+      "enum": ["I0", "I1", "I2", "I3", "I4", "I5", "I6", "I7", "I8", "I9"]
+    },
+    "phase_fit": {
+      "type": "array",
+      "items": {"type": "string", "enum": ["P0", "P1", "P2", "P3", "P4", "P5", "P6", "P7", "P8", "P9", "P10", "P11"]},
+      "minItems": 1,
+      "uniqueItems": true
+    },
+    "target_user": {"type": "array", "items": {"type": "string"}},
+    "citizen_accessibility": {"type": "string", "enum": ["A0", "A1", "A2", "A3", "A4"]},
+    "eligibility": {"type": "array", "items": {"type": "string"}},
+    "entry_channel": {"type": "array", "items": {"type": "string"}, "minItems": 1},
+    "capability": {"type": "array", "items": {"type": "string"}, "minItems": 1},
+    "service_type": {"type": "array", "items": {"type": "string"}},
+    "geographic_coverage": {"type": ["string", "null"]},
+    "price_or_cofunding": {"type": ["string", "null"]},
+    "turnaround_if_known": {"type": ["string", "null"]},
+    "application_window_if_any": {"type": ["string", "null"]},
+    "legal_authority_if_any": {"type": ["string", "null"]},
+    "accreditation_if_any": {"type": ["string", "null"]},
+    "evidence_of_activity": {"type": "array", "items": {"type": "string"}},
+    "source_url": {"type": "string", "format": "uri"},
+    "last_verified": {"type": "string", "format": "date"},
+    "fallback_routes": {"type": "array", "items": {"type": "string"}},
+    "notes": {"type": ["string", "null"]}
+  }
+}
