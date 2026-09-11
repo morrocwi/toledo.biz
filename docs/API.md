@@ -1,6 +1,6 @@
 # Toledo Protocol API
 
-The reference API exposes the Protocol Compiler, domain-neutral Problem & Capability Grammar contracts, stateless closed-loop Case Passport lifecycle, equation readouts, institution routing, handoff validation and Return Gate validation.
+The reference API exposes the Protocol Compiler, domain-neutral Problem & Capability Grammar contracts, anchor-preserved Decision Threads, stateless closed-loop Case Passport lifecycle, equation readouts, institution routing, handoff validation and Return Gate validation.
 
 ## Run
 
@@ -15,7 +15,7 @@ FastAPI also exposes generated OpenAPI at `/openapi.json` and interactive docs a
 
 A repository-controlled contract is stored at `openapi/toledo.protocol.v1.yaml`.
 
-Current reference API metadata version: `0.3.0`.
+Current reference API metadata version: `0.4.0`.
 
 ## Endpoints
 
@@ -28,6 +28,7 @@ POST /v1/protocols/compile
 POST /v1/cases/init
 POST /v1/cases/update
 POST /v1/cases/step
+POST /v1/cases/threads/compile
 GET  /v1/institutions
 POST /v1/handoffs/validate
 POST /v1/returns/validate
@@ -56,6 +57,24 @@ CandidateSignature != EndorsedSignature
 Occupation != ProtocolSelector
 ```
 
+### Decision Thread machine contract
+
+Retrieve:
+
+```text
+GET /v1/schemas/decision-thread
+```
+
+A Decision Thread is a decision-specific subgraph inside one persistent Case Passport.
+
+```text
+Case != SingleDecision
+DecisionThread != NewCase
+ThreadPhase != CaseMaturity
+```
+
+Existing `current_phase` and `current_decision` fields remain as the primary-thread projection for backward compatibility.
+
 ### Direct compile
 
 ```bash
@@ -64,7 +83,7 @@ curl -X POST http://127.0.0.1:8787/v1/protocols/compile \
   -d '{"problem":"Water pools in one part of my orchard","phase":"P0","jurisdiction":"TH"}'
 ```
 
-`practice_context` may be supplied, but core behavior does not use an occupation label as a bespoke protocol selector.
+`practice_context` may be supplied, but core behavior does not use an occupation or industry label as a bespoke protocol selector.
 
 ### Initialize a Case Passport
 
@@ -74,17 +93,59 @@ curl -X POST http://127.0.0.1:8787/v1/cases/init \
   -d '{"problem":"Water pools in one part of my orchard","goal":"Protect the trees","jurisdiction":"TH"}'
 ```
 
-The response contains a caller-held `passport` plus the initial `protocol`.
+The response contains:
+
+```text
+passport
+protocol              # primary-thread compatibility surface
+thread_protocols[]    # all Decision Threads
+primary_thread_id
+```
 
 A Case Passport can carry:
 
 ```text
 practice_context
 problem_signature
+decision_threads[]
+primary_thread_id
 external_actor_used
 ```
 
 without replacing `citizen_problem_verbatim`.
+
+### Initialize a multi-decision case
+
+A caller may supply Decision Threads from the start:
+
+```json
+{
+  "problem": "Product quality signals appeared while a larger production commitment and a regulated marketing claim are being considered.",
+  "primary_thread_id": "td-1111111111111111",
+  "decision_threads": [
+    {
+      "thread_id": "td-1111111111111111",
+      "decision": "identify the quality cause",
+      "phase": "P1",
+      "unknowns": ["cause of observed quality change"]
+    },
+    {
+      "thread_id": "td-2222222222222222",
+      "decision": "check the regulated claim",
+      "phase": "P3",
+      "risk_profile": {"regulatory_required": true}
+    },
+    {
+      "thread_id": "td-3333333333333333",
+      "decision": "decide whether to scale production",
+      "phase": "P10",
+      "depends_on": ["td-1111111111111111", "td-2222222222222222"]
+    }
+  ]
+}
+```
+
+The P10 thread is not reclassified into another phase. It is held by an explicit dependency gate until required upstream decisions close.
 
 ### Advance a case
 
@@ -107,9 +168,54 @@ POST it to:
 /v1/cases/step
 ```
 
-The API applies the event, increments the passport version and recompiles the next action.
+The API applies the event, increments the passport version and recompiles all Decision Threads.
 
-Problem-grammar events include:
+### Thread-scoped events
+
+Existing events become decision-specific when `payload.thread_id` is supplied:
+
+```json
+{
+  "event_type": "RISK_UPDATED",
+  "actor": "steward",
+  "payload": {
+    "thread_id": "td-2222222222222222",
+    "risk": {"regulatory_required": true}
+  }
+}
+```
+
+Supported thread-scoped semantics include observations, unknowns, hypotheses, phase, risk, signatures/barriers, capability requests, institution selection, route failure, handoff, return and outcome.
+
+Structural Decision Thread events are:
+
+```text
+DECISION_THREAD_CREATED
+DECISION_THREAD_DEPENDENCIES_UPDATED
+DECISION_THREAD_CANCELLED
+PRIMARY_THREAD_SET
+```
+
+### Compile all threads without mutation
+
+```text
+POST /v1/cases/threads/compile
+```
+
+Request body: one caller-held Case Passport.
+
+Response:
+
+```text
+case_id
+primary_thread_id
+count
+thread_protocols[]
+```
+
+This is useful for AI hosts that want the full decision surface without applying a new event.
+
+### Problem-grammar events
 
 ```text
 SIGNATURE_CANDIDATES_UPDATED
@@ -119,21 +225,24 @@ BARRIER_UPDATED
 
 `SIGNATURE_CANDIDATES_UPDATED` must not be interpreted as a diagnosis merely because the actor is AI.
 
-### Return and closure
+### Dependency hold
 
-External institutional/expert results should arrive as `RETURN_RECEIVED` with a structured Return Object. An externally routed case closes only after a passing Return Gate plus a citizen outcome satisfying the current closure predicate.
-
-A citizen+AI/world-only case that never used an external actor may close without a fake institutional Return Object when a closure outcome is recorded and no hard safety/authority trigger remains.
+A blocked thread compiles as:
 
 ```text
-external_actor_used = false
-+ latest_return_gate = NOT_APPLICABLE
-+ closure outcome
-+ no hard escalation
-→ CLOSED
+next_action = HOLD
+status = HOLD_FOR_DEPENDENCY
 ```
 
-This distinction prevents both false institutional closure and needless institutionalization of a valid local solution.
+Hard safety/authority escalation has higher priority than an ordinary dependency hold.
+
+### Return and closure
+
+External institutional/expert results should arrive as `RETURN_RECEIVED` with a structured Return Object. For a Decision Thread, include `thread_id` in the event payload so the Return Gate attaches to the correct decision.
+
+A local thread that never used an external actor may close without a fake institutional Return Object when a closure outcome is recorded and no hard safety/authority trigger remains.
+
+A multi-decision case closes only when all required non-cancelled threads are closed and the citizen-level outcome condition is satisfied.
 
 ## Storage boundary
 
