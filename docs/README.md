@@ -8,7 +8,8 @@ The repository follows a **specification-first, evidence-aware, executable-proto
 
 | Document / artifact | Purpose | Status |
 |---|---|---|
-| [`PROTOCOL_COMPILER.md`](PROTOCOL_COMPILER.md) | Deterministic minimal-subgraph compiler | Reference runtime contract |
+| [`PROTOCOL_COMPILER.md`](PROTOCOL_COMPILER.md) | Deterministic minimal-subgraph compiler and recompile semantics | Reference runtime contract |
+| [`CASE_LIFECYCLE.md`](CASE_LIFECYCLE.md) | Versioned Case Passport, event loop, return and closure semantics | Normative runtime contract |
 | [`API.md`](API.md) | HTTP API usage and endpoint map | Reference implementation |
 | [`MCP.md`](MCP.md) | MCP tools/resources for AI agents | Reference implementation |
 | [`../openapi/toledo.protocol.v1.yaml`](../openapi/toledo.protocol.v1.yaml) | Versioned API contract | Machine contract |
