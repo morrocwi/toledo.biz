@@ -1,6 +1,6 @@
 # Toledo Protocol API
 
-The reference API exposes the Protocol Compiler, stateless closed-loop Case Passport lifecycle, equation readouts, institution routing, handoff validation and Return Gate validation.
+The reference API exposes the Protocol Compiler, domain-neutral Problem & Capability Grammar contracts, stateless closed-loop Case Passport lifecycle, equation readouts, institution routing, handoff validation and Return Gate validation.
 
 ## Run
 
@@ -14,6 +14,8 @@ Default development address: `http://127.0.0.1:8787`.
 FastAPI also exposes generated OpenAPI at `/openapi.json` and interactive docs at `/docs`.
 
 A repository-controlled contract is stored at `openapi/toledo.protocol.v1.yaml`.
+
+Current reference API metadata version: `0.3.0`.
 
 ## Endpoints
 
@@ -38,6 +40,22 @@ GET  /v1/schemas/{schema_name}
 
 Use `live=true` to attempt a read from the pinned upstream Toledo commit. Failure falls back to the local auditable mirror and is disclosed in the response.
 
+### Problem Signature machine contract
+
+Retrieve:
+
+```text
+GET /v1/schemas/problem-signature
+```
+
+The schema represents **candidate routing readouts**, not a diagnosis or universal ontology. Material facets can carry provenance, multiple candidates may remain live, and unresolved context is valid.
+
+```text
+P_C != ProblemSignature
+CandidateSignature != EndorsedSignature
+Occupation != ProtocolSelector
+```
+
 ### Direct compile
 
 ```bash
@@ -45,6 +63,8 @@ curl -X POST http://127.0.0.1:8787/v1/protocols/compile \
   -H 'content-type: application/json' \
   -d '{"problem":"Water pools in one part of my orchard","phase":"P0","jurisdiction":"TH"}'
 ```
+
+`practice_context` may be supplied, but core behavior does not use an occupation label as a bespoke protocol selector.
 
 ### Initialize a Case Passport
 
@@ -55,6 +75,16 @@ curl -X POST http://127.0.0.1:8787/v1/cases/init \
 ```
 
 The response contains a caller-held `passport` plus the initial `protocol`.
+
+A Case Passport can carry:
+
+```text
+practice_context
+problem_signature
+external_actor_used
+```
+
+without replacing `citizen_problem_verbatim`.
 
 ### Advance a case
 
@@ -79,9 +109,31 @@ POST it to:
 
 The API applies the event, increments the passport version and recompiles the next action.
 
+Problem-grammar events include:
+
+```text
+SIGNATURE_CANDIDATES_UPDATED
+SIGNATURE_ENDORSED
+BARRIER_UPDATED
+```
+
+`SIGNATURE_CANDIDATES_UPDATED` must not be interpreted as a diagnosis merely because the actor is AI.
+
 ### Return and closure
 
-Institutional/expert results should arrive as `RETURN_RECEIVED` with a structured Return Object. The case closes only after a passing Return Gate and a citizen outcome event satisfying the current closure predicate.
+External institutional/expert results should arrive as `RETURN_RECEIVED` with a structured Return Object. An externally routed case closes only after a passing Return Gate plus a citizen outcome satisfying the current closure predicate.
+
+A citizen+AI/world-only case that never used an external actor may close without a fake institutional Return Object when a closure outcome is recorded and no hard safety/authority trigger remains.
+
+```text
+external_actor_used = false
++ latest_return_gate = NOT_APPLICABLE
++ closure outcome
++ no hard escalation
+→ CLOSED
+```
+
+This distinction prevents both false institutional closure and needless institutionalization of a valid local solution.
 
 ## Storage boundary
 
