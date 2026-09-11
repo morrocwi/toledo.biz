@@ -41,6 +41,21 @@ jobs:
               schemas[path.name] = data
               print(f'Valid JSON Schema: {path}')
 
+          required_schemas = {
+              'case-passport.schema.json',
+              'case-event.schema.json',
+              'case-step-request.schema.json',
+              'case-step-response.schema.json',
+              'return-object.schema.json',
+              'institution-record.schema.json',
+              'country-adapter-manifest.schema.json',
+              'protocol-compile-request.schema.json',
+              'protocol-instance.schema.json',
+          }
+          missing = sorted(required_schemas - set(schemas))
+          if missing:
+              raise SystemExit(f'Missing required schemas: {missing}')
+
           fmt = FormatChecker()
           institution_validator = Draft202012Validator(schemas['institution-record.schema.json'], format_checker=fmt)
           adapter_validator = Draft202012Validator(schemas['country-adapter-manifest.schema.json'], format_checker=fmt)
@@ -106,16 +121,21 @@ jobs:
         run: python -m compileall -q src apps
       - name: Run deterministic runtime tests
         run: python -m unittest discover -s tests -v
-      - name: Smoke import API and MCP services
+      - name: Smoke import API, MCP, and closed-loop case engine
         run: |
           python - <<'PY'
           from apps.protocol_api.main import app
           from apps.mcp_server.server import mcp
-          from toledo_runtime import EquationStore
+          from toledo_runtime import EquationStore, create_case_passport, step_case, __version__
           assert app.title == 'Toledo Protocol API'
           assert mcp is not None
           assert len(EquationStore().list()) == 36
-          print('Runtime imports and equation mirror OK')
+          passport = create_case_passport({'problem': 'synthetic test problem'})
+          result = step_case({'passport': passport})
+          assert result['case_id'] == passport['case_id']
+          assert result['passport_version'] == 1
+          assert __version__ == '0.3.0'
+          print('Runtime, case lifecycle, API, MCP, and equation mirror OK')
           PY
 
   policy-guards:
@@ -132,15 +152,16 @@ jobs:
             docs/README.md docs/ARCHITECTURE.md docs/CITIZEN_PROTOCOL.md docs/GOVERNANCE.md
             docs/TRUST_AND_SAFETY.md docs/DATA_GOVERNANCE.md docs/DATA_CATALOG.md docs/GLOSSARY.md
             docs/INSTITUTION_ROUTING.md docs/INSTITUTION_REGISTRY_STANDARD.md docs/COUNTRY_ADAPTER_STANDARD.md
-            docs/EQUATION_BINDINGS.md docs/PROTOCOL_COMPILER.md docs/API.md docs/MCP.md
+            docs/EQUATION_BINDINGS.md docs/PROTOCOL_COMPILER.md docs/CASE_LIFECYCLE.md docs/API.md docs/MCP.md
             docs/RELEASE_AND_VERSIONING.md docs/SPECIFICATION_STATUS.md
             registry/README.md registry/DATA_CATALOG.json registry/equation-index.json
-            packages/schemas/README.md packages/schemas/case-passport.schema.json
+            packages/schemas/README.md packages/schemas/case-passport.schema.json packages/schemas/case-event.schema.json
+            packages/schemas/case-step-request.schema.json packages/schemas/case-step-response.schema.json
             packages/schemas/return-object.schema.json packages/schemas/institution-record.schema.json
             packages/schemas/country-adapter-manifest.schema.json
             packages/schemas/protocol-compile-request.schema.json packages/schemas/protocol-instance.schema.json
             adapters/README.md adapters/thailand/adapter.manifest.json adapters/thailand/SOURCES.md
-            src/toledo_runtime/protocol.py apps/protocol_api/main.py apps/mcp_server/server.py
+            src/toledo_runtime/cases.py src/toledo_runtime/protocol.py apps/protocol_api/main.py apps/mcp_server/server.py
           )
           for f in "${required[@]}"; do test -f "$f" || { echo "Missing required file: $f"; exit 1; }; done
       - name: Verify equation authority boundary is declared
@@ -151,7 +172,7 @@ jobs:
           grep -q 'morrocwi/toledo' registry/README.md
           grep -q '361546c934829de56f3dcff2032c740209de847a' docs/EQUATION_BINDINGS.md
           grep -q 'mirror_only' registry/equation-index.json
-      - name: Verify citizen safety invariants are documented
+      - name: Verify citizen safety and continuity invariants are documented
         shell: bash
         run: |
           set -euo pipefail
@@ -161,6 +182,8 @@ jobs:
           grep -qi 'Case Passport' docs/ARCHITECTURE.md
           grep -qi 'Academic capability != university executability' docs/GLOSSARY.md
           grep -q 'Protocol engine controls typed gates' AGENTS.md
+          grep -q 'Route Failure != Case Failure' docs/CASE_LIFECYCLE.md
+          grep -q 'P_C = citizen_problem_verbatim' docs/CASE_LIFECYCLE.md
 
   repository-hygiene:
     runs-on: ubuntu-latest
