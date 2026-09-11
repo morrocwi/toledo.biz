@@ -1,0 +1,98 @@
+name: Institution data update
+description: Report a verified change to a public/university institution or service mechanism.
+title: "[data] "
+labels: []
+body:
+  - type: markdown
+    attributes:
+      value: |
+        Use this form for public routing metadata only. Do **not** include sensitive citizen case data.
+
+  - type: input
+    id: institution_id
+    attributes:
+      label: Institution record ID
+      description: Existing `institution_id`, or proposed stable ID for a new mechanism.
+      placeholder: TH-NSTDA-ITAP
+    validations:
+      required: true
+
+  - type: input
+    id: mechanism
+    attributes:
+      label: Mechanism / service
+      placeholder: Industrial Technology Assistance Program (ITAP)
+    validations:
+      required: true
+
+  - type: dropdown
+    id: change_type
+    attributes:
+      label: What changed?
+      options:
+        - Current availability
+        - Eligibility
+        - Application window
+        - Entry/contact channel
+        - Cost or co-funding
+        - Turnaround / capacity
+        - Capability / service scope
+        - Accreditation / legal authority
+        - Institution identity / naming
+        - New mechanism
+        - Program closed / superseded
+        - Other
+    validations:
+      required: true
+
+  - type: textarea
+    id: change
+    attributes:
+      label: Proposed factual update
+      description: State only what the source supports. Preserve unknowns.
+    validations:
+      required: true
+
+  - type: input
+    id: source
+    attributes:
+      label: Public source URL
+      description: Prefer the current official service/regulator source.
+    validations:
+      required: true
+
+  - type: input
+    id: verified
+    attributes:
+      label: Date verified
+      placeholder: YYYY-MM-DD
+    validations:
+      required: true
+
+  - type: dropdown
+    id: source_class
+    attributes:
+      label: Source class
+      options:
+        - S0 — law/regulator/standards authority
+        - S1 — official institution/program source
+        - S2 — official government report/open data
+        - S3 — peer-reviewed research
+        - S4 — reputable independent secondary source
+        - S5 — community/anecdotal discovery signal
+    validations:
+      required: true
+
+  - type: textarea
+    id: notes
+    attributes:
+      label: Uncertainty / conflict / fallback notes
+      description: Mention source conflicts, unresolved availability, or alternative routes.
+
+  - type: checkboxes
+    id: privacy
+    attributes:
+      label: Privacy confirmation
+      options:
+        - label: This issue contains no sensitive citizen case data, private records, credentials, or confidential material.
+          required: true
