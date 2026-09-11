@@ -17,6 +17,55 @@ from toledo_runtime import (
 ROOT = Path(__file__).resolve().parents[1]
 
 
+def candidate_signature():
+    return {
+        "status": "CANDIDATE",
+        "candidate_signatures": [
+            {
+                "signature_id": "sig-1",
+                "intent": {
+                    "value": "IDENTIFY_CAUSE",
+                    "provenance": ["AI_INFERENCE", "CITIZEN_VERBATIM"],
+                    "confidence": "MEDIUM",
+                    "citizen_confirmed": None,
+                },
+                "object_readout": {
+                    "value": "PRODUCTION_SYSTEM",
+                    "provenance": ["CITIZEN_VERBATIM"],
+                    "confidence": "MEDIUM",
+                    "citizen_confirmed": None,
+                },
+                "observed_difference": ["failure rate increased compared with prior batch"],
+                "evidence_need": ["batch comparison", "process trace"],
+                "stakes": "MODERATE",
+                "irreversibility": "LOW",
+                "third_party_exposure": "LOW",
+                "authority_need": "UNKNOWN",
+                "jurisdiction": "TH",
+                "candidate_alternatives": ["input", "process", "environment", "operator"],
+                "next_discriminating_action": "compare failure pattern by batch",
+                "citizen_endorsement": "NOT_CHECKED",
+            }
+        ],
+        "endorsed_signature_id": None,
+        "context_known": ["failure increased in current batch"],
+        "context_unknown": ["which process step differs"],
+        "barrier_state": {
+            "knowledge": "UNKNOWN",
+            "skill": "UNKNOWN",
+            "language": "ABSENT",
+            "tool": "UNKNOWN",
+            "resource_time": "UNKNOWN",
+            "network": "UNKNOWN",
+            "credential": "UNKNOWN",
+            "permission": "UNKNOWN",
+            "opportunity": "UNKNOWN",
+            "unknown": "PRESENT",
+        },
+        "domain_adapter_required": "HOLD_UNKNOWN",
+    }
+
+
 class RuntimeTests(unittest.TestCase):
     def test_equation_mirror_contains_expected_family(self):
         store = EquationStore()
@@ -52,11 +101,19 @@ class RuntimeTests(unittest.TestCase):
         self.assertEqual(passport["case_status"], "OPEN")
         self.assertEqual(passport["citizen_problem_verbatim"], "Trees decline after heavy rain")
         self.assertEqual(passport["goal_state"], "PROVISIONAL")
+        self.assertEqual(passport["problem_signature"]["status"], "NOT_PROVIDED")
+        self.assertFalse(passport["external_actor_used"])
         self.assertEqual(len(passport["events"]), 1)
 
         schema = json.loads((ROOT / "packages/schemas/case-passport.schema.json").read_text())
         validator = Draft202012Validator(schema, format_checker=FormatChecker())
         errors = list(validator.iter_errors(passport))
+        self.assertEqual(errors, [])
+
+    def test_problem_signature_schema_accepts_candidate_with_provenance(self):
+        schema = json.loads((ROOT / "packages/schemas/problem-signature.schema.json").read_text())
+        validator = Draft202012Validator(schema, format_checker=FormatChecker())
+        errors = list(validator.iter_errors(candidate_signature()))
         self.assertEqual(errors, [])
 
     def test_event_updates_version_without_overwriting_pc(self):
@@ -70,6 +127,71 @@ class RuntimeTests(unittest.TestCase):
         self.assertIn("Pooling appears after heavy rain", updated["observations"])
         self.assertEqual(updated["citizen_problem_verbatim"], passport["citizen_problem_verbatim"])
         self.assertEqual(passport["version"], 1)
+
+    def test_candidate_signature_can_be_endorsed_without_overwriting_pc(self):
+        passport = create_case_passport({"problem": "Something changed after the last production batch"})
+        updated = apply_case_event(passport, {
+            "event_type": "SIGNATURE_CANDIDATES_UPDATED",
+            "actor": "ai",
+            "payload": {"problem_signature": candidate_signature()},
+        })
+        self.assertEqual(updated["problem_signature"]["status"], "CANDIDATE")
+        self.assertEqual(updated["citizen_problem_verbatim"], passport["citizen_problem_verbatim"])
+
+        endorsed = apply_case_event(updated, {
+            "event_type": "SIGNATURE_ENDORSED",
+            "actor": "citizen",
+            "payload": {"signature_id": "sig-1"},
+        })
+        self.assertEqual(endorsed["problem_signature"]["status"], "ENDORSED")
+        self.assertEqual(endorsed["problem_signature"]["endorsed_signature_id"], "sig-1")
+        self.assertEqual(endorsed["citizen_problem_verbatim"], passport["citizen_problem_verbatim"])
+
+    def test_practice_context_does_not_select_a_bespoke_core_protocol(self):
+        mushroom = compile_protocol({
+            "problem": "Output fails intermittently",
+            "phase": "P0",
+            "practice_context": {"occupation": "mushroom grower"},
+        })
+        mechanic = compile_protocol({
+            "problem": "Output fails intermittently",
+            "phase": "P0",
+            "practice_context": {"occupation": "mechanic"},
+        })
+        self.assertEqual(mushroom["next_action"], mechanic["next_action"])
+        self.assertEqual(mushroom["hard_gates"], mechanic["hard_gates"])
+
+    def test_local_citizen_outcome_can_close_without_fake_external_return(self):
+        passport = create_case_passport({
+            "problem": "A reversible local process gives inconsistent results",
+            "goal": "Stabilize the process",
+        })
+        closed = apply_case_event(passport, {
+            "event_type": "OUTCOME_UPDATED",
+            "actor": "citizen",
+            "payload": {"outcome_state": "improved", "result": "The local change stabilized the next run"},
+        })
+        self.assertFalse(closed["external_actor_used"])
+        self.assertEqual(closed["latest_return_gate"], "NOT_APPLICABLE")
+        self.assertEqual(closed["case_status"], "CLOSED")
+        result = step_case({"passport": closed})
+        self.assertEqual(result["protocol"]["next_action"], "STOP")
+
+    def test_external_contribution_still_requires_return_gate(self):
+        passport = create_case_passport({"problem": "Need an external specialist check"})
+        routed = apply_case_event(passport, {
+            "event_type": "INSTITUTION_SELECTED",
+            "actor": "steward",
+            "payload": {"institution_id": "example-lab"},
+        })
+        self.assertTrue(routed["external_actor_used"])
+        outcome = apply_case_event(routed, {
+            "event_type": "OUTCOME_UPDATED",
+            "actor": "citizen",
+            "payload": {"outcome_state": "improved"},
+        })
+        self.assertEqual(outcome["case_status"], "HOLD")
+        self.assertEqual(outcome["latest_return_gate"], "NOT_APPLICABLE")
 
     def test_closed_loop_return_then_outcome_closes_case(self):
         passport = create_case_passport({"problem": "Water pools in one corner", "goal": "Keep trees healthy"})
@@ -95,6 +217,7 @@ class RuntimeTests(unittest.TestCase):
                 }
             },
         })
+        self.assertTrue(returned["external_actor_used"])
         self.assertEqual(returned["latest_return_gate"], "PASS")
         closed = apply_case_event(returned, {
             "event_type": "OUTCOME_UPDATED",
