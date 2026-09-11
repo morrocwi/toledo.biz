@@ -73,8 +73,11 @@ def resolve_execution_route(
     """
 
     phase = _text(case.get("phase") or "P0").upper()
+    case_status = _text(case.get("case_status") or "OPEN").upper()
     problem_signature = case.get("problem_signature") or {}
     signature, signature_basis = _working_signature(problem_signature)
+    signature_endorsed = signature_basis == "ENDORSED"
+    signature_candidate = signature_basis == "CANDIDATE"
     barrier_state = problem_signature.get("barrier_state") or {}
     evidence_need = [str(x) for x in signature.get("evidence_need", [])]
     unknowns = [str(x) for x in (case.get("evidence") or {}).get("unknowns", [])]
@@ -168,64 +171,69 @@ def resolve_execution_route(
             basis="interaction/interpretation signal",
         )
 
-    # EXPERT means a human expert route is required, but the role is still split
-    # into interaction and field expertise rather than collapsed into one class.
+    # A candidate signature may suggest an expert route, but it does not promote
+    # that route to a required fact until endorsement/evidence or a hard gate does.
     if authority_need == "EXPERT":
+        expert_requiredness = "REQUIRED" if signature_endorsed else "CANDIDATE"
         if field_signal and not interaction_signal:
             _add_requirement(
                 requirements,
                 "FIELD_EXPERT",
-                requiredness="REQUIRED",
-                reason="working signature requires expert input and the unresolved context is primarily situated/field-side",
-                basis="authority_need=EXPERT",
+                requiredness=expert_requiredness,
+                reason="working signature points to expert input and the unresolved context is primarily situated/field-side",
+                basis=f"authority_need=EXPERT ({signature_basis})",
             )
         elif interaction_signal and not field_signal:
             _add_requirement(
                 requirements,
                 "INTERACTION_EXPERT",
-                requiredness="REQUIRED",
-                reason="working signature requires expert input and the unresolved context is primarily interpretive/interactive",
-                basis="authority_need=EXPERT",
+                requiredness=expert_requiredness,
+                reason="working signature points to expert input and the unresolved context is primarily interpretive/interactive",
+                basis=f"authority_need=EXPERT ({signature_basis})",
             )
         else:
             _add_requirement(
                 requirements,
                 "INTERACTION_EXPERT",
                 requiredness="CANDIDATE",
-                reason="expert input is required but the expert mode is not yet resolved",
-                basis="authority_need=EXPERT",
+                reason="expert input is indicated but the expert mode is not yet resolved",
+                basis=f"authority_need=EXPERT ({signature_basis})",
             )
             _add_requirement(
                 requirements,
                 "FIELD_EXPERT",
                 requiredness="CANDIDATE",
-                reason="expert input is required but the expert mode is not yet resolved",
-                basis="authority_need=EXPERT",
+                reason="expert input is indicated but the expert mode is not yet resolved",
+                basis=f"authority_need=EXPERT ({signature_basis})",
             )
 
-    if authority_need == "LICENSED_PROFESSIONAL":
-        _add_requirement(
-            requirements,
+    authority_map = {
+        "LICENSED_PROFESSIONAL": (
             "LICENSED_PROFESSIONAL",
-            requiredness="REQUIRED",
-            reason="working signature indicates licensed professional authority is material",
-            basis="authority_need",
-        )
-    if authority_need == "LAB":
-        _add_requirement(
-            requirements,
+            "licensed professional authority may be material",
+        ),
+        "LAB": (
             "LAB_INFRASTRUCTURE",
-            requiredness="REQUIRED",
-            reason="working signature indicates laboratory evidence is material",
-            basis="authority_need",
-        )
-    if authority_need == "REGULATOR":
+            "laboratory evidence may be material",
+        ),
+        "REGULATOR": (
+            "REGULATORY_AUTHORITY",
+            "formal regulatory authority may be material",
+        ),
+    }
+    if authority_need in authority_map:
+        cls, reason = authority_map[authority_need]
+        requiredness = "REQUIRED" if signature_endorsed else "CANDIDATE"
         _add_requirement(
             requirements,
-            "REGULATORY_AUTHORITY",
-            requiredness="REQUIRED",
-            reason="working signature indicates formal regulatory authority is material",
-            basis="authority_need",
+            cls,
+            requiredness=requiredness,
+            reason=(
+                reason.replace("may be", "is")
+                if signature_endorsed
+                else f"candidate signature indicates {reason}; confirmation is still required"
+            ),
+            basis=f"authority_need ({signature_basis})",
         )
 
     if _contains_any(corpus, ("lab", "laboratory", "assay", "sample analysis")):
@@ -266,10 +274,20 @@ def resolve_execution_route(
     explicit_credential_block = barrier_state.get("credential") == "PRESENT"
     dependency_blocked = bool(case.get("dependency_blocked"))
     return_gate = _text(case.get("latest_return_gate")).upper()
+    unresolved_authority_candidate = (
+        signature_candidate
+        and authority_need in {"LICENSED_PROFESSIONAL", "LAB", "REGULATOR"}
+    )
+    endorsed_authority_block = (
+        signature_endorsed
+        and authority_need in {"LICENSED_PROFESSIONAL", "LAB", "REGULATOR"}
+    )
 
     forward_allowed = (
-        not hard_escalation
-        and authority_need not in {"LICENSED_PROFESSIONAL", "LAB", "REGULATOR"}
+        case_status != "CLOSED"
+        and not hard_escalation
+        and not endorsed_authority_block
+        and not unresolved_authority_candidate
         and not explicit_permission_block
         and not explicit_credential_block
         and not dependency_blocked
@@ -306,20 +324,24 @@ def resolve_execution_route(
             basis="hard gate",
         )
 
-    if dependency_blocked:
+    if case_status == "CLOSED":
+        route_mode = "CLOSED"
+    elif dependency_blocked:
         route_mode = "DEPENDENCY_HOLD"
-    elif hard_escalation:
+    elif hard_escalation or endorsed_authority_block:
         route_mode = "EXTERNAL_REQUIRED"
+    elif unresolved_authority_candidate:
+        route_mode = "AUTHORITY_UNRESOLVED"
     elif forward_allowed and market_signal:
         route_mode = "PARALLEL_OR_FORWARD_EXPERIMENT"
     else:
         route_mode = "MINIMUM_SUFFICIENT_FLEXIBLE"
 
     external_used = bool(case.get("external_actor_used", False))
-    knowledge_class = "K*_I" if external_used else "K*_0"
+    knowledge_class = "K*_I" if external_used and return_gate == "PASS" else "K*_0"
 
     return {
-        "matrix_version": "0.1.0",
+        "matrix_version": "0.1.1",
         "phase": phase,
         "phase_semantics": "ROUTING_CONTEXT_NOT_MANDATORY_SEQUENCE",
         "route_mode": route_mode,
@@ -350,7 +372,7 @@ def resolve_execution_route(
             "status": "PROVISIONAL",
             "is_human_expert": False,
             "is_truth_certificate": False,
-            "note": "structured knowledge-like material may guide action but remains provenance-bound and corrigible",
+            "note": "K*_I is emitted only after a usable external return passes the Return Gate; otherwise the readout remains K*_0",
         },
         "signature_basis": signature_basis,
         "authority_need": authority_need,
@@ -358,7 +380,7 @@ def resolve_execution_route(
         "forward_experiment": {
             "allowed": forward_allowed,
             "market_test_candidate": bool(forward_allowed and market_signal),
-            "rule": "bounded/reversible world or market action may run before later expert/institution phases when no hard safety, authority, permission, credential, return, or dependency gate blocks it",
+            "rule": "bounded/reversible world or market action may run before later expert/institution phases when no hard safety, endorsed authority, unresolved authority candidate, permission, credential, return, or dependency gate blocks it",
             "not_a_phase_skip_claim": True,
         },
         "hard_gate_reasons": list(hard_reasons or []),
