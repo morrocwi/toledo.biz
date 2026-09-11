@@ -9,19 +9,28 @@ The project follows the spirit of Keep a Changelog while remaining pre-1.0.
 ### Added
 
 - deterministic Toledo Protocol Compiler reference runtime;
-- HTTP Protocol API (`apps/protocol_api`) with equation, protocol, institution, handoff and Return Gate endpoints;
-- MCP stdio server (`apps/mcp_server`) exposing tools and resources for AI agents;
+- closed-loop Case Passport lifecycle with versioned, auditable Case Events;
+- stateless `initialize -> event -> recompile -> return -> outcome -> stop` reference loop;
+- `create_case_passport`, `apply_case_event`, `evaluate_return_object` and `step_case` runtime functions;
+- HTTP Protocol API (`apps/protocol_api`) with equation, protocol, case lifecycle, institution, handoff and Return Gate endpoints;
+- MCP stdio server (`apps/mcp_server`) exposing equation, protocol, Case Passport, routing and gate tools/resources for AI agents;
+- `CASE_LIFECYCLE.md` normative runtime contract;
+- Case Event and Case Step request/response JSON Schemas;
 - pinned 36-entry machine-readable equation mirror with upstream Toledo provenance;
 - `llms.txt` AI discovery index and `.well-known/toledo.json` service manifest;
 - versioned OpenAPI contract;
-- protocol compile request / protocol instance JSON Schemas;
-- runtime unit tests and service import validation;
+- runtime unit tests including Case Passport schema validation, no-restart rerouting and citizen closure;
 - structured documentation, controlled glossary, data governance, institution registry, country-adapter standard and trust/safety contracts.
 
 ### Changed
 
-- project status advanced from specification-only to pre-alpha reference runtime;
+- Protocol Compiler advanced from v0.1 one-shot compilation to v0.2 closed-loop recompilation;
+- runtime package advanced to `0.3.0`;
+- project status advanced from specification-only to pre-alpha executable reference runtime;
 - MCP runtime targets stable SDK v2 (`MCPServer`) with `mcp>=2.2,<3`;
+- `P_C = citizen_problem_verbatim` is protected against ordinary event overwrite;
+- failed institutional routes remain inside the same Case Passport instead of forcing case restart;
+- closure now requires a passing Return Gate plus a recorded citizen outcome before `STOP`;
 - CI validates runtime contracts in addition to schemas, adapters, policy guards and repository hygiene;
 - equation mirror remains explicitly lower authority than `morrocwi/toledo`.
 
@@ -29,7 +38,8 @@ The project follows the spirit of Keep a Changelog while remaining pre-1.0.
 
 - equation statements/status remain upstream-controlled;
 - machine interfaces must disclose equation provenance and proposal/canonical status;
-- Protocol Compiler uses deterministic typed-gate behavior rather than allowing an AI model to silently override hard gates.
+- Protocol Compiler uses deterministic typed-gate behavior rather than allowing an AI model to silently override hard gates;
+- the public reference runtime remains stateless and is not an approved sensitive citizen-case store.
 
 ## 0.1.0 — 2026-09-11
 
