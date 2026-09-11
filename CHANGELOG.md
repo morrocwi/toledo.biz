@@ -6,7 +6,25 @@ The project follows the spirit of Keep a Changelog while remaining pre-1.0.
 
 ## Unreleased
 
-No unreleased repository-level changes are recorded after the v0.2.0 release cut.
+### Added
+
+- flexible Execution Requirement Matrix that translates current decision state into candidate/required knowledge-like, expert, tool, world-test, infrastructure and authority routes without turning P0-P11 into a mandatory sequence;
+- explicit separation of `INTERACTION_EXPERT` and `FIELD_EXPERT` roles;
+- explicit AI role as `MEDIATOR_TRANSLATOR`, not an expert class, licensed authority or independent validator;
+- machine-readable distinction between provisional knowledge-like material (`K*_0` / `K*_I`) and human expertise;
+- bounded forward/world/market experiment rule allowing reversible low-gate learning to run before later expert/institution phases when no hard safety, authority, permission, credential, Return Gate or dependency constraint blocks it;
+- `execution-routing.schema.json`, `execution_routing` compiler output and regression tests for non-linear market-first routing, expert-role separation, knowledge-like status and hard-gate precedence.
+
+### Changed
+
+- runtime package advanced to `0.6.0`;
+- Protocol Compiler output advanced to `0.5.0` while preserving existing Case Passport, Decision Thread, P0-P11, Return Gate and equation-authority anchors;
+- phase is now explicitly reported as routing context rather than an expert selector or mandatory execution sequence.
+
+### Governance
+
+- no new Toledo mathematical equation is created by the execution-routing layer;
+- `AI != ExpertClass`, `KnowledgeLike != HumanExpert`, `InteractionExpert != FieldExpert`, `Expertise != Authority`, and `ForwardExperiment != PermissionToIgnoreHardGates` are explicit non-collapse rules.
 
 ## 0.2.0 — 2026-09-11
 
