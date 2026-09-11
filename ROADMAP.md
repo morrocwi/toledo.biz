@@ -1,103 +1,188 @@
 # Roadmap
 
-## Stage 0 — Specification baseline
+Toledo Citizen Platform is specification-first. The roadmap prioritizes a small auditable routing core, data integrity, and governed cross-actor continuity before a polished interface.
 
-Status: **active**
+## Milestone status
+
+| Milestone | Status |
+|---|---|
+| M0 — Specification and governance baseline | **complete** |
+| M1 — Deterministic reference engine | **active** |
+| M2 — Thailand adapter hardening | next |
+| M3 — Citizen web application | planned |
+| M4 — Steward console | planned |
+| M5 — Institution adapters / live registry | planned |
+| M6 — Global country-adapter expansion | planned |
+| M7 — Evidence and impact evaluation | planned |
+
+## M0 — Specification and governance baseline
+
+Status: **complete**
+
+Delivered:
 
 - [x] citizen-first mission and repository boundary
 - [x] citizen protocol
 - [x] reference architecture
 - [x] cross-actor governance model
+- [x] trust and safety model
 - [x] Case Passport schema
 - [x] Return Object schema
 - [x] Institution Capability schema
+- [x] Country Adapter Manifest schema
 - [x] Thailand reference routing model
-- [ ] equation bindings to canonical Toledo IDs
+- [x] documentation hierarchy and glossary
+- [x] data-governance/provenance standard
+- [x] institution registry standard
+- [x] global country-adapter standard
+- [x] architecture decision records
+- [x] equation proposal/binding lane to `morrocwi/toledo`
+- [x] schema/data validation CI
 
-## Stage 1 — Deterministic reference engine
+Exit criterion: a contributor can identify the source of truth for concepts, schemas, equations, country data, and routing behavior without relying on conversation history.
+
+## M1 — Deterministic reference engine
+
+Status: **active**
 
 Goal: implement a small auditable core before building a polished UI.
+
+Deliverables:
 
 - [ ] case state machine
 - [ ] P0–P11 phase classifier
 - [ ] hard escalation gate evaluator
 - [ ] minimum-sufficient route scorer
 - [ ] institution registry query interface
+- [ ] `AcademicFit != UniversityExecutability` checks
 - [ ] handoff validator
-- [ ] return-gate validator
+- [ ] Return Gate validator
 - [ ] meaning-preservation checkpoint
+- [ ] response-time/fallback evaluator
 - [ ] no-restart rerouting
-- [ ] JSON Schema validation tests
+- [ ] equation binding loader
+- [ ] synthetic test suite
 
-## Stage 2 — Thailand adapter
+Minimum test cases:
 
-- [ ] live institution registry seeded from public sources
-- [ ] freshness / `last_verified` monitoring
-- [ ] capability tags for ClinicTech, science parks, universities, NSTDA/ITAP, TISTR, NIA, DIP/IP Mart, TED Fund, depa, PMUC, DIPROM, OSMEP, DBD, regulators, DITP, EXIM
-- [ ] Thai-language citizen intake
+```text
+low-risk citizen+AI-only
+hard professional escalation
+unknown hard-gate state
+ineligible institution
+institution too slow for decision window
+meaning drift
+consent/data-scope failure
+handoff failure
+return-gate failure
+successful reroute without restart
+non-founder knowledge-utilization route
+```
+
+Exit criterion: a deterministic CLI/library consumes a synthetic Case Passport and returns the next routing state with a traceable explanation of the gate/rule that produced it.
+
+## M2 — Thailand adapter hardening
+
+Goal: turn the current reference seed into a more operational, evidence-maintained adapter.
+
+- [ ] assign verification metadata (`V0`–`V3`) to seed records
+- [ ] normalize capability codes
+- [ ] separate regulator and standards datasets
+- [ ] add local/regional nodes where access materially differs
+- [ ] add availability lifecycle fields
+- [ ] add source/evidence bundles for high-volatility claims
+- [ ] freshness monitoring for calls/application windows
+- [ ] Thai-language citizen intake vocabulary
 - [ ] Thai public-service routing examples
-- [ ] local fallback routes
+- [ ] synthetic Thai cases across P0–P11
+- [ ] local fallback route coverage
 
-## Stage 3 — Citizen web application
+Exit criterion: a live-routing prototype can explain both **why** a Thai mechanism is a fit and **how current** the supporting routing data is.
+
+## M3 — Citizen web application
 
 - [ ] plain-language intake
 - [ ] observation vs interpretation UI
 - [ ] citizen confirmation of AI reframe
-- [ ] risk / escalation explanation
-- [ ] "why this institution?" view
+- [ ] risk/escalation explanation
+- [ ] "why this route?" view
 - [ ] Case Passport timeline
 - [ ] Return Object view
-- [ ] privacy-first case storage
+- [ ] private case-store interface
 - [ ] multilingual UI
 - [ ] accessibility audit
+- [ ] low-bandwidth/mobile-first review
 
-## Stage 4 — Steward console
+Exit criterion: a user can complete a synthetic end-to-end case without seeing institutional complexity unless escalation is needed.
+
+## M4 — Steward console
 
 - [ ] pending handoffs
 - [ ] decision deadlines
-- [ ] consent scope
+- [ ] consent/data-use scopes
 - [ ] response-time alerts
-- [ ] fallback route activation
+- [ ] fallback activation
 - [ ] failed-route logging
-- [ ] return-gate enforcement
+- [ ] Return Gate enforcement
 - [ ] rights/provenance checklist
+- [ ] institution capacity/status notes
 
-## Stage 5 — Institution adapters
+Exit criterion: a steward can move a case across institutions without asking the citizen to restart or losing rights/return obligations.
+
+## M5 — Institution adapters / live registry
 
 - [ ] capability-provider API contract
-- [ ] verified service-directory ingestion
+- [ ] verified public-service directory ingestion
 - [ ] lab/service availability adapters
 - [ ] application-window adapters
 - [ ] regulator adapters
 - [ ] TTO/IP-market adapters
+- [ ] source conflict handling
+- [ ] historical/superseded record lifecycle
+- [ ] operational verification audit trail
 
-## Stage 6 — Globalization
+Exit criterion: country adapter data can refresh independently from platform releases while preserving source and change provenance.
 
-- [ ] country adapter interface
-- [ ] jurisdiction-specific safety/authority policies
+## M6 — Globalization
+
+- [ ] country adapter onboarding workflow
+- [ ] adapter conformance tests
+- [ ] jurisdiction-specific hard-gate policy interface
 - [ ] localization contribution workflow
-- [ ] cross-border institution registry
-- [ ] global public-service discovery
+- [ ] cross-border institution discovery
+- [ ] multi-country regulator/standard representation
+- [ ] adapter comparison without collapsing local context
 
-## Stage 7 — Evidence and impact
+Exit criterion: a second country adapter can be added without changing global citizen/core semantics.
+
+## M7 — Evidence and impact
 
 Measure separately:
 
 ```text
 routing accuracy
+hard-gate correctness
 handoff completion
 return-to-citizen rate
 citizen problem resolution
 time saved
 money saved
+retelling burden
 institutional burden
 meaning-drift incidents
-rights disputes
+rights/consent failures
+fallback success
 repeat institutional use
 innovation / transfer / venture outcomes when relevant
 ```
 
 Avoid a single vanity metric.
+
+Research questions should include whether minimum-sufficient routing actually reduces citizen cost without increasing safety failures.
+
+## Upstream dependency
+
+The citizen/cross-actor equation family is registered in `morrocwi/toledo` as governed proposals pending canonical promotion. `toledo.biz` must preserve proposal/canonical status in bindings and implementations.
 
 ## Non-goals
 
@@ -108,4 +193,5 @@ The platform is not intended to become:
 - a mandatory innovation funnel;
 - a startup factory;
 - a centralized owner of citizen knowledge;
-- a public repository for sensitive case data.
+- a public repository for sensitive case data;
+- a global database that erases local legal/cultural context.
