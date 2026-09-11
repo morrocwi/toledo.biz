@@ -1,0 +1,36 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://toledo.biz/schemas/case-event.schema.json",
+  "title": "Toledo Case Event",
+  "type": "object",
+  "additionalProperties": false,
+  "required": ["event_type"],
+  "properties": {
+    "event_type": {
+      "type": "string",
+      "enum": [
+        "OBSERVATION_ADDED",
+        "UNKNOWN_ADDED",
+        "UNKNOWN_RESOLVED",
+        "HYPOTHESIS_ADDED",
+        "ACTION_RECORDED",
+        "RESULT_RECORDED",
+        "RISK_UPDATED",
+        "PHASE_CHANGED",
+        "GOAL_CONFIRMED",
+        "STRUCTURED_PROBLEM_UPDATED",
+        "DISCIPLINARY_PROBLEM_UPDATED",
+        "CAPABILITY_REQUESTED",
+        "INSTITUTION_SELECTED",
+        "ROUTE_FAILED",
+        "HANDOFF_CHECKED",
+        "RETURN_RECEIVED",
+        "OUTCOME_UPDATED",
+        "NOTE"
+      ]
+    },
+    "actor": {"type": ["string", "null"]},
+    "occurred_at": {"type": ["string", "null"], "format": "date-time"},
+    "payload": {"type": "object", "additionalProperties": true}
+  }
+}
