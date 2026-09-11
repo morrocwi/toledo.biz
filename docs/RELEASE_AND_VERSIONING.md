@@ -4,11 +4,13 @@ Toledo Citizen Platform has several independently changing artifacts. A single v
 
 ## 1. Version families
 
-The project tracks at least four version families:
+The project tracks at least six version families:
 
 ```text
-Platform version
-Schema version
+Public citation / platform version
+Runtime package version
+Protocol Compiler version
+Schema generation
 Country-adapter version / data snapshot
 Upstream Toledo equation baseline
 ```
@@ -31,7 +33,27 @@ Guidance:
 
 Pre-1.0 versions indicate that contracts may still evolve substantially.
 
-## 3. Schema version
+The public citation version does not have to change for every pre-alpha runtime commit.
+
+## 3. Runtime package version
+
+The executable Python package has its own SemVer declared in `pyproject.toml` and `toledo_runtime.__version__`.
+
+The current pre-alpha runtime line is `0.3.x`.
+
+## 4. Protocol Compiler version
+
+Compiler semantics are versioned separately because a runtime release may contain implementation fixes without changing the protocol contract.
+
+Current reference line:
+
+```text
+Protocol Compiler v0.2
+```
+
+A material change to case-state transition, typed-gate behavior, closure semantics or next-action selection requires a compiler version review.
+
+## 5. Schema version
 
 Machine-readable schemas SHOULD carry an explicit version in their `$id`, metadata, or documented release mapping.
 
@@ -42,7 +64,7 @@ A schema breaking change requires either:
 
 Do not change required semantics silently while leaving consumers unable to identify the schema generation.
 
-## 4. Country-adapter version
+## 6. Country-adapter version
 
 Country adapters version separately from the platform because public programs, regulations, institutions, and entry channels change independently.
 
@@ -57,7 +79,7 @@ upstream_platform_compatibility
 
 A data refresh does not necessarily require a platform release.
 
-## 5. Data snapshot date
+## 7. Data snapshot date
 
 Time-sensitive registry datasets SHOULD expose a snapshot date such as:
 
@@ -67,7 +89,7 @@ Time-sensitive registry datasets SHOULD expose a snapshot date such as:
 
 Individual records still keep their own `last_verified` metadata.
 
-## 6. Equation baseline
+## 8. Equation baseline
 
 `morrocwi/toledo` is the mathematical source of truth.
 
@@ -82,7 +104,7 @@ binding status
 
 Implementation behavior tied to an upstream equation should be reproducible against that exact baseline.
 
-## 7. Binding status
+## 9. Binding status
 
 Recommended equation-binding states:
 
@@ -95,7 +117,7 @@ unbound
 
 `proposal` MUST NOT be presented as a canonical Toledo equation.
 
-## 8. Release maturity
+## 10. Release maturity
 
 Use these project maturity labels independently from SemVer:
 
@@ -108,9 +130,9 @@ production-candidate
 stable
 ```
 
-The current repository remains specification-first until the deterministic routing engine and schema-validation tests exist.
+The current repository is a **pre-alpha executable reference runtime**: deterministic compiler, closed-loop Case Passport engine, schemas, API and MCP exist, but production persistence, domain validation, security deployment and broad interoperability testing are not complete.
 
-## 9. Document status
+## 11. Document status
 
 Normative documents SHOULD identify whether they are:
 
@@ -123,7 +145,7 @@ Superseded
 
 See [`SPECIFICATION_STATUS.md`](SPECIFICATION_STATUS.md).
 
-## 10. Change categories
+## 12. Change categories
 
 Changelog entries should use:
 
@@ -138,19 +160,22 @@ Data
 Governance
 ```
 
-## 11. Breaking changes
+## 13. Breaking changes
 
 Examples of breaking changes:
 
 - removing a required Case Passport field;
+- changing Case Event meaning incompatibly;
+- changing case identity/version semantics;
 - changing hard-gate semantics;
+- changing citizen closure semantics;
 - changing `P0`–`P11` meanings incompatibly;
 - changing `PASS/HOLD_UNKNOWN/FAIL/N/A` interpretation;
 - collapsing separate rights fields into one;
 - changing an institution identifier to refer to a different mechanism;
 - changing equation meaning locally without upstream Toledo update.
 
-## 12. Non-breaking changes
+## 14. Non-breaking changes
 
 Examples:
 
@@ -161,11 +186,13 @@ Examples:
 - adding a new fallback route;
 - refreshing `last_verified` data.
 
-## 13. Release checklist
+## 15. Release checklist
 
 Before a tagged release:
 
 - [ ] schemas parse and validation tests pass;
+- [ ] runtime tests pass;
+- [ ] API and MCP smoke imports pass;
 - [ ] normative docs agree with schemas;
 - [ ] equation bindings identify upstream status;
 - [ ] adapter data has provenance and snapshot date;
@@ -176,8 +203,8 @@ Before a tagged release:
 - [ ] repository status document is updated;
 - [ ] citation metadata version is updated when a release is actually cut.
 
-## 14. No fake releases
+## 16. No fake releases
 
 Do not update citation/release metadata to a version that has not actually been released/tagged under the project's chosen release process.
 
-Documentation may describe a `draft` specification version without pretending that a release exists.
+Documentation may describe a `draft` or reference protocol/runtime version without pretending that a public release exists.
