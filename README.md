@@ -12,9 +12,10 @@ Toledo Citizen Platform is the citizen-facing implementation layer of the Toledo
 |---|---|
 | Product maturity | **Pre-alpha reference runtime** |
 | Public citation version | `0.1.0` |
-| Runtime package | `0.2.0` |
+| Runtime package | `0.3.0` |
 | Architecture baseline | aligned to Toledo citizen/cross-actor framework v0.17 |
-| Protocol Compiler | **reference v0.1 implemented** |
+| Protocol Compiler | **reference v0.2 implemented** |
+| Closed-loop Case Passport | **implemented; stateless reference lifecycle** |
 | Protocol API | **reference implementation available** |
 | MCP server | **reference stdio server available** |
 | Equation machine readout | **36-entry pinned mirror + optional live upstream read** |
@@ -24,39 +25,37 @@ Toledo Citizen Platform is the citizen-facing implementation layer of the Toledo
 
 This repository is not yet a production public service. The runtime is intentionally small, deterministic, auditable and designed to make the protocol executable before a polished UI is built.
 
-## Citizen flow
+## Closed-loop citizen flow
 
 ```text
 REAL-LIFE PROBLEM
       ↓
-CITIZEN EXPERIENCE
-      ↕
-AI-MEDIATED EXCHANGE
+CASE PASSPORT v1
       ↓
-PROVISIONAL KNOWLEDGE-LIKE CAPITAL (K*_0)
+AI-MEDIATED STRUCTURE
       ↓
 PROTOCOL COMPILER
       ↓
 MINIMUM RELEVANT SUBGRAPH / NEXT ACTION
       ↓
-Citizen+AI / Expert / Lab / University / Public Service / Regulator
+Citizen+AI / World / Expert / Lab / University / Public Service / Regulator
       ↓
-CASE PASSPORT + VALID HANDOFF
+CASE EVENT or RETURN OBJECT
       ↓
-RETURN OBJECT
+CASE PASSPORT v2...vN
       ↓
-SAFE / JUSTIFIED ACTION
+RECOMPILE
       ↓
-WORLD RESULT
+RETURN GATE + CITIZEN OUTCOME
       ↓
-Better life / Local fix / Repeatable knowledge / Research / Innovation
+STOP / or continue from the same case
 ```
 
 A good local solution is a complete success. A citizen does **not** have to become a researcher, inventor, or entrepreneur.
 
 ## Machine access for AI systems
 
-Toledo now exposes three machine-first surfaces:
+Toledo exposes three machine-first surfaces:
 
 1. **Protocol API** — HTTP/FastAPI reference service.
 2. **MCP server** — stdio MCP tools/resources for AI agents.
@@ -67,6 +66,7 @@ Start here:
 ```text
 llms.txt
 docs/PROTOCOL_COMPILER.md
+docs/CASE_LIFECYCLE.md
 docs/API.md
 docs/MCP.md
 openapi/toledo.protocol.v1.yaml
@@ -82,7 +82,17 @@ toledo-api   # HTTP API on 127.0.0.1:8787
 toledo-mcp   # MCP stdio server
 ```
 
-The MCP server exposes equation lookup/search, protocol compilation, institutional routing, handoff validation and Return Gate validation.
+The preferred machine loop is:
+
+```text
+initialize_case
+→ advance_case
+→ world/institution action
+→ update_case or advance_case(event)
+→ Return Object
+→ OUTCOME_UPDATED
+→ STOP when citizen closure is satisfied
+```
 
 ## Equation authority
 
@@ -109,9 +119,11 @@ The current citizen-bridge family is pinned to upstream proposal commit:
 ```text
 AI-first != AI-only
 Observation != Interpretation != Diagnosis
+P_C != P_S != P_D
 Academic capability != University executability
 Referral != Handoff != Collaboration
 Institutional output != Citizen outcome
+Route failure != Case restart
 Grant approval != Regulatory approval
 Experience provenance != IP ownership
 Company registration != Business-0
@@ -119,7 +131,7 @@ Innovation success != Creator becomes entrepreneur
 Vehicle != Matching channel
 ```
 
-The citizen's original problem remains visible throughout the case.
+The citizen's original problem `P_C = citizen_problem_verbatim` is preserved and cannot be silently overwritten by ordinary Case Events.
 
 ## Routing phases
 
@@ -160,6 +172,8 @@ CITIZEN ↔ AI ↔ CASE STEWARD ↔ CASE PASSPORT
                                CITIZEN
                                   ↓
                             WORLD-SIDE ACTION
+                                  ↓
+                          CASE EVENT / RECOMPILE
 ```
 
 The platform routes by **capability, eligibility, access, evidence need, time fit, rights, and burden** — not prestige.
@@ -179,6 +193,7 @@ Start with [`docs/README.md`](docs/README.md).
 Key runtime documents:
 
 - [`docs/PROTOCOL_COMPILER.md`](docs/PROTOCOL_COMPILER.md)
+- [`docs/CASE_LIFECYCLE.md`](docs/CASE_LIFECYCLE.md)
 - [`docs/API.md`](docs/API.md)
 - [`docs/MCP.md`](docs/MCP.md)
 - [`docs/EQUATION_BINDINGS.md`](docs/EQUATION_BINDINGS.md)
@@ -195,7 +210,7 @@ Key governance documents:
 
 ## Schemas
 
-Machine-readable contracts live in [`packages/schemas/`](packages/schemas/), including Case Passport, Return Object, institution records, country adapters, protocol compile requests and protocol instances.
+Machine-readable contracts live in [`packages/schemas/`](packages/schemas/), including Case Passport, Case Event, Case Step request/response, Return Object, institution records, country adapters, protocol compile requests and protocol instances.
 
 ## Repository layout
 
@@ -205,7 +220,7 @@ apps/
   mcp_server/              MCP server for AI agents
   citizen-web/             future citizen UI
   steward-console/         future steward UI
-src/toledo_runtime/        deterministic runtime core
+src/toledo_runtime/        deterministic runtime + closed-loop case engine
 packages/schemas/          machine-readable contracts
 openapi/                   API contract
 adapters/                  country/jurisdiction adapters
@@ -222,7 +237,7 @@ This public repository is **not** an approved location for real sensitive citize
 
 Do not submit medical records, identity documents, private addresses, passwords/tokens, confidential contracts, patent-sensitive material, or restricted community knowledge through public issues, examples, logs, or fixtures.
 
-Production deployments need private case storage, access control, encryption, retention/deletion rules, consent enforcement, audit logs and domain-specific safety review. See [`SECURITY.md`](SECURITY.md).
+The reference lifecycle is deliberately stateless: the caller holds the Case Passport. Production deployments need private case storage, access control, encryption, retention/deletion rules, consent enforcement, audit logs and domain-specific safety review. See [`SECURITY.md`](SECURITY.md).
 
 ## Contributing
 
