@@ -7,22 +7,32 @@
   "required": [
     "case_id",
     "version",
+    "case_status",
+    "jurisdiction",
     "citizen_problem_verbatim",
     "citizen_goal",
+    "goal_state",
     "current_phase",
     "current_decision",
     "consent",
     "case_steward",
-    "return_obligation"
+    "latest_return_gate",
+    "outcome_state",
+    "return_obligation",
+    "events"
   ],
   "properties": {
     "case_id": {"type": "string", "minLength": 1},
     "version": {"type": "integer", "minimum": 1},
     "created_at": {"type": "string", "format": "date-time"},
     "updated_at": {"type": "string", "format": "date-time"},
+    "case_status": {"type": "string", "enum": ["OPEN", "HOLD", "CLOSED"]},
+    "jurisdiction": {"type": "string", "minLength": 2},
+    "target_user": {"type": ["string", "null"]},
 
     "citizen_problem_verbatim": {"type": "string", "minLength": 1},
     "citizen_goal": {"type": "string", "minLength": 1},
+    "goal_state": {"type": "string", "enum": ["PROVISIONAL", "USER_SUPPLIED", "CONFIRMED"]},
     "citizen_constraints": {"type": "array", "items": {"type": "string"}},
 
     "ai_structured_problem": {"type": ["string", "null"]},
@@ -37,6 +47,7 @@
     "unknowns": {"type": "array", "items": {"type": "string"}},
     "hypotheses": {"type": "array", "items": {"type": "string"}},
     "risk_state": {"type": ["string", "null"]},
+    "risk_profile": {"type": "object", "additionalProperties": true},
 
     "current_phase": {
       "type": "string",
@@ -94,6 +105,15 @@
     "currency": {"type": ["string", "null"], "minLength": 3, "maxLength": 3},
     "fallback_route": {"type": ["string", "null"]},
 
+    "latest_return_gate": {
+      "type": "string",
+      "enum": ["NOT_APPLICABLE", "PASS", "HOLD_UNKNOWN", "FAIL"]
+    },
+    "outcome_state": {
+      "type": "string",
+      "enum": ["ongoing", "resolved", "improved", "safely_held", "explicitly_rescoped_with_consent", "worsened", "unknown"]
+    },
+
     "return_obligation": {
       "type": "object",
       "additionalProperties": false,
@@ -102,6 +122,22 @@
         "required": {"const": true},
         "return_format": {"type": ["string", "null"]},
         "return_to": {"type": ["string", "null"]}
+      }
+    },
+
+    "events": {
+      "type": "array",
+      "items": {
+        "type": "object",
+        "additionalProperties": true,
+        "required": ["event_id", "event_type", "occurred_at", "actor", "payload"],
+        "properties": {
+          "event_id": {"type": "string", "pattern": "^ev-[a-f0-9]{16}$"},
+          "event_type": {"type": "string"},
+          "occurred_at": {"type": "string", "format": "date-time"},
+          "actor": {"type": "string"},
+          "payload": {"type": "object", "additionalProperties": true}
+        }
       }
     }
   }
