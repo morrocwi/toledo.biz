@@ -52,18 +52,55 @@ A separate description of what blocks progress. The reference barrier dimensions
 Occupation, repeated practice, local setting, tacit distinctions, role, tools, and other situated information that may carry experiential expertise. Practice Context is relevant evidence/context but does not automatically select a bespoke core protocol.
 
 ### Protocol Primitive
-An operational verb available to the compiler, such as observe, compare, measure, test, decide, repair, validate, or scale. A Protocol Primitive is not asserted to be a fundamental metaphysical kind of problem.
+An operational verb available to the compiler, such as observe, compare, measure, test, decide, repair, validate, hold, or scale. A Protocol Primitive is not asserted to be a fundamental metaphysical kind of problem.
 
 ### Domain Adapter
-An optional specialization that adds domain vocabulary, hazards, professional boundaries, measurements/sample rules, regulation or provider mappings without redefining global Case Passport, provenance, hard-gate, Return Gate, or equation semantics.
+An optional specialization that adds domain vocabulary, hazards, professional boundaries, measurements/sample rules, regulation or provider mappings without redefining global Case Passport, Decision Thread, provenance, hard-gate, Return Gate, or equation semantics.
 
-## Case continuity
+## Case continuity and multi-decision terms
 
 ### Case Passport
-A versioned object that carries the same case across citizens, AI systems, experts, universities, public agencies, laboratories, regulators, and other actors without forcing a restart.
+A versioned object that carries the same case across citizens, AI systems, experts, universities, public agencies, laboratories, regulators, and other actors without forcing a restart. A Case Passport may contain one or more Decision Threads.
+
+### Decision Thread
+One decision-specific routing subgraph inside the same Case Passport. A Decision Thread carries its own decision, P0-P11 phase, evidence/unknowns, risk, requested capability, dependencies, external-actor state, Return Gate state and outcome state when needed.
+
+A Decision Thread is **not** a new case, a new maturity scale, or a new Toledo equation.
+
+### Primary Thread
+The Decision Thread selected as the backward-compatible projection surface for legacy fields:
+
+```text
+current_phase    = primary_thread.phase
+current_decision = primary_thread.decision
+```
+
+`Primary Thread` means compatibility/reference focus, not "the truest" or universally most important decision.
+
+### Thread Dependency
+A declared relation indicating that one Decision Thread should not execute its downstream action until another Decision Thread is closed or cancelled.
+
+### Blocking Thread
+An unresolved dependency listed in `blocking_threads`. A blocking thread prevents ordinary downstream execution but does not mean the case failed.
+
+### Dependency Hold
+The runtime state used when a Decision Thread has unresolved dependencies:
+
+```text
+next_action = HOLD
+status = HOLD_FOR_DEPENDENCY
+```
+
+Hard safety/authority escalation outranks an ordinary Dependency Hold.
+
+### Required Thread
+A Decision Thread whose `required_for_case_closure` is true. A multi-decision case cannot close while a required, non-cancelled thread remains unresolved.
+
+### Thread Closure
+The closure of one decision-specific subgraph. Local threads may close without a fake institutional Return Object when no external actor was used and safety/authority is clear. External threads require a passing Return Gate. Thread Closure does not automatically imply Case Closure.
 
 ### Civic Knowledge Case Steward
-A coordination role responsible for continuity, routing, consent scope, return obligations, and fallback activation. A steward is not automatically an expert, regulator, or decision authority.
+A coordination role responsible for continuity, routing, consent scope, return obligations, dependency visibility and fallback activation. A steward is not automatically an expert, regulator, or decision authority.
 
 ### Capability Request
 A structured request that identifies the exact capability needed, the decision it should unlock, the minimum required output, current evidence, uncertainty to reduce, timing, cost constraints, and return format.
@@ -72,19 +109,19 @@ A structured request that identifies the exact capability needed, the decision i
 A pointer to another actor or institution. A referral does not imply continuity or return.
 
 ### Handoff
-A transfer of case context plus requested capability, consent/data scope, decision owner, response-time requirement, return obligation, and fallback route.
+A transfer of case/thread context plus requested capability, consent/data scope, decision owner, response-time requirement, return obligation, and fallback route.
 
 ### Collaboration
-Two or more actors remain jointly active around the same persistent case state.
+Two or more actors remain jointly active around the same persistent case/thread state.
 
 ### Return Object
 The structured result returned by an external actor: plain-language result, technical result where needed, knowns, unknowns, limitations, next action, unsafe actions to avoid, returned data, rights state, and follow-up trigger.
 
 ### Return Gate
-The gate that prevents external institutional/professional work from being treated as complete until a usable result reaches the citizen or correct decision owner. A citizen+AI/world-only local case with no external actor may use `NOT_APPLICABLE` rather than manufacturing a fake Return Object.
+The gate that prevents external institutional/professional work from being treated as complete until a usable result reaches the citizen or correct decision owner. A citizen+AI/world-only local thread with no external actor may use `NOT_APPLICABLE` rather than manufacturing a fake Return Object.
 
 ### External Actor Used
-A Case Passport state indicating that an expert, institution, provider, regulator, laboratory or equivalent external actor actually entered the execution route. When true, external closure requires a passing Return Gate.
+A case/thread state indicating that an expert, institution, provider, regulator, laboratory or equivalent external actor actually entered the execution route. When true at thread level, thread closure requires a passing Return Gate.
 
 ## Routing terms
 
@@ -95,16 +132,16 @@ A concrete service or authority needed by the case, such as expert consultation,
 A sequence of capabilities and actors selected to unlock the next justified decision.
 
 ### Minimum-Sufficient Route
-The lowest-burden route that still satisfies safety, evidence, authority, rights, and decision-usability requirements.
+The lowest-burden route that still satisfies safety, evidence, authority, rights, dependencies, and decision-usability requirements.
 
 ### Hard Gate
-A typed requirement that cannot be averaged away by a soft score. Typical states are `PASS`, `HOLD_UNKNOWN`, `FAIL`, and `N/A`.
+A typed requirement that cannot be averaged away by a soft score. Typical states are `PASS`, `HOLD_UNKNOWN`, `FAIL`, and `N/A`. Hard safety/authority gates also take precedence over ordinary Decision Thread dependency holds.
 
 ### Soft Score
 A comparative heuristic used only after hard gates are satisfied, for example cost, access burden, timeliness, or expected decision gain.
 
 ### Phase (`P0`–`P11`)
-A routing coordinate describing the current case need. Phases are **not** a maturity ranking and are not mandatory linear stages.
+A routing coordinate describing the current decision need. Phases are **not** a maturity ranking and are not mandatory linear stages. In multi-decision cases, different Decision Threads may legitimately occupy different phases at the same time.
 
 ## Institutional terms
 
@@ -146,10 +183,10 @@ A formed venture that has completed an independently grounded first economic loo
 Traceability of who originated an observation or situated contribution and in what context. Provenance is not automatically legal IP ownership.
 
 ### Decision Owner
-The actor with legitimate authority to make the next material decision. Advice does not automatically transfer decision authority.
+The actor with legitimate authority to make the next material decision. Advice does not automatically transfer decision authority. Different Decision Threads may have different decision owners when legitimately required.
 
 ### Meaning Preservation
-The requirement that citizen goals, material constraints, risk tolerance, and unresolved uncertainty remain represented across reframing and handoff.
+The requirement that citizen goals, material constraints, risk tolerance, and unresolved uncertainty remain represented across reframing, thread decomposition and handoff.
 
 ### Epistemic Capture
 A failure mode where a more powerful actor's framing replaces the citizen's actual problem or makes correction impractical.
@@ -174,6 +211,7 @@ Government is not one undifferentiated actor. Toledo distinguishes:
 AI-first != AI-only
 Observation != Interpretation != Diagnosis
 Occupation != ProtocolSelector
+Industry != ProtocolSelector
 PracticeContext != IrrelevantContext
 P_C != ProblemSignature
 ProblemSignature != Diagnosis
@@ -183,6 +221,12 @@ Unknown != Failure
 MissingEvidence != NegativeEvidence
 DomainAdapter != NewCore
 ProviderName != Capability
+Case != SingleDecision
+DecisionThread != NewCase
+PrimaryThread != MostImportantTruth
+ThreadPhase != CaseMaturity
+BlockedThread != FailedCase
+ThreadClosure != CaseClosure
 Academic capability != university executability
 Referral != Handoff != Collaboration
 Institutional output != Citizen outcome
