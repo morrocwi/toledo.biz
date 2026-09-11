@@ -12,10 +12,11 @@ Toledo Citizen Platform is the citizen-facing implementation layer of the Toledo
 |---|---|
 | Product maturity | **Pre-alpha reference runtime** |
 | Public citation version | `0.1.0` |
-| Runtime package | `0.4.0` |
+| Runtime package | `0.5.0` |
 | Architecture baseline | aligned to Toledo citizen/cross-actor framework v0.17 |
-| Protocol Compiler | **reference v0.3 implemented** |
+| Protocol Compiler | **reference v0.4 implemented** |
 | Domain-neutral Problem & Capability Grammar | **normative architecture + machine schema implemented** |
+| Decision Threads | **anchor-preserved multi-decision runtime implemented** |
 | Closed-loop Case Passport | **implemented; stateless reference lifecycle** |
 | Protocol API | **reference implementation available** |
 | MCP server | **reference stdio server available** |
@@ -39,9 +40,11 @@ CITIZEN / EVIDENCE ENDORSEMENT or HOLD_UNKNOWN
       ↓
 PROBLEM + BARRIER STATE
       ↓
+DECISION THREAD(S)
+      ↓
 PROTOCOL COMPILER
       ↓
-MINIMUM RELEVANT SUBGRAPH / NEXT ACTION
+MINIMUM RELEVANT SUBGRAPH / NEXT ACTION PER DECISION
       ↓
 Citizen+AI / World / Expert / Lab / University / Public Service / Regulator
       ↓
@@ -49,7 +52,7 @@ CASE EVENT or RETURN OBJECT when external work is used
       ↓
 CASE PASSPORT v2...vN
       ↓
-RECOMPILE
+RECOMPILE THREADS
       ↓
 CITIZEN OUTCOME
       ↓
@@ -60,10 +63,11 @@ A good local solution is a complete success. A citizen does **not** have to beco
 
 ## Scale without one protocol per occupation
 
-Toledo does not attempt to maintain a mushroom-farmer protocol, mechanic protocol, teacher protocol, shop-owner protocol, and thousands of other bespoke cores.
+Toledo does not attempt to maintain a mushroom-farmer protocol, mechanic protocol, teacher protocol, shop-owner protocol, cosmetics protocol, and thousands of other bespoke cores.
 
 ```text
 Occupation != ProtocolSelector
+Industry != ProtocolSelector
 ```
 
 Occupation and practice history are preserved as context because they may contain experiential expertise. The core instead represents the problem through candidate signatures, context gaps, barriers, risk/authority needs and required capabilities.
@@ -83,6 +87,33 @@ The Problem Signature is a routing readout, not a diagnosis and not a universal 
 
 See [`docs/PROBLEM_CAPABILITY_GRAMMAR.md`](docs/PROBLEM_CAPABILITY_GRAMMAR.md) and [`packages/schemas/problem-signature.schema.json`](packages/schemas/problem-signature.schema.json).
 
+## One case can contain several decisions
+
+A real case does not always have one meaningful phase. A business can simultaneously have a quality decision at P1, an external test/regulatory decision at P3, and a scale decision at P10.
+
+Toledo therefore preserves the original Case Passport and P0-P11 anchors but adds decision-specific subgraphs:
+
+```text
+Case Passport
+  ├── shared P_C / goal / rights / context
+  ├── Decision Thread T1 -> phase / evidence / gates / capability
+  ├── Decision Thread T2 -> phase / evidence / gates / capability
+  └── Decision Thread T3 -> phase / dependencies / next action
+```
+
+```text
+Case != SingleDecision
+DecisionThread != NewCase
+ThreadPhase != CaseMaturity
+BlockedThread != FailedCase
+```
+
+The old `current_phase` and `current_decision` fields remain as a **primary-thread projection**, preserving compatibility with the prior single-decision runtime.
+
+Thread dependencies are explicit. If a scale decision depends on unresolved quality and regulatory decisions, the scale thread emits `HOLD` rather than pretending P10 is ready. Hard safety/authority escalation still outranks an ordinary dependency hold.
+
+See [`docs/DECISION_THREADS.md`](docs/DECISION_THREADS.md), [`docs/adr/0005-anchor-preserved-decision-threads.md`](docs/adr/0005-anchor-preserved-decision-threads.md), and [`packages/schemas/decision-thread.schema.json`](packages/schemas/decision-thread.schema.json).
+
 ## Machine access for AI systems
 
 Toledo exposes three machine-first surfaces:
@@ -96,6 +127,7 @@ Start here:
 ```text
 llms.txt
 docs/PROBLEM_CAPABILITY_GRAMMAR.md
+docs/DECISION_THREADS.md
 docs/PROTOCOL_COMPILER.md
 docs/CASE_LIFECYCLE.md
 docs/API.md
@@ -118,13 +150,24 @@ The preferred machine loop is:
 ```text
 initialize_case
 → optional SIGNATURE_CANDIDATES_UPDATED / SIGNATURE_ENDORSED / BARRIER_UPDATED
+→ create or inspect Decision Threads
 → advance_case
 → world/institution action
-→ update_case or advance_case(event)
+→ update_case or advance_case(event, optionally scoped by thread_id)
 → Return Object when an external actor was used
-→ OUTCOME_UPDATED
-→ STOP when citizen closure is satisfied
+→ thread outcome(s)
+→ citizen-level OUTCOME_UPDATED
+→ STOP when closure is satisfied
 ```
+
+`step_case()` returns both:
+
+```text
+protocol            # primary-thread compatibility surface
+thread_protocols[]  # all concurrent decision subgraphs
+```
+
+New AI agents SHOULD inspect all thread protocols before recommending a material downstream decision.
 
 ## Equation authority
 
@@ -146,7 +189,7 @@ The current citizen-bridge family is pinned to upstream proposal commit:
 
 `registry/equation-index.json` is a **read mirror**, not canonical authority. Responses preserve proposal status and upstream provenance.
 
-The Problem & Capability Grammar does not create new Toledo equations. Any future equation change belongs upstream.
+The Problem & Capability Grammar and Decision Thread layer do not create new Toledo equations. Any future equation change belongs upstream.
 
 ## Core invariants
 
@@ -162,6 +205,11 @@ Unknown != Failure
 MissingEvidence != NegativeEvidence
 DomainAdapter != NewCore
 ProviderName != Capability
+Case != SingleDecision
+DecisionThread != NewCase
+ThreadPhase != CaseMaturity
+BlockedThread != FailedCase
+ThreadClosure != CaseClosure
 Academic capability != University executability
 Referral != Handoff != Collaboration
 Institutional output != Citizen outcome
@@ -179,26 +227,35 @@ The citizen's original problem `P_C = citizen_problem_verbatim` is preserved and
 
 External work must return to the citizen through the Return Gate.
 
-A local citizen+AI/world case that never used an external actor does not need a fake institutional Return Object. It may close only when the citizen outcome reaches a closure state and no unresolved hard safety/authority trigger remains.
+A local citizen+AI/world thread that never used an external actor does not need a fake institutional Return Object. It may close only when the thread outcome reaches a closure state and no unresolved hard safety/authority trigger remains.
 
 ```text
-local:
+local thread:
 external_actor_used = false
 + Return Gate = NOT_APPLICABLE
-+ citizen outcome
++ thread outcome
 + safety/authority satisfied
-→ CLOSED
+→ thread CLOSED
 
-external route:
+external thread:
 external_actor_used = true
 + Return Gate = PASS
-+ citizen outcome
-→ CLOSED
++ thread outcome
+→ thread CLOSED
+```
+
+For a multi-decision case, case closure is stronger:
+
+```text
+all required non-cancelled threads CLOSED
++ citizen-level outcome satisfied
++ shared hard safety/authority state cleared
+→ case CLOSED
 ```
 
 ## Routing phases
 
-`P0`–`P11` are routing coordinates, not a maturity ranking or mandatory funnel.
+`P0`–`P11` are routing coordinates, not a maturity ranking or mandatory funnel. They now apply to each active Decision Thread rather than forcing one scalar phase onto an entire complex case.
 
 | Phase | State |
 |---|---|
@@ -215,7 +272,7 @@ external_actor_used = true
 | P10 | business dynamics / growth |
 | P11 | global / cross-border |
 
-A case may terminate successfully at any appropriate phase.
+A thread may terminate successfully at any appropriate phase. The case may contain other active threads at other phases.
 
 ## Cross-actor architecture
 
@@ -224,6 +281,8 @@ A case may terminate successfully at any appropriate phase.
                                   ↕
                                   │
 CITIZEN ↔ AI ↔ CASE STEWARD ↔ CASE PASSPORT
+                                  │
+                         DECISION THREADS
                                   │
                  ┌────────────────┼────────────────┐
                  ↕                ↕                ↕
@@ -239,7 +298,7 @@ CITIZEN ↔ AI ↔ CASE STEWARD ↔ CASE PASSPORT
                           CASE EVENT / RECOMPILE
 ```
 
-The platform routes by **capability, eligibility, access, evidence need, time fit, rights, and burden** — not prestige or occupation label.
+The platform routes by **capability, eligibility, access, evidence need, time fit, rights, dependencies, and burden** — not prestige, occupation, or industry label.
 
 ## Global core, local adapters
 
@@ -260,6 +319,7 @@ Start with [`docs/README.md`](docs/README.md).
 Key runtime documents:
 
 - [`docs/PROBLEM_CAPABILITY_GRAMMAR.md`](docs/PROBLEM_CAPABILITY_GRAMMAR.md)
+- [`docs/DECISION_THREADS.md`](docs/DECISION_THREADS.md)
 - [`docs/PROTOCOL_COMPILER.md`](docs/PROTOCOL_COMPILER.md)
 - [`docs/CASE_LIFECYCLE.md`](docs/CASE_LIFECYCLE.md)
 - [`docs/API.md`](docs/API.md)
@@ -278,7 +338,7 @@ Key governance documents:
 
 ## Schemas
 
-Machine-readable contracts live in [`packages/schemas/`](packages/schemas/), including Case Passport, Case Event, Case Step request/response, Problem Signature, Return Object, institution records, country adapters, protocol compile requests and protocol instances.
+Machine-readable contracts live in [`packages/schemas/`](packages/schemas/), including Case Passport, Decision Thread, Case Event, Case Step request/response, Problem Signature, Return Object, institution records, country adapters, protocol compile requests and protocol instances.
 
 ## Repository layout
 
@@ -288,7 +348,7 @@ apps/
   mcp_server/              MCP server for AI agents
   citizen-web/             future citizen UI
   steward-console/         future steward UI
-src/toledo_runtime/        deterministic runtime + closed-loop case engine
+src/toledo_runtime/        deterministic runtime + closed-loop case/thread engine
 packages/schemas/          machine-readable contracts
 openapi/                   API contract
 adapters/                  country/jurisdiction adapters
