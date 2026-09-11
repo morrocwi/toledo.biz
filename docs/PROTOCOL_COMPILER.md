@@ -1,4 +1,4 @@
-# Toledo Protocol Compiler v0.2
+# Toledo Protocol Compiler v0.3
 
 Status: **reference implementation / pre-alpha**.
 
@@ -7,6 +7,8 @@ The compiler turns a Case State into the smallest relevant executable subgraph o
 ```text
 Citizen Input
     → Case Passport
+    → Candidate Problem Signature(s)
+    → Problem / Barrier State
     → Protocol Compiler
     → Minimal Relevant Subgraph
     → Next Action
@@ -24,9 +26,24 @@ It is deliberately not a P0→P11 conveyor belt. A case may stop successfully at
 AI interprets
 Protocol engine controls typed gates
 Case Passport preserves continuity
+Problem Signature remains a readout, not a diagnosis
 ```
 
 The reference compiler is deterministic. It does not permit an LLM to silently override hard safety, authority, consent, rights or Return Gate semantics.
+
+## Domain-neutral problem grammar
+
+The compiler does not branch by occupation.
+
+```text
+Occupation != ProtocolSelector
+```
+
+Occupation, practice history and situated expertise remain available as `practice_context`, but core routing is driven by the current problem state, evidence need, barriers, risk, authority need, capability need and jurisdiction.
+
+AI may provide several candidate problem signatures. Candidates retain provenance and may remain `HOLD_UNKNOWN`. A candidate signature is not automatically a diagnosis or an endorsed fact.
+
+See [`PROBLEM_CAPABILITY_GRAMMAR.md`](PROBLEM_CAPABILITY_GRAMMAR.md).
 
 ## Stateless reference architecture
 
@@ -62,6 +79,8 @@ RETURN
 STOP
 ```
 
+These runtime action labels are operational primitives. They are not claims that every real-world problem belongs to one metaphysical category.
+
 `STOP` is emitted only after the Case Passport records citizen closure. Closure is not inferred from institutional completion alone.
 
 ## Case lifecycle functions
@@ -86,24 +105,68 @@ The original citizen problem is stored as:
 P_C = citizen_problem_verbatim
 ```
 
-A normal Case Event cannot overwrite it. Clarifications or disciplinary reframings are stored separately.
+A normal Case Event cannot overwrite it. Clarifications, candidate signatures and disciplinary reframings are stored separately.
 
 ```text
-P_C != P_S != P_D
+P_C != P_S != P_D != ProblemSignature
 ```
 
-This prevents later institutional language from silently replacing the citizen's original problem.
+This prevents later AI or institutional language from silently replacing the citizen's original problem.
+
+## Candidate signatures and barriers
+
+The Case Passport may carry:
+
+```text
+problem_signature.status
+problem_signature.candidate_signatures[]
+problem_signature.endorsed_signature_id
+problem_signature.context_known[]
+problem_signature.context_unknown[]
+problem_signature.barrier_state
+problem_signature.domain_adapter_required
+```
+
+New reference events include:
+
+```text
+SIGNATURE_CANDIDATES_UPDATED
+SIGNATURE_ENDORSED
+BARRIER_UPDATED
+```
+
+The runtime does not infer that AI-generated candidate signatures are true. It stores and transports them with provenance for later endorsement or correction.
 
 ## Return and closure
 
-A Return Object is evaluated against the implementation of `TCB-X005`.
+A Return Object is evaluated against the implementation of `TCB-X005` when external contribution is used.
 
-A case is marked `CLOSED` only when:
+The lifecycle distinguishes two closure paths.
+
+### Local citizen+AI/world closure
+
+A case may close without manufacturing a fake institutional Return Object when:
 
 ```text
-latest_return_gate = PASS
-AND
-outcome_state ∈ {
+external_actor_used = false
+AND latest_return_gate = NOT_APPLICABLE
+AND outcome_state ∈ {
+  resolved,
+  improved,
+  safely_held,
+  explicitly_rescoped_with_consent
+}
+AND no unresolved hard safety / authority trigger remains
+```
+
+### External-route closure
+
+When an external institution/expert route was actually used:
+
+```text
+external_actor_used = true
+AND latest_return_gate = PASS
+AND outcome_state ∈ {
   resolved,
   improved,
   safely_held,
@@ -134,11 +197,13 @@ RESTART_CASE
 
 The reference implementation escalates when any configured hard trigger is present, including professional/regulatory authority requirements or high severity/irreversibility/third-party exposure. These thresholds are implementation defaults, not universal scientific laws. Deployments must review them by domain and jurisdiction.
 
+A domain adapter may specialize safety, authority, measurement or regulatory constraints. It must not redefine the global Case Passport, provenance or hard-gate semantics.
+
 ## Equation status
 
 Citizen-bridge equations are currently bound to the upstream v0.17 proposal family unless individually promoted in `morrocwi/toledo`.
 
-The compiler MUST disclose that status. It MUST NOT present planning heuristics as validated physical or social laws.
+The compiler MUST disclose that status. It MUST NOT present planning heuristics, the problem grammar, or domain mappings as validated physical or social laws.
 
 ## Safety boundary
 
