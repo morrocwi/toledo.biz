@@ -1,0 +1,8 @@
+blank_issues_enabled: true
+contact_links:
+  - name: Security vulnerabilities
+    url: https://github.com/morrocwi/toledo.biz/security
+    about: Do not disclose exploitable vulnerabilities or sensitive case data in public issues.
+  - name: Upstream Toledo mathematics
+    url: https://github.com/morrocwi/toledo
+    about: Equation provenance and canonical mathematical changes belong upstream.
