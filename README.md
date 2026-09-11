@@ -10,8 +10,8 @@ Toledo Citizen Platform is the citizen-facing implementation layer of the Toledo
 
 | Item | Status |
 |---|---|
-| Product maturity | **Pre-alpha reference runtime** |
-| Public citation version | `0.1.0` |
+| Product maturity | **Pre-alpha executable reference release** |
+| Public citation version | `0.2.0` |
 | Runtime package | `0.5.0` |
 | Architecture baseline | aligned to Toledo citizen/cross-actor framework v0.17 |
 | Protocol Compiler | **reference v0.4 implemented** |
@@ -24,6 +24,8 @@ Toledo Citizen Platform is the citizen-facing implementation layer of the Toledo
 | Reference country adapter | Thailand |
 | Production citizen-case storage | **not provided by this public repository** |
 | Mathematical authority | [`morrocwi/toledo`](https://github.com/morrocwi/toledo) |
+
+Release notes: [`docs/releases/v0.2.0.md`](docs/releases/v0.2.0.md).
 
 This repository is not yet a production public service. The runtime is intentionally small, deterministic, auditable and designed to make the protocol executable before a polished UI is built.
 

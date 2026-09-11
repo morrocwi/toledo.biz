@@ -6,56 +6,67 @@ The project follows the spirit of Keep a Changelog while remaining pre-1.0.
 
 ## Unreleased
 
+No unreleased repository-level changes are recorded after the v0.2.0 release cut.
+
+## 0.2.0 — 2026-09-11
+
 ### Added
 
 - deterministic Toledo Protocol Compiler reference runtime;
 - closed-loop Case Passport lifecycle with versioned, auditable Case Events;
 - stateless `initialize -> event -> recompile -> return -> outcome -> stop` reference loop;
 - Domain-Neutral Problem & Capability Grammar grounded in existing Toledo/Readout commitments without replacing prior layers;
-- machine-readable `problem-signature.schema.json` with multiple candidate signatures, facet provenance, context gaps, Barrier Signature state and optional domain-adapter need;
-- **anchor-preserved Decision Threads** for several concurrent decisions inside one Case Passport while retaining P0-P11 semantics;
-- machine-readable `decision-thread.schema.json` with decision, phase, dependencies, blocking state, thread-local evidence/risk/capability/return/outcome state;
-- `DECISION_THREADS.md` normative additive runtime contract and ADR 0005 (`anchor-preserved-decision-threads`);
-- Decision Thread structural Case Events: `DECISION_THREAD_CREATED`, `DECISION_THREAD_DEPENDENCIES_UPDATED`, `DECISION_THREAD_CANCELLED`, `PRIMARY_THREAD_SET`;
-- thread-scoped reuse of existing Case Events through `payload.thread_id`;
-- dependency action `HOLD` / status `HOLD_FOR_DEPENDENCY`, with hard safety/authority escalation taking precedence;
-- `compile_decision_threads()` runtime function and `thread_protocols[]` in Case Step responses;
-- API endpoint `POST /v1/cases/threads/compile` and schema endpoint `/v1/schemas/decision-thread`;
-- MCP tool `compile_case_threads` plus `toledo://protocol/decision-threads` and `toledo://schema/decision-thread` resources;
-- cosmetics-business cross-domain regression case proving that quality P1, regulatory P3 and scale P10 decisions can coexist without creating a cosmetics-specific core protocol;
-- cross-domain regression coverage ensuring occupation/industry changes do not create bespoke core protocol branching;
-- local citizen+AI/world closure path separated from externally routed Return-Gate closure;
+- machine-readable Problem Signature schema with multiple candidate signatures, facet provenance, context gaps, Barrier Signature state and optional domain-adapter need;
+- Practice Context preservation without occupation- or industry-specific core branching;
+- anchor-preserved Decision Threads allowing one Case Passport to carry multiple concurrent decisions at different P0–P11 routing coordinates;
+- explicit Decision Thread dependencies, `HOLD_FOR_DEPENDENCY`, thread-level hard-gate precedence, thread closure and case-closure aggregation;
+- backward-compatible primary-thread projection through legacy `current_phase` and `current_decision` fields;
+- Decision Thread JSON Schema, runtime engine, API endpoint, MCP tool/resource and normative ADR/documentation;
+- cosmetics multi-decision regression case proving concurrent quality, regulatory and scale threads without adding a cosmetics-specific core protocol;
+- HTTP Protocol API with equation, protocol, case lifecycle, Decision Thread, institution, handoff and Return Gate endpoints;
+- MCP stdio server exposing equation, protocol, Case Passport, Decision Thread, routing and gate tools/resources for AI agents;
 - pinned 36-entry machine-readable equation mirror with upstream Toledo provenance;
 - `llms.txt` AI discovery index and `.well-known/toledo.json` service manifest;
-- HTTP Protocol API, MCP stdio server, OpenAPI contract and schema/data/runtime CI.
+- versioned OpenAPI contract;
+- Case Event and Case Step request/response JSON Schemas;
+- local citizen+AI/world closure path separated from externally routed Return-Gate closure;
+- synthetic runtime test suite covering P_C preservation, signature endorsement, cross-domain invariance, no-restart rerouting, local closure, external Return-Gate closure and multi-decision dependencies;
+- structured documentation, controlled glossary, data governance, institution registry, country-adapter standard and trust/safety contracts.
 
 ### Changed
 
-- Protocol Compiler advanced to **v0.4**, retaining the original P0-P11 action logic while adding dependency-aware `HOLD`;
-- runtime package advanced to **`0.5.0`**;
-- API reference metadata advanced to **`0.4.0`**;
-- Case Passport now carries `decision_threads[]` and `primary_thread_id` while keeping legacy `current_phase` / `current_decision` as a primary-thread projection;
-- `step_case()` now returns a backward-compatible primary `protocol` plus `thread_protocols[]` for all concurrent decisions;
-- `P_C = citizen_problem_verbatim` remains protected against ordinary event overwrite while Problem Signatures and Decision Threads remain separate routing/readout objects;
-- failed institutional routes remain inside the same Case Passport/thread instead of forcing case restart;
-- external thread closure requires a passing Return Gate plus a recorded thread outcome;
-- local citizen+AI/world thread closure does not require a fake institutional Return Object when no external actor was used and safety/authority conditions are satisfied;
-- multi-decision case closure additionally requires all required non-cancelled Decision Threads to be closed plus a citizen-level closure outcome;
-- CI now validates Decision Thread schema/contracts, dependency precedence, multi-decision closure and the cosmetics regression alongside prior problem-grammar, adapter, policy and repository-hygiene checks;
+- runtime package advanced to `0.5.0`;
+- Protocol Compiler advanced to `v0.4`;
+- API metadata advanced to `0.4.0`;
+- public platform/citation version advanced to `0.2.0`;
+- P0–P11 remain routing coordinates but may now apply independently to each Decision Thread rather than forcing one scalar phase onto a complex case;
+- Case Passport remains the stable case anchor while multi-decision state is carried in `decision_threads[]`;
+- hard safety/authority escalation outranks ordinary dependency holds;
+- external closure requires a passing Return Gate plus citizen outcome;
+- local citizen+AI/world closure does not require a fake institutional Return Object when no external actor was used and safety/authority conditions are satisfied;
+- machine interfaces expose Decision Thread compilation while preserving the single-primary-protocol compatibility surface;
 - equation mirror remains explicitly lower authority than `morrocwi/toledo`.
 
 ### Governance
 
-- equation statements/status remain upstream-controlled;
-- the Domain-Neutral Problem & Capability Grammar is a product/runtime architecture, not a new equation family or validated universal ontology;
-- Decision Threads are an additive runtime/product orchestration layer, not a replacement phase system and not a new canonical equation;
-- `Case != SingleDecision`, `DecisionThread != NewCase`, `ThreadPhase != CaseMaturity`, `BlockedThread != FailedCase`, and `ThreadClosure != CaseClosure` are implementation non-collapse rules;
-- occupation/practice/industry context is preserved as situated context but MUST NOT silently select a bespoke core protocol;
-- candidate Problem Signatures MUST NOT be treated as diagnosis or truth merely because AI generated them;
-- unknown/context-gap states are legitimate outputs and MUST NOT be silently filled by inference;
-- optional domain adapters may specialize safety, professional, measurement, regulatory and provider constraints but MUST NOT redefine global Case Passport, Decision Thread, provenance, hard-gate, Return Gate or equation semantics;
-- machine interfaces must disclose equation provenance and proposal/canonical status;
-- the public reference runtime remains stateless and is not an approved sensitive citizen-case store.
+- equation statements/status remain upstream-controlled by `morrocwi/toledo`;
+- Decision Threads and the Domain-Neutral Problem & Capability Grammar are runtime/specification architecture, not new canonical equation families;
+- occupation/practice context is preserved as situated context but MUST NOT silently select a bespoke core protocol;
+- AI-generated candidate Problem Signatures MUST NOT be treated as diagnosis or truth merely because AI generated them;
+- unknown/context-gap states remain legitimate outputs;
+- optional domain adapters may specialize safety, professional, measurement, regulatory and provider constraints but MUST NOT redefine global Case Passport, provenance, hard-gate, Return Gate or equation semantics;
+- public reference runtime remains stateless and is not an approved sensitive citizen-case store.
+
+### Validation
+
+Release-cut CI passed:
+
+- JSON and Draft 2020-12 schema validation;
+- deterministic runtime tests;
+- Decision Thread and cosmetics multi-decision regression tests;
+- API/MCP smoke imports;
+- policy guards;
+- repository hygiene.
 
 ## 0.1.0 — 2026-09-11
 
@@ -70,4 +81,4 @@ The project follows the spirit of Keep a Changelog while remaining pre-1.0.
 
 ### Notes
 
-`0.1.0` is a specification baseline, not a production-ready citizen service.
+`0.1.0` was the specification baseline preceding the executable v0.2.0 platform release.

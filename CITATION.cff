@@ -5,12 +5,12 @@ type: software
 authors:
   - family-names: Lahtee
     given-names: Yaoharee
-version: "0.1.0"
+version: "0.2.0"
 date-released: "2026-09-11"
 repository-code: "https://github.com/morrocwi/toledo.biz"
 url: "https://github.com/morrocwi/toledo.biz"
 abstract: >-
   A citizen-facing implementation architecture for converting experiential capital through
   AI-mediated exchange into usable knowledge, minimum-sufficient institutional routing,
-  cross-actor case continuity, and optional innovation/business pathways.
+  anchor-preserved multi-decision Case Passport continuity, and optional innovation/business pathways.
 license: MIT
