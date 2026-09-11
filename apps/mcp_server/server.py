@@ -10,6 +10,7 @@ from toledo_runtime import (
     EquationStore,
     InstitutionStore,
     apply_case_event,
+    compile_decision_threads,
     compile_protocol,
     create_case_passport,
     step_case,
@@ -21,10 +22,12 @@ mcp = MCPServer(
     "toledo-citizen",
     instructions=(
         "Use Toledo as a citizen-centered protocol and equation readout layer. "
-        "Preserve equation provenance and proposal/canonical status. "
-        "Preserve P_C, Case Passport continuity, typed gates, candidate-signature provenance, "
-        "and Return-to-Citizen. Treat occupation/practice context as context, not as a bespoke "
-        "core protocol selector. Do not treat AI as professional, regulatory, laboratory, or truth authority."
+        "Preserve equation provenance and proposal/canonical status. Preserve P_C, Case Passport continuity, "
+        "typed gates, candidate-signature provenance, Decision Threads, dependencies, and Return-to-Citizen. "
+        "Treat occupation/practice context as context, not as a bespoke core protocol selector. "
+        "A case may have multiple decision threads at different P0-P11 phases; inspect all thread protocols "
+        "before recommending a material downstream decision. Do not treat AI as professional, regulatory, "
+        "laboratory, or truth authority."
     ),
 )
 _eq = EquationStore()
@@ -50,26 +53,39 @@ def search_equations(query: str = "", domain: str = "", live: bool = False) -> d
 
 @mcp.tool()
 def compile_citizen_protocol(case: dict[str, Any]) -> dict[str, Any]:
-    """Compile a minimal deterministic Toledo protocol instance from a compact case state."""
+    """Compile one deterministic Toledo protocol instance from a compact decision state."""
     return compile_protocol(case)
 
 
 @mcp.tool()
+def compile_case_threads(passport: dict[str, Any]) -> dict[str, Any]:
+    """Compile every Decision Thread in a caller-held Case Passport without mutating it."""
+    rows = compile_decision_threads(passport)
+    return {
+        "case_id": passport.get("case_id"),
+        "primary_thread_id": passport.get("primary_thread_id"),
+        "count": len(rows),
+        "thread_protocols": rows,
+    }
+
+
+@mcp.tool()
 def initialize_case(case: dict[str, Any]) -> dict[str, Any]:
-    """Create a versioned Case Passport from a citizen problem without public persistence."""
+    """Create a versioned Case Passport and compile primary plus all Decision Threads."""
     passport = create_case_passport(case)
-    return {"passport": passport, "protocol": step_case({"passport": passport})["protocol"]}
+    return step_case({"passport": passport})
 
 
 @mcp.tool()
 def update_case(passport: dict[str, Any], event: dict[str, Any]) -> dict[str, Any]:
-    """Apply one auditable event to a Case Passport and return the next version."""
-    return {"passport": apply_case_event(passport, event)}
+    """Apply one auditable Case Event; payload.thread_id scopes supported events to one Decision Thread."""
+    updated = apply_case_event(passport, event)
+    return {"passport": updated, "thread_protocols": compile_decision_threads(updated)}
 
 
 @mcp.tool()
 def advance_case(payload: dict[str, Any]) -> dict[str, Any]:
-    """Initialize or update a Case Passport, then compile the next protocol step."""
+    """Initialize or update a Case Passport, then compile primary and all Decision Threads."""
     return step_case(payload)
 
 
@@ -131,6 +147,11 @@ def problem_capability_grammar_spec() -> str:
     return (_ROOT / "docs" / "PROBLEM_CAPABILITY_GRAMMAR.md").read_text(encoding="utf-8")
 
 
+@mcp.resource("toledo://protocol/decision-threads")
+def decision_threads_spec() -> str:
+    return (_ROOT / "docs" / "DECISION_THREADS.md").read_text(encoding="utf-8")
+
+
 @mcp.resource("toledo://schema/case-passport")
 def case_passport_schema() -> str:
     return (_ROOT / "packages" / "schemas" / "case-passport.schema.json").read_text(encoding="utf-8")
@@ -149,6 +170,11 @@ def case_step_request_schema() -> str:
 @mcp.resource("toledo://schema/problem-signature")
 def problem_signature_schema() -> str:
     return (_ROOT / "packages" / "schemas" / "problem-signature.schema.json").read_text(encoding="utf-8")
+
+
+@mcp.resource("toledo://schema/decision-thread")
+def decision_thread_schema() -> str:
+    return (_ROOT / "packages" / "schemas" / "decision-thread.schema.json").read_text(encoding="utf-8")
 
 
 @mcp.resource("toledo://schema/protocol-instance")
