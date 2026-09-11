@@ -1,13 +1,13 @@
 # Roadmap
 
-Toledo Citizen Platform is specification-first. The roadmap prioritizes a small auditable routing core, data integrity, and governed cross-actor continuity before a polished interface.
+Toledo Citizen Platform is specification-first but now includes an executable pre-alpha reference runtime. The roadmap prioritizes a small auditable routing core, data integrity, and governed cross-actor continuity before a polished interface.
 
 ## Milestone status
 
 | Milestone | Status |
 |---|---|
 | M0 — Specification and governance baseline | **complete** |
-| M1 — Deterministic reference engine | **active** |
+| M1 — Deterministic reference engine | **active / core loop implemented** |
 | M2 — Thailand adapter hardening | next |
 | M3 — Citizen web application | planned |
 | M4 — Steward console | planned |
@@ -43,31 +43,39 @@ Exit criterion: a contributor can identify the source of truth for concepts, sch
 
 ## M1 — Deterministic reference engine
 
-Status: **active**
+Status: **active / core closed loop implemented**
 
 Goal: implement a small auditable core before building a polished UI.
 
-Deliverables:
+Delivered:
 
-- [ ] case state machine
-- [ ] P0–P11 phase classifier
-- [ ] hard escalation gate evaluator
-- [ ] minimum-sufficient route scorer
-- [ ] institution registry query interface
-- [ ] `AcademicFit != UniversityExecutability` checks
-- [ ] handoff validator
-- [ ] Return Gate validator
-- [ ] meaning-preservation checkpoint
-- [ ] response-time/fallback evaluator
-- [ ] no-restart rerouting
-- [ ] equation binding loader
-- [ ] synthetic test suite
+- [x] versioned Case Passport state machine
+- [x] Case Event contract and monotonic passport versioning
+- [x] hard escalation gate evaluator
+- [x] institution registry query interface
+- [x] handoff validator
+- [x] Return Gate validator
+- [x] no-restart rerouting state
+- [x] equation binding/readout loader
+- [x] stateless initialize → event → recompile loop
+- [x] citizen closure → `STOP` behavior
+- [x] HTTP API and MCP access
+- [x] synthetic runtime test suite
 
-Minimum test cases:
+Still active:
+
+- [ ] richer P0–P11 phase classifier
+- [ ] minimum-sufficient route scorer using full cost/fit state
+- [ ] explicit `AcademicFit != UniversityExecutability` executable check
+- [ ] meaning-preservation checkpoint beyond stored state
+- [ ] response-time/fallback evaluator using actual decision windows
+- [ ] typed `HOLD_UNKNOWN` propagation across all gate families
+- [ ] controlled reopening semantics for closed cases
+- [ ] domain/jurisdiction policy plug-ins for hard thresholds
+
+Minimum test cases still to add or deepen:
 
 ```text
-low-risk citizen+AI-only
-hard professional escalation
 unknown hard-gate state
 ineligible institution
 institution too slow for decision window
@@ -75,11 +83,24 @@ meaning drift
 consent/data-scope failure
 handoff failure
 return-gate failure
-successful reroute without restart
 non-founder knowledge-utilization route
+multi-country adapter behavior
 ```
 
-Exit criterion: a deterministic CLI/library consumes a synthetic Case Passport and returns the next routing state with a traceable explanation of the gate/rule that produced it.
+Current reference loop already covers:
+
+```text
+low-risk citizen+AI path
+hard professional escalation
+Case Passport schema validity
+versioned observation event
+successful no-restart reroute
+Return Gate PASS
+citizen outcome closure
+STOP
+```
+
+M1 exit criterion: a deterministic library/API/MCP runtime consumes a synthetic Case Passport, applies typed events, returns the next routing state with traceable equation/gate references, and passes the remaining hard-gate/time-fit/meaning-preservation test matrix.
 
 ## M2 — Thailand adapter hardening
 
