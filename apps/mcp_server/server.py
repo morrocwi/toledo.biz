@@ -23,11 +23,13 @@ mcp = MCPServer(
     instructions=(
         "Use Toledo as a citizen-centered protocol and equation readout layer. "
         "Preserve equation provenance and proposal/canonical status. Preserve P_C, Case Passport continuity, "
-        "typed gates, candidate-signature provenance, Decision Threads, dependencies, and Return-to-Citizen. "
-        "Treat occupation/practice context as context, not as a bespoke core protocol selector. "
-        "A case may have multiple decision threads at different P0-P11 phases; inspect all thread protocols "
-        "before recommending a material downstream decision. Do not treat AI as professional, regulatory, "
-        "laboratory, or truth authority."
+        "typed gates, candidate-signature provenance, Decision Threads, dependencies, flexible execution routing, "
+        "and Return-to-Citizen. Treat occupation/practice context as context, not as a bespoke core protocol selector. "
+        "Treat P0-P11 as routing context rather than a mandatory expert/tool sequence. AI is a mediator/translator, "
+        "not an expert class or independent validator. Distinguish interaction expertise, field/front-line expertise, "
+        "knowledge-like material, tools/infrastructure, and authority. A bounded reversible world/market test may run "
+        "before later expert/institution phases when no hard gate blocks it. A case may have multiple decision threads "
+        "at different P0-P11 phases; inspect all thread protocols before recommending a material downstream decision."
     ),
 )
 _eq = EquationStore()
@@ -53,7 +55,7 @@ def search_equations(query: str = "", domain: str = "", live: bool = False) -> d
 
 @mcp.tool()
 def compile_citizen_protocol(case: dict[str, Any]) -> dict[str, Any]:
-    """Compile one deterministic Toledo protocol instance from a compact decision state."""
+    """Compile one deterministic protocol including flexible execution requirements."""
     return compile_protocol(case)
 
 
@@ -147,6 +149,11 @@ def problem_capability_grammar_spec() -> str:
     return (_ROOT / "docs" / "PROBLEM_CAPABILITY_GRAMMAR.md").read_text(encoding="utf-8")
 
 
+@mcp.resource("toledo://protocol/execution-routing")
+def execution_routing_spec() -> str:
+    return (_ROOT / "docs" / "EXECUTION_ROUTING.md").read_text(encoding="utf-8")
+
+
 @mcp.resource("toledo://protocol/decision-threads")
 def decision_threads_spec() -> str:
     return (_ROOT / "docs" / "DECISION_THREADS.md").read_text(encoding="utf-8")
@@ -175,6 +182,11 @@ def problem_signature_schema() -> str:
 @mcp.resource("toledo://schema/decision-thread")
 def decision_thread_schema() -> str:
     return (_ROOT / "packages" / "schemas" / "decision-thread.schema.json").read_text(encoding="utf-8")
+
+
+@mcp.resource("toledo://schema/execution-routing")
+def execution_routing_schema() -> str:
+    return (_ROOT / "packages" / "schemas" / "execution-routing.schema.json").read_text(encoding="utf-8")
 
 
 @mcp.resource("toledo://schema/protocol-instance")
