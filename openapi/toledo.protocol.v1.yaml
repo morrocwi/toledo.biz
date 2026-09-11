@@ -1,8 +1,8 @@
 openapi: 3.1.0
 info:
   title: Toledo Protocol API
-  version: 0.4.0
-  description: Reference API for Toledo citizen protocol compilation, domain-neutral problem signatures, anchor-preserved Decision Threads, closed-loop Case Passport lifecycle, equation readouts and governed routing.
+  version: 0.5.0
+  description: Reference API for Toledo citizen protocol compilation, domain-neutral problem signatures, flexible execution routing, anchor-preserved Decision Threads, closed-loop Case Passport lifecycle, equation readouts and governed routing.
 servers:
   - url: http://127.0.0.1:8787
 paths:
@@ -37,7 +37,7 @@ paths:
   /v1/protocols/compile:
     post:
       operationId: compileProtocol
-      description: Compile one compact decision state. For a full multi-decision Case Passport use /v1/cases/threads/compile or /v1/cases/step.
+      description: Compile one compact decision state, including flexible execution requirements. P0-P11 are routing context rather than a mandatory expert/tool sequence. For a full multi-decision Case Passport use /v1/cases/threads/compile or /v1/cases/step.
       requestBody:
         required: true
         content:
@@ -46,7 +46,7 @@ paths:
               $ref: '../packages/schemas/protocol-compile-request.schema.json'
       responses:
         '200':
-          description: Compiled protocol instance
+          description: Compiled protocol instance including execution_routing and execution_requirements
           content:
             application/json:
               schema:
@@ -89,7 +89,7 @@ paths:
   /v1/cases/step:
     post:
       operationId: advanceCase
-      description: Initialize or update a Case Passport and compile primary plus all Decision Threads. Thread dependencies can produce HOLD_FOR_DEPENDENCY; hard safety/authority escalation remains higher priority.
+      description: Initialize or update a Case Passport and compile primary plus all Decision Threads. Thread dependencies can produce HOLD_FOR_DEPENDENCY; hard safety/authority escalation remains higher priority. Each protocol includes flexible execution routing.
       requestBody:
         required: true
         content:
@@ -107,7 +107,7 @@ paths:
   /v1/cases/threads/compile:
     post:
       operationId: compileCaseThreads
-      description: Compile every Decision Thread in a caller-held Case Passport without applying an event.
+      description: Compile every Decision Thread in a caller-held Case Passport without applying an event. Each thread protocol includes flexible execution requirements.
       requestBody:
         required: true
         content:
@@ -167,6 +167,7 @@ paths:
               - case-step-response
               - problem-signature
               - decision-thread
+              - execution-routing
               - return-object
               - institution-record
               - protocol-compile-request

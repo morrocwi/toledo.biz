@@ -4,7 +4,7 @@ build-backend = "setuptools.build_meta"
 
 [project]
 name = "toledo-citizen-runtime"
-version = "0.5.0"
+version = "0.6.0"
 description = "Reference Protocol API and MCP runtime for Toledo Citizen Platform"
 requires-python = ">=3.11"
 dependencies = [

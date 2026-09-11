@@ -2,7 +2,7 @@
 
 **Turn lived experience into usable knowledge — AI first, institutions only when necessary.**
 
-Toledo Citizen Platform is the citizen-facing implementation layer of the Toledo framework. It helps ordinary people structure real-life problems, obtain the **minimum sufficient** expert or institutional support needed for a safe next action, preserve the same case across actors, and return useful knowledge to everyday life.
+Toledo Citizen Platform is the citizen-facing implementation layer of the Toledo framework. It helps ordinary people structure real-life problems, obtain the **minimum sufficient** knowledge, expert, tool, institutional or world-side support needed for a safe next action, preserve the same case across actors, and return useful knowledge to everyday life.
 
 > **North Star:** How can citizens translate experiential capital, with AI, into usable knowledge and innovation capital at the lowest total cost that remains safe, while calling on existing knowledge institutions only as much as necessary?
 
@@ -12,20 +12,21 @@ Toledo Citizen Platform is the citizen-facing implementation layer of the Toledo
 |---|---|
 | Product maturity | **Pre-alpha executable reference release** |
 | Public citation version | `0.2.0` |
-| Runtime package | `0.5.0` |
+| Runtime package | `0.6.0` |
 | Architecture baseline | aligned to Toledo citizen/cross-actor framework v0.17 |
-| Protocol Compiler | **reference v0.4 implemented** |
+| Protocol Compiler | **reference v0.5 implemented** |
 | Domain-neutral Problem & Capability Grammar | **normative architecture + machine schema implemented** |
+| Flexible Execution Routing | **AI translator + expert-role/tool/authority matrix implemented** |
 | Decision Threads | **anchor-preserved multi-decision runtime implemented** |
 | Closed-loop Case Passport | **implemented; stateless reference lifecycle** |
-| Protocol API | **reference implementation available** |
+| Protocol API | **reference 0.5.0 implementation available** |
 | MCP server | **reference stdio server available** |
 | Equation machine readout | **36-entry pinned mirror + optional live upstream read** |
 | Reference country adapter | Thailand |
 | Production citizen-case storage | **not provided by this public repository** |
 | Mathematical authority | [`morrocwi/toledo`](https://github.com/morrocwi/toledo) |
 
-Release notes: [`docs/releases/v0.2.0.md`](docs/releases/v0.2.0.md).
+Release notes: [`docs/releases/v0.2.0.md`](docs/releases/v0.2.0.md). Current post-release work is recorded under `Unreleased` in [`CHANGELOG.md`](CHANGELOG.md).
 
 This repository is not yet a production public service. The runtime is intentionally small, deterministic, auditable and designed to make the protocol executable before a polished UI is built.
 
@@ -48,7 +49,9 @@ PROTOCOL COMPILER
       ↓
 MINIMUM RELEVANT SUBGRAPH / NEXT ACTION PER DECISION
       ↓
-Citizen+AI / World / Expert / Lab / University / Public Service / Regulator
+FLEXIBLE EXECUTION ROUTING
+      ↓
+Citizen+AI / Knowledge-like source / Interaction expert / Field expert / Tool / Lab / University / Public Service / Regulator / World or Market Test
       ↓
 CASE EVENT or RETURN OBJECT when external work is used
       ↓
@@ -81,6 +84,7 @@ P_C
 → Barrier State
 → Minimal Protocol
 → Capability Need
+→ Flexible Execution Routing
 → Optional Domain Adapter
 → Provider / World Action
 ```
@@ -88,6 +92,51 @@ P_C
 The Problem Signature is a routing readout, not a diagnosis and not a universal ontology of reality.
 
 See [`docs/PROBLEM_CAPABILITY_GRAMMAR.md`](docs/PROBLEM_CAPABILITY_GRAMMAR.md) and [`packages/schemas/problem-signature.schema.json`](packages/schemas/problem-signature.schema.json).
+
+## Flexible execution: AI connects, it does not become the expert
+
+Toledo does not map each phase to one mandatory expert or institution.
+
+```text
+Phase != ExpertSelector
+Phase != MandatorySequence
+```
+
+The execution layer distinguishes three different knowledge/expertise objects:
+
+```text
+AI = MEDIATOR_TRANSLATOR
+KNOWLEDGE_LIKE_SOURCE / K*_0 / K*_I
+INTERACTION_EXPERT
+FIELD_EXPERT
+```
+
+`INTERACTION_EXPERT` contributes mainly through elicitation, interpretation, dialogue, teaching, negotiation, requirements clarification or stakeholder interaction.
+
+`FIELD_EXPERT` contributes situated/front-line expertise grounded in direct practice, tacit distinctions, physical context and repeated world contact.
+
+Knowledge-like material includes structured readouts, documents, standards, papers, datasets, manuals and prior cases. It can guide action but is not a human expert and not a truth certificate.
+
+Tools, laboratories, licensed professionals and regulators remain separate execution/authority overlays:
+
+```text
+Expertise != Authority
+Advice != AccreditedMeasurement
+AccreditedMeasurement != RegulatoryAuthorization
+```
+
+AI translates and connects between the citizen, these knowledge/expert/tool layers, institutions and world return. It does not silently become a licensed professional, front-line expert, laboratory, regulator or independent validator.
+
+When an action is sufficiently bounded and reversible and no hard safety, authority, permission, credential, unresolved Return Gate or Decision Thread dependency blocks it, Toledo may expose a `WORLD_TEST` or `BOUNDED_MARKET_TEST` before later expert/institution phases.
+
+```text
+ForwardExperiment != PermissionToIgnoreHardGates
+MarketEntry != CaseClosure
+```
+
+A real transaction can be world-side evidence without proving that every quality, safety, legal, rights or scale question is solved.
+
+See [`docs/EXECUTION_ROUTING.md`](docs/EXECUTION_ROUTING.md) and [`packages/schemas/execution-routing.schema.json`](packages/schemas/execution-routing.schema.json).
 
 ## One case can contain several decisions
 
@@ -129,6 +178,7 @@ Start here:
 ```text
 llms.txt
 docs/PROBLEM_CAPABILITY_GRAMMAR.md
+docs/EXECUTION_ROUTING.md
 docs/DECISION_THREADS.md
 docs/PROTOCOL_COMPILER.md
 docs/CASE_LIFECYCLE.md
@@ -154,7 +204,8 @@ initialize_case
 → optional SIGNATURE_CANDIDATES_UPDATED / SIGNATURE_ENDORSED / BARRIER_UPDATED
 → create or inspect Decision Threads
 → advance_case
-→ world/institution action
+→ inspect execution_routing / execution_requirements
+→ world / expert / tool / institution action
 → update_case or advance_case(event, optionally scoped by thread_id)
 → Return Object when an external actor was used
 → thread outcome(s)
@@ -167,6 +218,13 @@ initialize_case
 ```text
 protocol            # primary-thread compatibility surface
 thread_protocols[]  # all concurrent decision subgraphs
+```
+
+Each compiled protocol now also carries:
+
+```text
+execution_routing
+execution_requirements
 ```
 
 New AI agents SHOULD inspect all thread protocols before recommending a material downstream decision.
@@ -191,12 +249,18 @@ The current citizen-bridge family is pinned to upstream proposal commit:
 
 `registry/equation-index.json` is a **read mirror**, not canonical authority. Responses preserve proposal status and upstream provenance.
 
-The Problem & Capability Grammar and Decision Thread layer do not create new Toledo equations. Any future equation change belongs upstream.
+The Problem & Capability Grammar, Flexible Execution Routing and Decision Thread layer do not create new Toledo equations. Any future equation change belongs upstream.
 
 ## Core invariants
 
 ```text
 AI-first != AI-only
+AI != ExpertClass
+AITranslation != IndependentValidation
+KnowledgeLike != HumanExpert
+KnowledgeLike != TruthCertificate
+InteractionExpert != FieldExpert
+Expertise != Authority
 Observation != Interpretation != Diagnosis
 P_C != P_S != P_D != ProblemSignature
 Occupation != ProtocolSelector
@@ -207,6 +271,10 @@ Unknown != Failure
 MissingEvidence != NegativeEvidence
 DomainAdapter != NewCore
 ProviderName != Capability
+Phase != ExpertSelector
+Phase != MandatorySequence
+ForwardExperiment != PermissionToIgnoreHardGates
+MarketEntry != CaseClosure
 Case != SingleDecision
 DecisionThread != NewCase
 ThreadPhase != CaseMaturity
@@ -274,14 +342,17 @@ all required non-cancelled threads CLOSED
 | P10 | business dynamics / growth |
 | P11 | global / cross-border |
 
-A thread may terminate successfully at any appropriate phase. The case may contain other active threads at other phases.
+These labels are routing coordinates, not a fixed execution order. A thread may terminate successfully at any appropriate phase, run a bounded world/market test when gates permit, or return to an earlier kind of evidence need without creating a new case. The case may contain other active threads at other phases.
 
 ## Cross-actor architecture
 
 ```text
-                           ACADEMIC / EXPERT
-                                  ↕
-                                  │
+                          KNOWLEDGE-LIKE
+                               ↕
+                        AI TRANSLATOR
+                         ↙         ↘
+             INTERACTION EXPERT   FIELD EXPERT
+                         ↘         ↙
 CITIZEN ↔ AI ↔ CASE STEWARD ↔ CASE PASSPORT
                                   │
                          DECISION THREADS
@@ -295,12 +366,12 @@ CITIZEN ↔ AI ↔ CASE STEWARD ↔ CASE PASSPORT
                                   ↓
                                CITIZEN
                                   ↓
-                            WORLD-SIDE ACTION
+                     WORLD / MARKET-SIDE ACTION
                                   ↓
                           CASE EVENT / RECOMPILE
 ```
 
-The platform routes by **capability, eligibility, access, evidence need, time fit, rights, dependencies, and burden** — not prestige, occupation, or industry label.
+The platform routes by **capability, evidence need, expert mode, eligibility, access, time fit, rights, risk, authority, dependencies, and burden** — not prestige, occupation, industry label, or phase alone.
 
 ## Global core, local adapters
 
@@ -321,6 +392,7 @@ Start with [`docs/README.md`](docs/README.md).
 Key runtime documents:
 
 - [`docs/PROBLEM_CAPABILITY_GRAMMAR.md`](docs/PROBLEM_CAPABILITY_GRAMMAR.md)
+- [`docs/EXECUTION_ROUTING.md`](docs/EXECUTION_ROUTING.md)
 - [`docs/DECISION_THREADS.md`](docs/DECISION_THREADS.md)
 - [`docs/PROTOCOL_COMPILER.md`](docs/PROTOCOL_COMPILER.md)
 - [`docs/CASE_LIFECYCLE.md`](docs/CASE_LIFECYCLE.md)
@@ -340,7 +412,7 @@ Key governance documents:
 
 ## Schemas
 
-Machine-readable contracts live in [`packages/schemas/`](packages/schemas/), including Case Passport, Decision Thread, Case Event, Case Step request/response, Problem Signature, Return Object, institution records, country adapters, protocol compile requests and protocol instances.
+Machine-readable contracts live in [`packages/schemas/`](packages/schemas/), including Case Passport, Decision Thread, Case Event, Case Step request/response, Problem Signature, Flexible Execution Routing, Return Object, institution records, country adapters, protocol compile requests and protocol instances.
 
 ## Repository layout
 
@@ -350,7 +422,7 @@ apps/
   mcp_server/              MCP server for AI agents
   citizen-web/             future citizen UI
   steward-console/         future steward UI
-src/toledo_runtime/        deterministic runtime + closed-loop case/thread engine
+src/toledo_runtime/        deterministic runtime + closed-loop case/thread/execution engine
 packages/schemas/          machine-readable contracts
 openapi/                   API contract
 adapters/                  country/jurisdiction adapters

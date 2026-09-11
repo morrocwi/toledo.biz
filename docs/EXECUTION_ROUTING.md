@@ -1,0 +1,598 @@
+# Toledo Flexible Execution Routing v0.1
+
+Status: **normative additive runtime contract / pre-alpha**.
+
+This layer extends the existing Toledo Citizen Platform without replacing the Case Passport, Problem & Capability Grammar, Decision Threads, P0-P11 routing coordinates, hard gates, institution registry, Return Gate, or upstream equation bindings.
+
+Its purpose is to answer a narrower execution question:
+
+```text
+Given the current decision state,
+what kind of knowledge, human expertise, world contact, tool,
+infrastructure, or authority is actually needed next?
+```
+
+It does **not** turn P0-P11 into a mandatory sequence and does not require an expert merely because a thread is at a particular phase.
+
+## 1. Anchor-preserving relationship
+
+The existing path remains authoritative:
+
+```text
+P_C
+-> Candidate Signature(s)
+-> Endorsed / unresolved working signature
+-> Barrier State
+-> Decision Thread
+-> Minimal Protocol
+-> Capability Need
+-> Provider / World Action
+-> Return / Case Event
+```
+
+This document adds one execution translation layer:
+
+```text
+Capability Need
++ Evidence Need
++ Barrier State
++ Risk / Authority State
++ Context Gap
++ Decision Thread dependencies
++ Phase as routing context
+        ↓
+Execution Requirement(s)
+        ↓
+AI-mediated connection to
+knowledge-like material / human experts / tools / infrastructure / authority / world test
+```
+
+The new layer is additive:
+
+```text
+Phase != ExpertSelector
+Phase != MandatorySequence
+ProviderName != Capability
+Capability != ExecutionActor
+```
+
+## 2. AI role: mediator and translator
+
+AI is the connective layer, not a third expert category.
+
+```text
+Citizen / World
+    ↕
+AI mediator / translator
+    ↕
+knowledge-like sources and readouts
+interaction experts
+field/front-line experts
+tools and measurement
+institutions and authorities
+    ↕
+World return
+```
+
+AI may:
+
+- translate citizen language into a capability request;
+- translate expert or institutional language back into usable citizen language;
+- connect evidence, experts, tools, and institutions;
+- compare routes;
+- expose missing context;
+- propose a bounded world test;
+- preserve provenance across translations.
+
+AI does not thereby become:
+
+```text
+a licensed professional
+a front-line expert
+a regulator
+a laboratory
+an independent validator
+a truth certificate
+```
+
+Multiple AI outputs with shared ancestry do not automatically create independent validation.
+
+## 3. Three distinct knowledge/expertise objects
+
+Toledo MUST NOT collapse the following into one generic `expert` object.
+
+### 3.1 Knowledge-like material
+
+Examples:
+
+```text
+structured AI readout
+prior case
+manual
+standard
+paper
+dataset
+original record
+retrieved public information
+provisional synthesis
+```
+
+A local/provisional readout remains `K*_0`.
+
+An escalated `K*_I` readout is emitted only after an external contribution has returned in usable form and the existing Return Gate passes:
+
+```text
+external_actor_used = true
+AND latest_return_gate = PASS
+-> K*_I
+```
+
+Merely selecting, contacting, or handing off to an external expert/institution does not itself promote the readout:
+
+```text
+ExternalActorSelected != K*_I
+ExternalContributionWithoutUsableReturn != K*_I
+```
+
+Both `K*_0` and `K*_I` remain provisional/corrigible readouts rather than truth certificates.
+
+```text
+KnowledgeLike != HumanExpert
+KnowledgeLike != Truth
+KnowledgeLike != Authority
+```
+
+It may be useful enough to support action while still remaining provenance-bound and corrigible.
+
+### 3.2 Interaction Expert
+
+An `INTERACTION_EXPERT` contributes expertise primarily through interaction such as:
+
+```text
+elicitation
+interpretation
+questioning
+teaching
+comparison
+negotiation
+stakeholder alignment
+requirements clarification
+decision support
+```
+
+This role is especially useful when meaning, goals, trade-offs, tacit distinctions expressed in conversation, institutional language, or stakeholder interpretation matter.
+
+An Interaction Expert may operate remotely and need not have direct physical contact with the system under study.
+
+### 3.3 Field / Front-line Expert
+
+A `FIELD_EXPERT` contributes situated expertise grounded in direct repeated contact with the world, for example:
+
+```text
+operator
+technician
+farmer
+nurse
+mechanic
+production worker
+installer
+field officer
+local practitioner
+```
+
+Its distinctive value may include:
+
+```text
+tacit distinctions
+sensory cues
+workarounds
+failure patterns
+local constraints
+physical access
+repeated world feedback
+```
+
+```text
+FieldExpert != InteractionExpert
+```
+
+One person may satisfy both roles, but the routing reason should remain explicit.
+
+## 4. Authority and infrastructure are overlays
+
+Some execution requirements are not adequately represented as ordinary expert roles.
+
+Reference overlays include:
+
+```text
+LICENSED_PROFESSIONAL
+LAB_INFRASTRUCTURE
+REGULATORY_AUTHORITY
+MEASUREMENT_TOOL
+ORIGINAL_DOCUMENT
+AUTHORITY_OR_PERMISSION_PATH
+```
+
+For example, a field expert may understand a machine extremely well while lacking the legal authority required to certify it. A regulator may possess authority without being the best actor for process diagnosis.
+
+```text
+Expertise != LegalAuthority
+Advice != AccreditedMeasurement
+AccreditedMeasurement != RegulatoryAuthorization
+```
+
+Authority inferred inside an unendorsed candidate Problem Signature remains a candidate routing signal, not a required fact:
+
+```text
+CandidateAuthorityNeed != RequiredAuthority
+CandidateSignature != EndorsedSignature
+```
+
+If a candidate signature indicates `LICENSED_PROFESSIONAL`, `LAB`, or `REGULATOR`, the reference runtime may hold the forward route as `AUTHORITY_UNRESOLVED` while keeping that execution requirement `CANDIDATE`. It becomes `REQUIRED` only through an endorsed/evidence-supported state or an independent hard safety/authority gate.
+
+This prevents AI translation from silently manufacturing authority requirements while also preventing an unresolved high-authority signal from being ignored.
+
+## 5. Non-linear execution rule
+
+P0-P11 remain routing coordinates, not a conveyor belt.
+
+A case may legitimately:
+
+```text
+observe
+-> act locally
+-> test in the world
+-> reach a bounded market
+-> return to measurement or expert review later
+```
+
+when the relevant action has enough positive evidence of boundedness/reversibility and no hard safety, confirmed authority, unresolved candidate high-authority signal, permission, credential, unresolved-return, or dependency gate blocks it.
+
+Therefore:
+
+```text
+EarlierPhase != MustWaitForAllLaterExpertise
+LaterMarketContact != ProofOfValidity
+MarketEntry != CaseClosure
+UnknownRisk != LowRisk
+```
+
+A real transaction or market test can itself generate world-side evidence, but absence of a known risk is not evidence that a market-facing test is safe.
+
+## 6. Bounded forward experiment
+
+A compiler may expose a generic world-side information action through:
+
+```text
+forward_experiment.allowed = true
+```
+
+when, at minimum:
+
+```text
+case/thread is not closed
+no hard escalation is active
+no endorsed licensed/lab/regulatory authority requirement blocks action
+no unresolved candidate licensed/lab/regulatory authority signal remains
+no explicit permission/credential barrier blocks action
+no Decision Thread dependency blocks the decision
+Return Gate is not FAIL/HOLD_UNKNOWN
+irreversibility is not known HIGH
+third-party exposure is not known HIGH
+```
+
+A **market-facing** forward test has a stronger condition. The reference runtime exposes:
+
+```text
+market_test_candidate = true
+BOUNDED_MARKET_TEST
+```
+
+only when the working state positively establishes:
+
+```text
+Problem Signature is ENDORSED
+authority_need = NONE
+irreversibility = LOW
+third_party_exposure = LOW
+all generic forward-action gates above also pass
+```
+
+Therefore market language, a desire to launch, or the absence of known bad evidence is not enough by itself:
+
+```text
+MarketIntent != MarketTestPermission
+UnknownAuthority != AuthorityNone
+UnknownThirdPartyRisk != LowThirdPartyRisk
+```
+
+This preserves non-linear learning without turning uncertainty into permission.
+
+This is not permission to ignore law, safety, consent, rights, consumer protection, professional boundaries, or sector regulation.
+
+## 7. Execution Requirement Matrix
+
+The matrix consumes multiple coordinates rather than phase alone.
+
+Reference inputs:
+
+```text
+phase
+problem signature + signature status
+evidence need
+barrier state
+unknown/context gap
+requested capability
+risk state
+authority need
+irreversibility
+third-party exposure
+dependency state
+return-gate state
+jurisdiction/domain constraints
+```
+
+Reference execution classes include:
+
+```text
+KNOWLEDGE_LIKE_SOURCE
+INTERACTION_EXPERT
+FIELD_EXPERT
+MEASUREMENT_TOOL
+ORIGINAL_DOCUMENT
+LAB_INFRASTRUCTURE
+LICENSED_PROFESSIONAL
+REGULATORY_AUTHORITY
+AUTHORITY_OR_PERMISSION_PATH
+WORLD_TEST
+BOUNDED_MARKET_TEST
+HARD_GATE_EXTERNAL_ROUTE
+```
+
+The list is an implementation vocabulary and may evolve without claiming a universal ontology of action.
+
+Each requirement carries:
+
+```text
+class
+requiredness = REQUIRED | CANDIDATE | OPTIONAL
+reasons[]
+basis[]
+```
+
+`CANDIDATE` means the route is useful or important to consider but has not been promoted into a mandatory execution condition.
+
+## 8. Phase use
+
+Phase is allowed to contribute prior routing context, but it must not dominate the matrix.
+
+Examples:
+
+```text
+P0-P1 often increase the value of observation, evidence and measurement
+P3 often increases the probability of external expert/institution use
+P4-P6 often increase the value of knowledge-like sources, research, validation or rights evidence
+P7-P11 often increase the value of partner, market, transaction, scale or cross-border world tests
+```
+
+But these are not hard mappings.
+
+A P1 thread can reach a bounded customer test if the positive bounded-market conditions are satisfied. A P10 thread can still need a basic field observation. A P3 thread may be resolved locally if the supposed need for escalation disappears after better evidence.
+
+## 9. Expert selection
+
+When an endorsed/evidence-supported working signature says `authority_need = EXPERT`, the compiler must still determine which expert relation is relevant.
+
+Reference logic:
+
+```text
+situated / physical / operational context dominant
+-> FIELD_EXPERT
+
+meaning / interpretation / stakeholder / decision interaction dominant
+-> INTERACTION_EXPERT
+
+mode unresolved
+-> keep both as candidates / HOLD_UNKNOWN as needed
+```
+
+If `authority_need = EXPERT` appears only in an unendorsed candidate signature, it remains a candidate expert-routing signal rather than an automatically required expert fact.
+
+The system should not route to a prestigious institution merely because it contains experts.
+
+## 10. Capability-to-provider matching
+
+The execution matrix stops at the type of execution needed.
+
+Country/domain adapters and the Institution Capability Registry then answer:
+
+```text
+Which currently executable provider can supply that capability
+under the relevant jurisdiction, access, eligibility, time, cost,
+accreditation and authority constraints?
+```
+
+This preserves:
+
+```text
+ExecutionRequirement != Provider
+Capability != InstitutionName
+```
+
+## 11. World return
+
+The purpose of expert/tool/institution routing is to improve the next decision, not to create institutional activity for its own sake.
+
+Every external route remains subject to the existing Return Gate.
+
+A world/market experiment returns through ordinary Case Events when no external institutional actor was used.
+
+For external work:
+
+```text
+external actor selected
+-> external work
+-> usable Return Object
+-> Return Gate PASS
+-> K*_I may be emitted
+```
+
+Institutional participation without usable return does not itself strengthen the knowledge-like class.
+
+## 12. Examples
+
+### Intermittent machine problem
+
+```text
+P_C:
+"The machine starts some mornings but not others."
+
+unknown cause
+physical system
+low known irreversibility
+no authority gate
+
+candidate requirements:
+KNOWLEDGE_LIKE_SOURCE
+FIELD_EXPERT
+MEASUREMENT_TOOL
+WORLD_TEST
+```
+
+AI connects the operator's observations to a test plan and, if useful, a technician or measurement tool. AI is not the technician.
+
+### Market-first learning
+
+```text
+P_C:
+"Customers like the sample but I do not know whether they will pay."
+
+endorsed low-risk reversible offer
+authority_need = NONE
+third_party_exposure = LOW
+
+candidate route:
+INTERACTION_EXPERT (optional/candidate)
+BOUNDED_MARKET_TEST
+WORLD_TEST
+```
+
+The bounded market test may occur before formal innovation or expert escalation. A sale is evidence of one economic interaction, not proof that every quality, legal, safety, or scale question is solved.
+
+### Unknown market state
+
+```text
+P_C:
+"I want to launch this product."
+
+authority / irreversibility / third-party exposure not yet established
+
+result:
+market_test_candidate = false
+```
+
+The system may still compile the next information action, but it does not infer permission to expose customers from missing safety/authority context.
+
+### Candidate regulated claim
+
+```text
+AI candidate signature:
+authority_need = REGULATOR
+citizen/evidence endorsement = not yet checked
+
+routing state:
+REGULATORY_AUTHORITY = CANDIDATE
+route_mode = AUTHORITY_UNRESOLVED
+forward experiment = HOLD
+```
+
+The runtime preserves the signal without falsely declaring that regulation is definitely required.
+
+### Confirmed regulated claim
+
+```text
+endorsed/evidence-supported regulatory authority need
+or independent hard regulatory gate
+
+required route:
+REGULATORY_AUTHORITY
+HARD_GATE_EXTERNAL_ROUTE when hard gate is active
+```
+
+AI may translate the question and prepare the record, but cannot satisfy the authority gate itself.
+
+## 13. Machine contract
+
+Reference schema:
+
+```text
+packages/schemas/execution-routing.schema.json
+```
+
+`compile_protocol()` exposes the routing object as:
+
+```text
+execution_routing
+execution_requirements
+```
+
+The object explicitly reports:
+
+```text
+phase_semantics = ROUTING_CONTEXT_NOT_MANDATORY_SEQUENCE
+ai_role.class = MEDIATOR_TRANSLATOR
+expert_classes = [INTERACTION_EXPERT, FIELD_EXPERT]
+knowledge_like class/status
+signature_basis
+route_mode
+requirements[]
+forward_experiment
+```
+
+Reference route modes include:
+
+```text
+MINIMUM_SUFFICIENT_FLEXIBLE
+PARALLEL_OR_FORWARD_EXPERIMENT
+EXTERNAL_REQUIRED
+AUTHORITY_UNRESOLVED
+DEPENDENCY_HOLD
+CLOSED
+```
+
+## 14. Non-collapse rules
+
+```text
+AI != ExpertClass
+AITranslation != IndependentValidation
+KnowledgeLike != HumanExpert
+KnowledgeLike != TruthCertificate
+ExternalActorSelected != K*_I
+CandidateAuthorityNeed != RequiredAuthority
+InteractionExpert != FieldExpert
+Expertise != Authority
+Phase != ExpertSelector
+Phase != MandatorySequence
+MarketIntent != MarketTestPermission
+UnknownRisk != LowRisk
+MarketTest != ValidationOfEverything
+MarketEntry != CaseClosure
+ForwardExperiment != PermissionToIgnoreHardGates
+Capability != Provider
+```
+
+## 15. Status boundary
+
+This matrix is product/runtime architecture.
+
+It is not claimed to be:
+
+```text
+a new Toledo equation
+a universal ontology of expertise
+a proof that all problems share one sequence
+a replacement for domain judgment
+a substitute for professional/regulatory authority
+```
+
+Mathematical authority remains in `morrocwi/toledo`. This layer must remain corrigible under cross-domain and real-world testing.

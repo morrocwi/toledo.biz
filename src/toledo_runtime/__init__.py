@@ -12,6 +12,7 @@ from .cases import (
     step_case,
 )
 from .equations import EquationStore
+from .execution import resolve_execution_route
 from .institutions import InstitutionStore
 from .protocol import compile_protocol, validate_handoff, validate_return_gate
 from .threads import compile_decision_threads, ensure_decision_threads, required_threads_closed
@@ -19,6 +20,7 @@ from .threads import compile_decision_threads, ensure_decision_threads, required
 __all__ = [
     "EquationStore",
     "InstitutionStore",
+    "resolve_execution_route",
     "compile_protocol",
     "compile_decision_threads",
     "ensure_decision_threads",
@@ -32,4 +34,4 @@ __all__ = [
     "step_case",
 ]
 
-__version__ = "0.5.0"
+__version__ = "0.6.0"

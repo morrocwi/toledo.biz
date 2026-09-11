@@ -1,4 +1,4 @@
-# Toledo Protocol Compiler v0.4
+# Toledo Protocol Compiler v0.5
 
 Status: **reference implementation / pre-alpha**.
 
@@ -12,8 +12,8 @@ Citizen Input
     → Decision Thread(s)
     → Protocol Compiler
     → Minimal Relevant Subgraph per active decision
-    → Next Action
-    → World / Institution
+    → Flexible Execution Routing
+    → Next Action / World / Expert / Tool / Institution
     → Case Event / Return Object
     → Updated Case Passport
     → Recompile all threads
@@ -24,11 +24,12 @@ It is deliberately not a P0→P11 conveyor belt. A Decision Thread may stop succ
 ## Design rule
 
 ```text
-AI interprets
+AI interprets and translates
 Protocol engine controls typed gates
 Case Passport preserves continuity
 Decision Threads preserve concurrent decisions
 Problem Signature remains a readout, not a diagnosis
+Execution routing remains flexible unless a hard gate or dependency requires otherwise
 ```
 
 The reference compiler is deterministic. It does not permit an LLM to silently override hard safety, authority, consent, rights, dependency, or Return Gate semantics.
@@ -47,6 +48,61 @@ Occupation, practice history and situated expertise remain available as `practic
 AI may provide several candidate problem signatures. Candidates retain provenance and may remain `HOLD_UNKNOWN`. A candidate signature is not automatically a diagnosis or an endorsed fact.
 
 See [`PROBLEM_CAPABILITY_GRAMMAR.md`](PROBLEM_CAPABILITY_GRAMMAR.md).
+
+## Flexible execution routing
+
+After selecting the minimal relevant subgraph, the compiler may translate current case state into execution requirements through the additive contract in [`EXECUTION_ROUTING.md`](EXECUTION_ROUTING.md).
+
+The execution layer consumes multiple coordinates:
+
+```text
+phase as routing context
+problem/evidence state
+barriers
+risk / authority need
+context gaps
+requested capability
+dependencies
+return-gate state
+```
+
+It MUST NOT implement a fixed mapping such as:
+
+```text
+P1 -> expert
+P3 -> lab
+P7 -> market
+```
+
+Instead:
+
+```text
+Phase != ExpertSelector
+Phase != MandatorySequence
+```
+
+The reference expert/knowledge model separates:
+
+```text
+AI = MEDIATOR_TRANSLATOR
+INTERACTION_EXPERT
+FIELD_EXPERT
+KNOWLEDGE_LIKE_SOURCE / K*_0 / K*_I
+tools / laboratories / licensed authority / regulators as distinct overlays
+```
+
+AI connects and translates between these objects. AI is not thereby a human expert, professional authority, laboratory or independent validator.
+
+When no hard gate, authority/permission block, unresolved Return Gate or dependency prevents it, the execution layer may expose a bounded reversible `WORLD_TEST` or `BOUNDED_MARKET_TEST` before later expert/institution phases. This is a non-linear learning route, not a claim that market contact validates every unresolved quality, safety, legal or scale question.
+
+`compile_protocol()` exposes:
+
+```text
+execution_routing
+execution_requirements
+```
+
+See [`EXECUTION_ROUTING.md`](EXECUTION_ROUTING.md) and `packages/schemas/execution-routing.schema.json`.
 
 ## Decision Thread compilation
 
@@ -270,7 +326,7 @@ A domain adapter may specialize safety, authority, measurement or regulatory con
 
 Citizen-bridge equations are currently bound to the upstream v0.17 proposal family unless individually promoted in `morrocwi/toledo`.
 
-The compiler MUST disclose that status. It MUST NOT present planning heuristics, the problem grammar, Decision Threads or domain mappings as validated physical or social laws.
+The compiler MUST disclose that status. It MUST NOT present planning heuristics, the problem grammar, Decision Threads, execution-routing matrices or domain mappings as validated physical or social laws.
 
 ## Safety boundary
 
