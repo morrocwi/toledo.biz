@@ -117,7 +117,24 @@ retrieved public information
 provisional synthesis
 ```
 
-This may contribute to `K*_0` or, after external contribution, an escalated `K*_I` readout.
+A local/provisional readout remains `K*_0`.
+
+An escalated `K*_I` readout is emitted only after an external contribution has returned in usable form and the existing Return Gate passes:
+
+```text
+external_actor_used = true
+AND latest_return_gate = PASS
+-> K*_I
+```
+
+Merely selecting, contacting, or handing off to an external expert/institution does not itself promote the readout:
+
+```text
+ExternalActorSelected != K*_I
+ExternalContributionWithoutUsableReturn != K*_I
+```
+
+Both `K*_0` and `K*_I` remain provisional/corrigible readouts rather than truth certificates.
 
 ```text
 KnowledgeLike != HumanExpert
@@ -125,7 +142,7 @@ KnowledgeLike != Truth
 KnowledgeLike != Authority
 ```
 
-It may be useful enough to support action while still remaining provisional, provenance-bound, and corrigible.
+It may be useful enough to support action while still remaining provenance-bound and corrigible.
 
 ### 3.2 Interaction Expert
 
@@ -204,6 +221,17 @@ Advice != AccreditedMeasurement
 AccreditedMeasurement != RegulatoryAuthorization
 ```
 
+Authority inferred inside an unendorsed candidate Problem Signature remains a candidate routing signal, not a required fact:
+
+```text
+CandidateAuthorityNeed != RequiredAuthority
+CandidateSignature != EndorsedSignature
+```
+
+If a candidate signature indicates `LICENSED_PROFESSIONAL`, `LAB`, or `REGULATOR`, the reference runtime may hold the forward route as `AUTHORITY_UNRESOLVED` while keeping that execution requirement `CANDIDATE`. It becomes `REQUIRED` only through an endorsed/evidence-supported state or an independent hard safety/authority gate.
+
+This prevents AI translation from silently manufacturing authority requirements while also preventing an unresolved high-authority signal from being ignored.
+
 ## 5. Non-linear execution rule
 
 P0-P11 remain routing coordinates, not a conveyor belt.
@@ -218,7 +246,7 @@ observe
 -> return to measurement or expert review later
 ```
 
-when the action is sufficiently bounded and reversible and no hard safety, authority, permission, credential, unresolved-return, or dependency gate blocks it.
+when the action is sufficiently bounded and reversible and no hard safety, confirmed authority, unresolved candidate high-authority signal, permission, credential, unresolved-return, or dependency gate blocks it.
 
 Therefore:
 
@@ -241,8 +269,10 @@ forward_experiment.allowed = true
 when, at minimum:
 
 ```text
+case/thread is not closed
 no hard escalation is active
-no required licensed/lab/regulatory authority is unresolved
+no endorsed licensed/lab/regulatory authority requirement blocks action
+no unresolved candidate licensed/lab/regulatory authority signal remains
 no explicit permission/credential barrier blocks action
 no Decision Thread dependency blocks the decision
 Return Gate is not FAIL/HOLD_UNKNOWN
@@ -270,7 +300,7 @@ Reference inputs:
 
 ```text
 phase
-problem signature
+problem signature + signature status
 evidence need
 barrier state
 unknown/context gap
@@ -312,7 +342,7 @@ reasons[]
 basis[]
 ```
 
-`CANDIDATE` means the route is useful to consider, not mandatory.
+`CANDIDATE` means the route is useful or important to consider but has not been promoted into a mandatory execution condition.
 
 ## 8. Phase use
 
@@ -333,7 +363,7 @@ A P1 thread can reach a bounded customer test if safe and useful. A P10 thread c
 
 ## 9. Expert selection
 
-When the working signature says `authority_need = EXPERT`, the compiler must still determine which expert relation is relevant.
+When an endorsed/evidence-supported working signature says `authority_need = EXPERT`, the compiler must still determine which expert relation is relevant.
 
 Reference logic:
 
@@ -347,6 +377,8 @@ meaning / interpretation / stakeholder / decision interaction dominant
 mode unresolved
 -> keep both as candidates / HOLD_UNKNOWN as needed
 ```
+
+If `authority_need = EXPERT` appears only in an unendorsed candidate signature, it remains a candidate expert-routing signal rather than an automatically required expert fact.
 
 The system should not route to a prestigious institution merely because it contains experts.
 
@@ -376,6 +408,18 @@ The purpose of expert/tool/institution routing is to improve the next decision, 
 Every external route remains subject to the existing Return Gate.
 
 A world/market experiment returns through ordinary Case Events when no external institutional actor was used.
+
+For external work:
+
+```text
+external actor selected
+-> external work
+-> usable Return Object
+-> Return Gate PASS
+-> K*_I may be emitted
+```
+
+Institutional participation without usable return does not itself strengthen the knowledge-like class.
 
 ## 12. Examples
 
@@ -416,15 +460,30 @@ WORLD_TEST
 
 The bounded market test may occur before formal innovation or expert escalation. A sale is evidence of one economic interaction, not proof that every quality, legal, safety, or scale question is solved.
 
-### Regulated claim
+### Candidate regulated claim
 
 ```text
-intended public claim
-regulatory authority required
+AI candidate signature:
+authority_need = REGULATOR
+citizen/evidence endorsement = not yet checked
+
+routing state:
+REGULATORY_AUTHORITY = CANDIDATE
+route_mode = AUTHORITY_UNRESOLVED
+forward experiment = HOLD
+```
+
+The runtime preserves the signal without falsely declaring that regulation is definitely required.
+
+### Confirmed regulated claim
+
+```text
+endorsed/evidence-supported regulatory authority need
+or independent hard regulatory gate
 
 required route:
 REGULATORY_AUTHORITY
-HARD_GATE_EXTERNAL_ROUTE
+HARD_GATE_EXTERNAL_ROUTE when hard gate is active
 ```
 
 AI may translate the question and prepare the record, but cannot satisfy the authority gate itself.
@@ -451,9 +510,21 @@ phase_semantics = ROUTING_CONTEXT_NOT_MANDATORY_SEQUENCE
 ai_role.class = MEDIATOR_TRANSLATOR
 expert_classes = [INTERACTION_EXPERT, FIELD_EXPERT]
 knowledge_like class/status
+signature_basis
 route_mode
 requirements[]
 forward_experiment
+```
+
+Reference route modes include:
+
+```text
+MINIMUM_SUFFICIENT_FLEXIBLE
+PARALLEL_OR_FORWARD_EXPERIMENT
+EXTERNAL_REQUIRED
+AUTHORITY_UNRESOLVED
+DEPENDENCY_HOLD
+CLOSED
 ```
 
 ## 14. Non-collapse rules
@@ -463,6 +534,8 @@ AI != ExpertClass
 AITranslation != IndependentValidation
 KnowledgeLike != HumanExpert
 KnowledgeLike != TruthCertificate
+ExternalActorSelected != K*_I
+CandidateAuthorityNeed != RequiredAuthority
 InteractionExpert != FieldExpert
 Expertise != Authority
 Phase != ExpertSelector
