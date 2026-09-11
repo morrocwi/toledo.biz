@@ -59,6 +59,14 @@ def _signature(**overrides):
     }
 
 
+def _candidate_signature(**overrides):
+    signature = _signature(**overrides)
+    signature["status"] = "CANDIDATE"
+    signature["endorsed_signature_id"] = None
+    signature["candidate_signatures"][0]["citizen_endorsement"] = "NOT_CHECKED"
+    return signature
+
+
 def _classes(result):
     return {x["class"]: x for x in result["execution_requirements"]}
 
@@ -101,11 +109,21 @@ class ExecutionRoutingTests(unittest.TestCase):
         self.assertFalse(k["is_human_expert"])
         self.assertFalse(k["is_truth_certificate"])
 
-    def test_external_contribution_marks_escalated_knowledge_like_without_truth_claim(self):
+    def test_external_selection_alone_does_not_promote_kstar_i(self):
         plan = resolve_execution_route({
-            "problem": "An external expert has returned a provisional interpretation",
+            "problem": "An external expert was selected but has not returned a usable result",
             "phase": "P3",
             "external_actor_used": True,
+            "latest_return_gate": "NOT_APPLICABLE",
+        })
+        self.assertEqual(plan["knowledge_like"]["class"], "K*_0")
+
+    def test_passing_external_return_marks_escalated_knowledge_like_without_truth_claim(self):
+        plan = resolve_execution_route({
+            "problem": "An external expert has returned a usable provisional interpretation",
+            "phase": "P3",
+            "external_actor_used": True,
+            "latest_return_gate": "PASS",
         })
         self.assertEqual(plan["knowledge_like"]["class"], "K*_I")
         self.assertEqual(plan["knowledge_like"]["status"], "PROVISIONAL")
@@ -135,6 +153,22 @@ class ExecutionRoutingTests(unittest.TestCase):
         self.assertTrue(routing["forward_experiment"]["market_test_candidate"])
         self.assertIn("BOUNDED_MARKET_TEST", _classes(result))
 
+    def test_candidate_authority_need_is_not_promoted_to_required_fact(self):
+        result = compile_protocol({
+            "problem": "A candidate interpretation says a market claim may require regulator review",
+            "goal": "run a customer market pilot",
+            "phase": "P1",
+            "problem_signature": _candidate_signature(
+                evidence_need=["regulatory claim review"],
+                authority_need="REGULATOR",
+            ),
+        })
+        routing = result["execution_routing"]
+        self.assertEqual(routing["signature_basis"], "CANDIDATE")
+        self.assertEqual(routing["route_mode"], "AUTHORITY_UNRESOLVED")
+        self.assertFalse(routing["forward_experiment"]["allowed"])
+        self.assertEqual(_classes(result)["REGULATORY_AUTHORITY"]["requiredness"], "CANDIDATE")
+
     def test_hard_authority_gate_blocks_forward_market_experiment(self):
         result = compile_protocol({
             "problem": "Launch a regulated public claim to customers",
@@ -152,6 +186,18 @@ class ExecutionRoutingTests(unittest.TestCase):
         classes = _classes(result)
         self.assertEqual(classes["REGULATORY_AUTHORITY"]["requiredness"], "REQUIRED")
         self.assertEqual(classes["HARD_GATE_EXTERNAL_ROUTE"]["requiredness"], "REQUIRED")
+
+    def test_closed_case_does_not_emit_forward_experiment(self):
+        result = compile_protocol({
+            "problem": "A resolved reversible market question",
+            "goal": "customer pilot",
+            "phase": "P1",
+            "case_status": "CLOSED",
+            "problem_signature": _signature(),
+        })
+        self.assertEqual(result["next_action"], "STOP")
+        self.assertEqual(result["execution_routing"]["route_mode"], "CLOSED")
+        self.assertFalse(result["execution_routing"]["forward_experiment"]["allowed"])
 
     def test_occupation_does_not_change_execution_matrix_for_same_case_state(self):
         base = {
