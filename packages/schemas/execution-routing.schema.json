@@ -29,7 +29,9 @@
         "MINIMUM_SUFFICIENT_FLEXIBLE",
         "PARALLEL_OR_FORWARD_EXPERIMENT",
         "EXTERNAL_REQUIRED",
-        "DEPENDENCY_HOLD"
+        "AUTHORITY_UNRESOLVED",
+        "DEPENDENCY_HOLD",
+        "CLOSED"
       ]
     },
     "ai_role": {
