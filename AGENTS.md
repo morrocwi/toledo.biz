@@ -12,9 +12,10 @@ Before a material change, read:
 4. the normative document for the layer being changed
 5. `docs/EQUATION_BINDINGS.md` when behavior depends on Toledo mathematics
 6. `docs/PROBLEM_CAPABILITY_GRAMMAR.md` for problem abstraction, candidate signatures, barriers, capability mapping, or domain adapters
-7. `docs/PROTOCOL_COMPILER.md` for runtime/routing/compiler changes
-8. `docs/CASE_LIFECYCLE.md` for Case Passport/event/closure changes
-9. `docs/API.md` or `docs/MCP.md` when changing machine interfaces
+7. `docs/DECISION_THREADS.md` for multi-decision cases, dependencies, blocking, thread-local events, or closure
+8. `docs/PROTOCOL_COMPILER.md` for runtime/routing/compiler changes
+9. `docs/CASE_LIFECYCLE.md` for Case Passport/event/closure changes
+10. `docs/API.md` or `docs/MCP.md` when changing machine interfaces
 
 For institution/country data, also read `docs/DATA_GOVERNANCE.md`, `docs/INSTITUTION_REGISTRY_STANDARD.md`, and `docs/COUNTRY_ADAPTER_STANDARD.md`.
 
@@ -24,8 +25,10 @@ For institution/country data, also read `docs/DATA_GOVERNANCE.md`, `docs/INSTITU
 - `registry/equation-index.json` is a pinned read mirror only.
 - Do not invent, silently modify, or promote equations in `toledo.biz`.
 - JSON Schemas and OpenAPI are machine contracts for this repository.
+- Accepted ADRs govern product/runtime architecture unless a later ADR explicitly supersedes them.
 - Country adapters govern only their jurisdictional routing data, subject to freshness/provenance.
 - Domain adapters may specialize vocabulary, hazards, measurements, professional boundaries, regulation or provider mappings; they may not redefine the global core.
+- Decision Threads are runtime/product architecture. Do not present them as a new canonical Toledo equation or scientific law.
 
 ## Citizen-first invariant
 
@@ -35,7 +38,7 @@ Every feature must preserve a path back to the citizen's original problem and go
 
 AI is mediator/translator/router, not universal expert or truth authority. AI may structure, retrieve, compare, question, hypothesize and route; it may not silently satisfy professional, laboratory, regulatory, legal or independent-validation requirements.
 
-AI-generated Problem Signatures are candidate translations. They are not diagnoses, observations, or truth merely because an AI produced them.
+AI-generated Problem Signatures and proposed Decision Threads are candidate translations/orchestration objects. They are not diagnoses, observations, truths, or authority merely because an AI produced them.
 
 ## Protocol-engine rule
 
@@ -46,12 +49,15 @@ Protocol engine controls typed gates
 
 Hard `FAIL` or `HOLD_UNKNOWN` states must never be averaged into a soft score.
 
+Hard safety/authority escalation must outrank an ordinary Decision Thread dependency hold.
+
 ## Domain-neutral core rule
 
-Do not add occupation-specific branching to the core merely because a new profession or domain appears.
+Do not add occupation- or industry-specific branching to the core merely because a new profession or domain appears.
 
 ```text
 Occupation != ProtocolSelector
+Industry != ProtocolSelector
 PracticeContext != IrrelevantContext
 ProblemSignature != Diagnosis
 CandidateSignature != EndorsedSignature
@@ -60,6 +66,31 @@ CandidateSignature != EndorsedSignature
 Preserve occupation/practice history as context when it carries experiential knowledge, constraints, tools, vocabulary or repeated observations.
 
 Use an optional domain adapter only when safety, professional authority, specialized measurement/sample handling, regulation, high-risk terminology, or provider matching materially requires it.
+
+## Multi-decision rule
+
+Do not force a real case with several material decisions into one scalar phase.
+
+```text
+Case != SingleDecision
+DecisionThread != NewCase
+ThreadPhase != CaseMaturity
+BlockedThread != FailedCase
+ThreadClosure != CaseClosure
+```
+
+Use the existing P0-P11 coordinates **inside each Decision Thread**. Do not invent a second phase system.
+
+Preserve backward compatibility:
+
+```text
+current_phase    = primary_thread.phase
+current_decision = primary_thread.decision
+```
+
+If a thread declares `depends_on`, unresolved dependencies must appear in `blocking_threads` and must prevent downstream execution through `HOLD` / `HOLD_FOR_DEPENDENCY`, unless the thread has a hard safety/authority escalation requirement.
+
+Before an AI agent recommends a downstream commitment such as scale, commercialization, public release, or another materially irreversible action, inspect all relevant `thread_protocols`, not only the primary thread.
 
 ## Meaning preservation
 
@@ -70,6 +101,7 @@ P_C = citizen problem verbatim
 P_S = AI-structured problem
 P_D = disciplinary/institutional problem
 Problem Signature = routing readout
+Decision Thread = one decision-specific subgraph
 ```
 
 Never overwrite `P_C` through an ordinary Case Event. If a citizen genuinely corrects the original problem statement, preserve the prior representation and use an explicit migration/correction mechanism rather than silent replacement.
@@ -94,10 +126,10 @@ A case has a stable `case_id` and monotonic `version`.
 Case Passport
 → Case Event
 → next Passport version
-→ Protocol recompile
+→ recompile Decision Threads
 ```
 
-A route failure must remain inside the same case unless the citizen is actually starting a materially different problem.
+A route failure must remain inside the same case and, where applicable, the same Decision Thread unless the citizen is actually starting a materially different problem.
 
 ```text
 ROUTE_FAILED != RESTART_CASE
@@ -107,15 +139,17 @@ The public reference runtime is stateless; caller-held passports are the transpo
 
 ## Case continuity
 
-Institution routing must carry a Case Passport. A valid handoff requires meaning preservation, requested capability, decision owner, consent/data scope, return obligation, response-time fit and fallback. Do not treat a generic referral as successful handoff.
+Institution routing must carry a Case Passport and the relevant Decision Thread context. A valid handoff requires meaning preservation, requested capability, decision owner, consent/data scope, return obligation, response-time fit and fallback. Do not treat a generic referral as successful handoff.
 
 ## Return Gate and closure
 
 External institutional/professional work is incomplete until a Return Object reaches the citizen/decision owner in usable form.
 
-Do not mark a case `CLOSED` merely because a project, report, consultation or institutional task is complete.
+Do not mark a thread or case `CLOSED` merely because a project, report, consultation or institutional task is complete.
 
-Do not manufacture a fake institutional Return Object for a citizen+AI/world-only local case. Local closure is permitted only when no external actor was used, the citizen outcome is a closure outcome, and no unresolved hard safety/authority trigger remains. External routes still require a passing Return Gate plus citizen outcome before `STOP`.
+Do not manufacture a fake institutional Return Object for a citizen+AI/world-only local thread. Local thread closure is permitted only when no external actor was used, its outcome is a closure outcome, and no unresolved hard safety/authority trigger remains. External threads still require a passing Return Gate plus thread outcome.
+
+A multi-decision case closes only when all required non-cancelled Decision Threads are closed, the citizen-level outcome condition is satisfied, and shared hard safety/authority state is clear.
 
 ## Privacy
 
@@ -133,7 +167,7 @@ Keep domain-neutral problem/routing semantics out of occupation-specific code. D
 
 ## No forced innovation or entrepreneurship
 
-A correct local fix is a valid terminal state. A useful innovation need not become a founder-operated startup.
+A correct local fix is a valid terminal state. A useful innovation need not become a founder-operated startup. A P10/P11 thread must not pull unrelated unresolved P1/P3 decisions forward merely because the business is mature elsewhere.
 
 ## Runtime changes
 
@@ -141,17 +175,22 @@ Any compiler/routing/case-lifecycle change should test at least:
 
 - low-risk citizen+AI path;
 - hard escalation path;
+- hard escalation precedence over ordinary dependency hold;
 - Case Passport schema validity;
+- Decision Thread schema validity when relevant;
 - Problem Signature schema validity when relevant;
 - monotonic version update;
 - `P_C` preservation;
+- primary-thread projection compatibility;
 - candidate signature provenance/endorsement behavior when relevant;
 - inaccessible/ineligible institution fallback;
 - no-restart rerouting;
 - Return Gate behavior;
-- local citizen-only closure where relevant;
+- local citizen-only/thread-only closure where relevant;
 - external-route closure requiring Return Gate;
-- at least one cross-domain invariance case where occupation changes but the same structural problem does not create bespoke core branching;
+- multi-decision dependency blocking and release;
+- multi-decision case closure requiring all required threads;
+- at least one cross-domain invariance case where occupation/industry changes but the same structural problem does not create bespoke core branching;
 - equation provenance/status disclosure.
 
 Machine interfaces MUST expose equation references rather than copy equations as local authority.
