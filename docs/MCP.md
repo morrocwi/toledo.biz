@@ -2,6 +2,18 @@
 
 The MCP server makes Toledo directly readable by other AI systems without requiring them to scrape prose documentation.
 
+## SDK / transport
+
+The reference server targets the stable MCP Python SDK v2 line:
+
+```text
+mcp>=2.2,<3
+MCPServer
+stdio transport
+```
+
+The MCP project renamed the v1 `FastMCP` class to `MCPServer`; Toledo uses the v2 interface intentionally rather than pinning the legacy API.
+
 ## Run
 
 ```bash
@@ -44,3 +56,7 @@ MCP responses MUST preserve upstream equation provenance. The equation mirror in
 4. route institutions only when the protocol requires external capability;
 5. validate handoff before treating referral as collaboration;
 6. require Return Gate before institutional work closes the case.
+
+## Safety
+
+The MCP server is an orchestration/readout layer. A host or agent MUST NOT treat an MCP tool response as licensed professional judgment, laboratory evidence, regulatory approval, or independent external validation unless the returned case state explicitly contains that external authority/evidence.

@@ -16,14 +16,14 @@ The project follows the spirit of Keep a Changelog while remaining pre-1.0.
 - versioned OpenAPI contract;
 - protocol compile request / protocol instance JSON Schemas;
 - runtime unit tests and service import validation;
-- structured documentation index, controlled glossary, data governance, institution registry standard, country-adapter standard, trust/safety model, ADRs and machine data catalog.
+- structured documentation, controlled glossary, data governance, institution registry, country-adapter standard and trust/safety contracts.
 
 ### Changed
 
 - project status advanced from specification-only to pre-alpha reference runtime;
-- CI now validates runtime contracts in addition to schemas, adapters, policy guards and repository hygiene;
-- institution-record and adapter governance remains evidence/freshness aware;
-- equation mirror is explicitly lower authority than `morrocwi/toledo`.
+- MCP runtime targets stable SDK v2 (`MCPServer`) with `mcp>=2.2,<3`;
+- CI validates runtime contracts in addition to schemas, adapters, policy guards and repository hygiene;
+- equation mirror remains explicitly lower authority than `morrocwi/toledo`.
 
 ### Governance
 

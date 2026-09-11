@@ -4,7 +4,7 @@ import json
 from pathlib import Path
 from typing import Any
 
-from mcp.server.fastmcp import FastMCP
+from mcp.server import MCPServer
 
 from toledo_runtime import (
     EquationStore,
@@ -14,7 +14,14 @@ from toledo_runtime import (
     validate_return_gate,
 )
 
-mcp = FastMCP("toledo-citizen")
+mcp = MCPServer(
+    "toledo-citizen",
+    instructions=(
+        "Use Toledo as a citizen-centered protocol and equation readout layer. "
+        "Preserve equation provenance and proposal/canonical status. "
+        "Do not treat AI as professional, regulatory, laboratory, or truth authority."
+    ),
+)
 _eq = EquationStore()
 _inst = InstitutionStore()
 _ROOT = Path(__file__).resolve().parents[2]
@@ -31,7 +38,7 @@ def get_equation(equation_id: str, live: bool = False) -> dict[str, Any]:
 
 @mcp.tool()
 def search_equations(query: str = "", domain: str = "", live: bool = False) -> dict[str, Any]:
-    """Search equation IDs, names, domains and statements."""
+    """Search Toledo equation IDs, names, domains, kinds, and statements."""
     rows = _eq.search(query, domain=domain or None, live=live)
     return {"count": len(rows), "entries": rows}
 
@@ -50,7 +57,7 @@ def route_institutions(
     target_user: str = "",
     limit: int = 5,
 ) -> dict[str, Any]:
-    """Find phase-fit institutional routes from a country adapter."""
+    """Find phase-fit institutional routes from an installed country adapter."""
     rows = _inst.route(
         jurisdiction=jurisdiction,
         phase=phase,
@@ -75,7 +82,7 @@ def check_return_gate(payload: dict[str, Any]) -> dict[str, Any]:
 
 @mcp.resource("toledo://equations/index")
 def equation_index() -> str:
-    """Machine-readable local mirror of the upstream Toledo citizen equation family."""
+    """Machine-readable pinned mirror of the upstream Toledo citizen equation family."""
     return json.dumps(_eq.data(), ensure_ascii=False, indent=2)
 
 
