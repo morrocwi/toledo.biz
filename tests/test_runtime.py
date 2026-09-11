@@ -177,6 +177,23 @@ class RuntimeTests(unittest.TestCase):
         result = step_case({"passport": closed})
         self.assertEqual(result["protocol"]["next_action"], "STOP")
 
+    def test_hard_risk_local_outcome_does_not_close_without_escalation(self):
+        passport = create_case_passport({
+            "problem": "A high-risk decision seems improved after a local attempt",
+            "risk": {"professional_authority_required": True},
+        })
+        updated = apply_case_event(passport, {
+            "event_type": "OUTCOME_UPDATED",
+            "actor": "citizen",
+            "payload": {"outcome_state": "improved", "result": "The immediate symptom appears better"},
+        })
+        self.assertFalse(updated["external_actor_used"])
+        self.assertEqual(updated["risk_state"], "HARD_ESCALATION")
+        self.assertEqual(updated["case_status"], "HOLD")
+        result = step_case({"passport": updated})
+        self.assertEqual(result["protocol"]["next_action"], "ESCALATE")
+        self.assertEqual(result["protocol"]["status"], "HOLD_FOR_ESCALATION")
+
     def test_external_contribution_still_requires_return_gate(self):
         passport = create_case_passport({"problem": "Need an external specialist check"})
         routed = apply_case_event(passport, {
