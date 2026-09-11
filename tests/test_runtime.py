@@ -89,6 +89,25 @@ class RuntimeTests(unittest.TestCase):
         self.assertEqual(result["next_action"], "ESCALATE")
         self.assertTrue(result["hard_gates"]["escalation_required"])
 
+    def test_dependency_hold_does_not_override_hard_escalation(self):
+        held = compile_protocol({
+            "problem": "Scale decision waits for quality evidence",
+            "phase": "P10",
+            "dependency_blocked": True,
+            "dependency_reasons": ["waiting_for:td-1111111111111111"],
+        })
+        self.assertEqual(held["next_action"], "HOLD")
+        self.assertEqual(held["status"], "HOLD_FOR_DEPENDENCY")
+
+        hard = compile_protocol({
+            "problem": "Regulated scale decision with unresolved dependency",
+            "phase": "P10",
+            "dependency_blocked": True,
+            "risk": {"regulatory_required": True},
+        })
+        self.assertEqual(hard["next_action"], "ESCALATE")
+        self.assertEqual(hard["status"], "HOLD_FOR_ESCALATION")
+
     def test_thailand_phase_routing(self):
         rows = InstitutionStore().route(jurisdiction="TH", phase="P1", limit=10)
         self.assertTrue(rows)
@@ -104,17 +123,22 @@ class RuntimeTests(unittest.TestCase):
         self.assertEqual(passport["problem_signature"]["status"], "NOT_PROVIDED")
         self.assertFalse(passport["external_actor_used"])
         self.assertEqual(len(passport["events"]), 1)
+        self.assertEqual(len(passport["decision_threads"]), 1)
+        self.assertEqual(passport["decision_threads"][0]["thread_id"], passport["primary_thread_id"])
+        self.assertEqual(passport["current_phase"], passport["decision_threads"][0]["phase"])
 
         schema = json.loads((ROOT / "packages/schemas/case-passport.schema.json").read_text())
         validator = Draft202012Validator(schema, format_checker=FormatChecker())
-        errors = list(validator.iter_errors(passport))
-        self.assertEqual(errors, [])
+        self.assertEqual(list(validator.iter_errors(passport)), [])
+
+        thread_schema = json.loads((ROOT / "packages/schemas/decision-thread.schema.json").read_text())
+        thread_validator = Draft202012Validator(thread_schema, format_checker=FormatChecker())
+        self.assertEqual(list(thread_validator.iter_errors(passport["decision_threads"][0])), [])
 
     def test_problem_signature_schema_accepts_candidate_with_provenance(self):
         schema = json.loads((ROOT / "packages/schemas/problem-signature.schema.json").read_text())
         validator = Draft202012Validator(schema, format_checker=FormatChecker())
-        errors = list(validator.iter_errors(candidate_signature()))
-        self.assertEqual(errors, [])
+        self.assertEqual(list(validator.iter_errors(candidate_signature())), [])
 
     def test_event_updates_version_without_overwriting_pc(self):
         passport = create_case_passport({"problem": "Water pools in one corner"})
@@ -125,6 +149,7 @@ class RuntimeTests(unittest.TestCase):
         })
         self.assertEqual(updated["version"], 2)
         self.assertIn("Pooling appears after heavy rain", updated["observations"])
+        self.assertIn("Pooling appears after heavy rain", updated["decision_threads"][0]["observations"])
         self.assertEqual(updated["citizen_problem_verbatim"], passport["citizen_problem_verbatim"])
         self.assertEqual(passport["version"], 1)
 
@@ -173,6 +198,7 @@ class RuntimeTests(unittest.TestCase):
         })
         self.assertFalse(closed["external_actor_used"])
         self.assertEqual(closed["latest_return_gate"], "NOT_APPLICABLE")
+        self.assertEqual(closed["decision_threads"][0]["status"], "CLOSED")
         self.assertEqual(closed["case_status"], "CLOSED")
         result = step_case({"passport": closed})
         self.assertEqual(result["protocol"]["next_action"], "STOP")
@@ -261,6 +287,124 @@ class RuntimeTests(unittest.TestCase):
         self.assertEqual(result["case_id"], passport["case_id"])
         self.assertIn("X: unavailable", result["passport"]["failed_routes"])
         self.assertEqual(result["protocol"]["next_action"], "ESCALATE")
+
+    def test_cosmetics_case_uses_concurrent_decision_threads_without_new_domain_protocol(self):
+        quality = "td-1111111111111111"
+        regulatory = "td-2222222222222222"
+        scale = "td-3333333333333333"
+        case = create_case_passport({
+            "problem": (
+                "Our OEM serum has irritation complaints and some bottles darken after opening; "
+                "we are deciding whether to order a much larger second lot and run marketing claims."
+            ),
+            "goal": "Protect customers and make a justified next production decision",
+            "practice_context": {"industry": "cosmetics", "product": "topical serum", "manufacturing": "OEM"},
+            "primary_thread_id": quality,
+            "decision_threads": [
+                {
+                    "thread_id": quality,
+                    "decision": "identify the cause and significance of the batch quality signals",
+                    "phase": "P1",
+                    "unknowns": ["cause of irritation reports", "cause of post-opening color change"],
+                    "risk_profile": {"third_party_exposure": 0.4}
+                },
+                {
+                    "thread_id": regulatory,
+                    "decision": "determine whether the intended market claim is regulatorily usable",
+                    "phase": "P3",
+                    "risk_profile": {"regulatory_required": True}
+                },
+                {
+                    "thread_id": scale,
+                    "decision": "decide whether to commit to the larger second production lot",
+                    "phase": "P10",
+                    "depends_on": [quality, regulatory]
+                }
+            ]
+        })
+
+        result = step_case({"passport": case})
+        by_id = {x["thread_id"]: x for x in result["thread_protocols"]}
+        self.assertEqual(len(by_id), 3)
+        self.assertEqual(result["primary_thread_id"], quality)
+        self.assertEqual(by_id[quality]["next_action"], "MEASURE")
+        self.assertEqual(by_id[regulatory]["next_action"], "ESCALATE")
+        self.assertEqual(by_id[scale]["next_action"], "HOLD")
+        self.assertEqual(by_id[scale]["status"], "HOLD_FOR_DEPENDENCY")
+        self.assertCountEqual(by_id[scale]["blocking_threads"], [quality, regulatory])
+        self.assertEqual(case["citizen_problem_verbatim"], result["passport"]["citizen_problem_verbatim"])
+
+        quality_done = apply_case_event(case, {
+            "event_type": "OUTCOME_UPDATED",
+            "actor": "citizen",
+            "payload": {
+                "thread_id": quality,
+                "outcome_state": "improved",
+                "result": "A reversible batch-control change reduced the quality signal in the next comparison run"
+            }
+        })
+        self.assertEqual(
+            next(x for x in quality_done["decision_threads"] if x["thread_id"] == quality)["status"],
+            "CLOSED",
+        )
+
+        routed = apply_case_event(quality_done, {
+            "event_type": "INSTITUTION_SELECTED",
+            "actor": "steward",
+            "payload": {"thread_id": regulatory, "institution_id": "example-regulatory-review"}
+        })
+        returned = apply_case_event(routed, {
+            "event_type": "RETURN_RECEIVED",
+            "actor": "external-reviewer",
+            "payload": {
+                "thread_id": regulatory,
+                "return_object": {
+                    "case_id": case["case_id"],
+                    "source_actor": "external-reviewer",
+                    "source_institution": "example-regulatory-review",
+                    "plain_language_result": "The proposed claim needs revision before use.",
+                    "what_is_known": ["the proposed wording is not ready for use"],
+                    "what_is_unknown": [],
+                    "limits": ["review limited to the submitted wording"],
+                    "recommended_next_action": "Revise the wording and retain the review record.",
+                    "unsafe_actions_to_avoid": ["publish the unreviewed wording"],
+                    "data_returned_refs": ["review-record"],
+                    "rights_state": "no new rights claim",
+                    "followup_trigger": "claim wording changes",
+                    "citizen_correction_possible": True,
+                    "return_gate_state": "PASS"
+                }
+            }
+        })
+        regulatory_done = apply_case_event(returned, {
+            "event_type": "OUTCOME_UPDATED",
+            "actor": "citizen",
+            "payload": {"thread_id": regulatory, "outcome_state": "safely_held"}
+        })
+
+        after_dependencies = step_case({"passport": regulatory_done})
+        by_id = {x["thread_id"]: x for x in after_dependencies["thread_protocols"]}
+        self.assertEqual(by_id[scale]["blocking_threads"], [])
+        self.assertEqual(by_id[scale]["next_action"], "SCALE_CHECK")
+
+        scale_done = apply_case_event(regulatory_done, {
+            "event_type": "OUTCOME_UPDATED",
+            "actor": "citizen",
+            "payload": {
+                "thread_id": scale,
+                "outcome_state": "safely_held",
+                "result": "Large lot commitment paused pending the next evidence cycle"
+            }
+        })
+        closed = apply_case_event(scale_done, {
+            "event_type": "OUTCOME_UPDATED",
+            "actor": "citizen",
+            "payload": {"outcome_state": "safely_held", "result": "All required decisions are in a safe state"}
+        })
+        self.assertEqual(closed["case_status"], "CLOSED")
+        final = step_case({"passport": closed})
+        self.assertTrue(final["closed"])
+        self.assertTrue(all(x["next_action"] == "STOP" for x in final["thread_protocols"]))
 
 
 if __name__ == "__main__":
