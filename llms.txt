@@ -5,6 +5,7 @@ Purpose: help citizens turn lived experience into usable knowledge and safe next
 ## Read first
 https://github.com/morrocwi/toledo.biz/blob/main/docs/PROTOCOL_COMPILER.md
 https://github.com/morrocwi/toledo.biz/blob/main/docs/CASE_LIFECYCLE.md
+https://github.com/morrocwi/toledo.biz/blob/main/docs/PROBLEM_CAPABILITY_GRAMMAR.md
 https://github.com/morrocwi/toledo.biz/blob/main/docs/GLOSSARY.md
 https://github.com/morrocwi/toledo.biz/blob/main/docs/TRUST_AND_SAFETY.md
 https://github.com/morrocwi/toledo.biz/blob/main/docs/EQUATION_BINDINGS.md
@@ -20,13 +21,28 @@ https://raw.githubusercontent.com/morrocwi/toledo.biz/main/registry/equation-ind
 
 Use equation IDs directly. Preserve each equation's upstream status and provenance.
 
+## Domain-neutral problem grammar
+The core does not select protocols by occupation. Preserve occupation/practice as context, not as a bespoke routing branch.
+
+P_C = citizen_problem_verbatim remains immutable. AI may produce multiple candidate signatures, each with provenance. A candidate signature is not a diagnosis and is not promoted merely because AI generated it.
+
+Machine contract:
+https://raw.githubusercontent.com/morrocwi/toledo.biz/main/packages/schemas/problem-signature.schema.json
+
+Core flow:
+P_C -> candidate signatures -> citizen/evidence endorsement -> barrier state -> minimal protocol -> capability need -> optional domain adapter -> provider/world action -> case update.
+
+Unknown and unresolved states are valid outputs. Do not fabricate missing context.
+
 ## Closed-loop protocol
 Preferred loop:
-Citizen input -> initialize_case -> Case Passport -> advance_case -> action/world/institution -> update_case/advance_case with event -> Return Object -> outcome -> STOP.
+Citizen input -> initialize_case -> Case Passport -> advance_case -> action/world/institution -> update_case/advance_case with event -> Return Object when external contribution is used -> outcome -> STOP.
 
 The Case Passport is caller-held in the public reference runtime. Do not assume this repository is a sensitive-data store.
 
 P_C = citizen_problem_verbatim is immutable under ordinary events. P_S and P_D are separate representations.
+
+Local citizen+AI/world cases may close without a fake institutional Return Object when no external actor was used and safety/authority constraints are satisfied. External routes still require the Return Gate.
 
 ## API
 Reference implementation: apps/protocol_api/main.py
@@ -40,17 +56,21 @@ Important routes:
 - /v1/institutions
 - /v1/handoffs/validate
 - /v1/returns/validate
+- /v1/schemas/problem-signature
 
 ## MCP
 Reference server: apps/mcp_server/server.py
 Equation tools: get_equation, search_equations
 Protocol tools: compile_citizen_protocol, initialize_case, update_case, advance_case
 Routing/gate tools: route_institutions, check_handoff, check_return_gate
-Resources: toledo://equations/index, toledo://equations/{id}, toledo://protocol/compiler, toledo://protocol/case-lifecycle, Toledo schemas.
+Resources: toledo://equations/index, toledo://equations/{id}, toledo://protocol/compiler, toledo://protocol/case-lifecycle, toledo://protocol/problem-capability-grammar, toledo://schema/problem-signature, Toledo schemas.
 
 ## Invariants
 AI-first != AI-only.
 Observation != Interpretation != Diagnosis.
+Occupation != ProtocolSelector.
+ProblemSignature != Diagnosis.
+CandidateSignature != EndorsedSignature.
 Academic capability != University executability.
 Referral != Handoff != Collaboration.
 Institutional output != Citizen outcome.
