@@ -11,13 +11,17 @@
     "generated_at": {"type": "string", "format": "date-time"},
     "phase": {"type": "string", "enum": ["P0","P1","P2","P3","P4","P5","P6","P7","P8","P9","P10","P11"]},
     "citizen_problem": {"type": "string"},
-    "status": {"type": "string", "enum": ["ACTIONABLE","HOLD_FOR_ESCALATION"]},
+    "status": {"type": "string", "enum": ["ACTIONABLE","HOLD_FOR_ESCALATION","HOLD_FOR_RETURN","CLOSED"]},
     "next_action": {"type": "string"},
     "hard_gates": {"type": "object"},
     "known": {"type": "array", "items": {"type": "string"}},
     "unknown": {"type": "array", "items": {"type": "string"}},
     "institution_candidates": {"type": "array", "items": {"type": "object"}},
     "equation_refs": {"type": "array", "items": {"type": "string"}},
-    "return_requirement": {"type": "string"}
+    "return_requirement": {"type": "string"},
+    "case_id": {"type": ["string", "null"]},
+    "case_passport_version": {"type": ["integer", "null"], "minimum": 1},
+    "outcome_state": {"type": ["string", "null"]},
+    "failed_routes": {"type": "array", "items": {"type": "string"}}
   }
 }
