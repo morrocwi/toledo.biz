@@ -10,17 +10,20 @@ from fastapi.responses import JSONResponse
 from toledo_runtime import (
     EquationStore,
     InstitutionStore,
+    apply_case_event,
     compile_protocol,
+    create_case_passport,
+    step_case,
     validate_handoff,
     validate_return_gate,
 )
 
 app = FastAPI(
     title="Toledo Protocol API",
-    version="0.1.0",
+    version="0.2.0",
     description=(
-        "Reference API for the Toledo Citizen Protocol Compiler, equation readouts, "
-        "institution routing, handoff validation and Return Gate checks."
+        "Reference API for the Toledo Citizen Protocol Compiler, stateless Case Passport lifecycle, "
+        "equation readouts, institution routing, handoff validation and Return Gate checks."
     ),
 )
 
@@ -31,7 +34,7 @@ _ROOT = Path(__file__).resolve().parents[2]
 
 @app.get("/health")
 def health() -> dict[str, Any]:
-    return {"ok": True, "service": "toledo-protocol-api", "version": "0.1.0"}
+    return {"ok": True, "service": "toledo-protocol-api", "version": "0.2.0"}
 
 
 @app.get("/.well-known/toledo")
@@ -40,11 +43,7 @@ def well_known() -> dict[str, Any]:
 
 
 @app.get("/v1/equations")
-def equations(
-    q: str = "",
-    domain: str | None = None,
-    live: bool = False,
-) -> dict[str, Any]:
+def equations(q: str = "", domain: str | None = None, live: bool = False) -> dict[str, Any]:
     entries = _eq.search(q, domain=domain, live=live)
     return {"count": len(entries), "entries": entries, "source": _eq.data(live=live).get("source")}
 
@@ -61,6 +60,35 @@ def equation(equation_id: str, live: bool = False) -> dict[str, Any]:
 def protocol_compile(case: dict[str, Any]) -> dict[str, Any]:
     try:
         return compile_protocol(case)
+    except ValueError as exc:
+        raise HTTPException(status_code=422, detail=str(exc)) from exc
+
+
+@app.post("/v1/cases/init")
+def case_init(case: dict[str, Any]) -> dict[str, Any]:
+    try:
+        passport = create_case_passport(case)
+        return {"passport": passport, "protocol": step_case({"passport": passport})["protocol"]}
+    except ValueError as exc:
+        raise HTTPException(status_code=422, detail=str(exc)) from exc
+
+
+@app.post("/v1/cases/update")
+def case_update(payload: dict[str, Any]) -> dict[str, Any]:
+    try:
+        passport = payload.get("passport")
+        event = payload.get("event")
+        if not isinstance(passport, dict) or not isinstance(event, dict):
+            raise ValueError("passport and event objects are required")
+        return {"passport": apply_case_event(passport, event)}
+    except ValueError as exc:
+        raise HTTPException(status_code=422, detail=str(exc)) from exc
+
+
+@app.post("/v1/cases/step")
+def case_step(payload: dict[str, Any]) -> dict[str, Any]:
+    try:
+        return step_case(payload)
     except ValueError as exc:
         raise HTTPException(status_code=422, detail=str(exc)) from exc
 
@@ -97,6 +125,9 @@ def return_validate(payload: dict[str, Any]) -> dict[str, Any]:
 def schema(schema_name: str) -> JSONResponse:
     allowed = {
         "case-passport": "case-passport.schema.json",
+        "case-event": "case-event.schema.json",
+        "case-step-request": "case-step-request.schema.json",
+        "case-step-response": "case-step-response.schema.json",
         "return-object": "return-object.schema.json",
         "institution-record": "institution-record.schema.json",
         "protocol-compile-request": "protocol-compile-request.schema.json",
@@ -111,7 +142,6 @@ def schema(schema_name: str) -> JSONResponse:
 
 def run() -> None:
     import uvicorn
-
     uvicorn.run("apps.protocol_api.main:app", host="127.0.0.1", port=8787, reload=False)
 
 
