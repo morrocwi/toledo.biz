@@ -153,6 +153,17 @@ class ExecutionRoutingTests(unittest.TestCase):
         self.assertTrue(routing["forward_experiment"]["market_test_candidate"])
         self.assertIn("BOUNDED_MARKET_TEST", _classes(result))
 
+    def test_market_language_alone_does_not_authorize_market_first(self):
+        result = compile_protocol({
+            "problem": "I want to launch this product to customers",
+            "goal": "enter the market",
+            "phase": "P1",
+        })
+        routing = result["execution_routing"]
+        self.assertFalse(routing["forward_experiment"]["market_test_candidate"])
+        self.assertNotIn("BOUNDED_MARKET_TEST", _classes(result))
+        self.assertNotEqual(routing["route_mode"], "PARALLEL_OR_FORWARD_EXPERIMENT")
+
     def test_candidate_authority_need_is_not_promoted_to_required_fact(self):
         result = compile_protocol({
             "problem": "A candidate interpretation says a market claim may require regulator review",
