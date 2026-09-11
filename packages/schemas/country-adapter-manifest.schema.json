@@ -1,0 +1,81 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://toledo.biz/schemas/country-adapter-manifest.schema.json",
+  "title": "Toledo Country Adapter Manifest",
+  "type": "object",
+  "additionalProperties": false,
+  "required": [
+    "adapter_id",
+    "name",
+    "adapter_version",
+    "status",
+    "languages",
+    "jurisdictions",
+    "institution_dataset",
+    "last_reviewed",
+    "upstream_platform_compatibility"
+  ],
+  "properties": {
+    "adapter_id": {
+      "type": "string",
+      "pattern": "^[A-Z]{2}$"
+    },
+    "name": {
+      "type": "string",
+      "minLength": 1
+    },
+    "adapter_version": {
+      "type": "string",
+      "pattern": "^[0-9]+\\.[0-9]+\\.[0-9]+(?:-[0-9A-Za-z.-]+)?$"
+    },
+    "status": {
+      "type": "string",
+      "enum": ["experimental", "reference", "supported", "maintenance", "archived"]
+    },
+    "languages": {
+      "type": "array",
+      "items": {"type": "string", "minLength": 2},
+      "minItems": 1,
+      "uniqueItems": true
+    },
+    "jurisdictions": {
+      "type": "array",
+      "items": {"type": "string", "minLength": 1},
+      "minItems": 1,
+      "uniqueItems": true
+    },
+    "institution_dataset": {
+      "type": "string",
+      "minLength": 1
+    },
+    "regulator_dataset": {
+      "type": ["string", "null"]
+    },
+    "standards_dataset": {
+      "type": ["string", "null"]
+    },
+    "data_snapshot_date": {
+      "type": ["string", "null"],
+      "format": "date"
+    },
+    "last_reviewed": {
+      "type": "string",
+      "format": "date"
+    },
+    "maintainers": {
+      "type": "array",
+      "items": {"type": "string"}
+    },
+    "upstream_platform_compatibility": {
+      "type": "string",
+      "minLength": 1
+    },
+    "known_gaps": {
+      "type": "array",
+      "items": {"type": "string"}
+    },
+    "notes": {
+      "type": ["string", "null"]
+    }
+  }
+}
