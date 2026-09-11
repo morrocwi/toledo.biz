@@ -1,8 +1,8 @@
 openapi: 3.1.0
 info:
   title: Toledo Protocol API
-  version: 0.3.0
-  description: Reference API for Toledo citizen protocol compilation, domain-neutral problem signatures, closed-loop Case Passport lifecycle, equation readouts and governed routing.
+  version: 0.4.0
+  description: Reference API for Toledo citizen protocol compilation, domain-neutral problem signatures, anchor-preserved Decision Threads, closed-loop Case Passport lifecycle, equation readouts and governed routing.
 servers:
   - url: http://127.0.0.1:8787
 paths:
@@ -37,6 +37,7 @@ paths:
   /v1/protocols/compile:
     post:
       operationId: compileProtocol
+      description: Compile one compact decision state. For a full multi-decision Case Passport use /v1/cases/threads/compile or /v1/cases/step.
       requestBody:
         required: true
         content:
@@ -53,7 +54,7 @@ paths:
   /v1/cases/init:
     post:
       operationId: initializeCase
-      description: Create a Case Passport and compile its first protocol step. The reference API does not persist the passport. Practice context and an optional Problem Signature may be carried without replacing P_C.
+      description: Create a Case Passport, create a backward-compatible primary Decision Thread when none is supplied, and compile all Decision Threads. The reference API does not persist the passport.
       requestBody:
         required: true
         content:
@@ -61,12 +62,17 @@ paths:
             schema:
               $ref: '../packages/schemas/protocol-compile-request.schema.json'
       responses:
-        '200': {description: Case Passport plus initial protocol}
+        '200':
+          description: Case Passport, primary protocol and all Decision Thread protocols
+          content:
+            application/json:
+              schema:
+                $ref: '../packages/schemas/case-step-response.schema.json'
         '422': {description: Invalid case input}
   /v1/cases/update:
     post:
       operationId: updateCase
-      description: Apply one auditable Case Event to a caller-held Case Passport. Problem-grammar events include SIGNATURE_CANDIDATES_UPDATED, SIGNATURE_ENDORSED and BARRIER_UPDATED.
+      description: Apply one auditable Case Event to a caller-held Case Passport. Supported events may be scoped to a Decision Thread with payload.thread_id.
       requestBody:
         required: true
         content:
@@ -78,12 +84,12 @@ paths:
                 passport: {$ref: '../packages/schemas/case-passport.schema.json'}
                 event: {$ref: '../packages/schemas/case-event.schema.json'}
       responses:
-        '200': {description: Updated Case Passport}
+        '200': {description: Updated Case Passport plus Decision Thread protocols}
         '422': {description: Invalid passport or event}
   /v1/cases/step:
     post:
       operationId: advanceCase
-      description: Initialize or update a Case Passport and compile the next deterministic Toledo action. External routes require Return Gate before closure; local low-risk citizen+AI/world closure may use Return Gate NOT_APPLICABLE.
+      description: Initialize or update a Case Passport and compile primary plus all Decision Threads. Thread dependencies can produce HOLD_FOR_DEPENDENCY; hard safety/authority escalation remains higher priority.
       requestBody:
         required: true
         content:
@@ -92,12 +98,38 @@ paths:
               $ref: '../packages/schemas/case-step-request.schema.json'
       responses:
         '200':
-          description: Updated passport and next protocol instance
+          description: Updated passport, primary protocol and all Decision Thread protocols
           content:
             application/json:
               schema:
                 $ref: '../packages/schemas/case-step-response.schema.json'
         '422': {description: Invalid case transition}
+  /v1/cases/threads/compile:
+    post:
+      operationId: compileCaseThreads
+      description: Compile every Decision Thread in a caller-held Case Passport without applying an event.
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '../packages/schemas/case-passport.schema.json'
+      responses:
+        '200':
+          description: Decision Thread protocol instances
+          content:
+            application/json:
+              schema:
+                type: object
+                required: [case_id, primary_thread_id, count, thread_protocols]
+                properties:
+                  case_id: {type: [string, 'null']}
+                  primary_thread_id: {type: [string, 'null']}
+                  count: {type: integer, minimum: 1}
+                  thread_protocols:
+                    type: array
+                    items: {$ref: '../packages/schemas/protocol-instance.schema.json'}
+        '422': {description: Invalid Case Passport or Decision Thread state}
   /v1/institutions:
     get:
       operationId: routeInstitutions
@@ -134,6 +166,7 @@ paths:
               - case-step-request
               - case-step-response
               - problem-signature
+              - decision-thread
               - return-object
               - institution-record
               - protocol-compile-request
