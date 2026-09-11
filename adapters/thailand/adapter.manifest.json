@@ -1,0 +1,22 @@
+{
+  "adapter_id": "TH",
+  "name": "Thailand",
+  "adapter_version": "0.1.0",
+  "status": "reference",
+  "languages": ["th", "en"],
+  "jurisdictions": ["Thailand"],
+  "institution_dataset": "institutions.seed.json",
+  "regulator_dataset": null,
+  "standards_dataset": null,
+  "data_snapshot_date": "2026-09-11",
+  "last_reviewed": "2026-09-11",
+  "maintainers": ["morrocwi"],
+  "upstream_platform_compatibility": ">=0.1.0 <1.0.0",
+  "known_gaps": [
+    "Institution records are national/mechanism-level seeds and do not yet enumerate all local nodes.",
+    "Current queue/turnaround and operational capacity are not available for most mechanisms.",
+    "Regulator and standards datasets have not yet been separated into dedicated files.",
+    "Thai localization and citizen-facing terminology are not yet packaged as a machine-readable localization bundle."
+  ],
+  "notes": "Reference adapter. Re-verify time-sensitive fields before production routing."
+}
