@@ -1,8 +1,8 @@
 {
   "name": "Toledo Citizen Platform",
   "protocol": "toledo-citizen",
-  "protocol_version": "0.1.0",
-  "runtime_version": "0.2.0",
+  "protocol_version": "0.2.0",
+  "runtime_version": "0.3.0",
   "repository": "https://github.com/morrocwi/toledo.biz",
   "mathematical_authority": "https://github.com/morrocwi/toledo",
   "equation_registry": {
@@ -11,13 +11,23 @@
     "upstream_commit": "361546c934829de56f3dcff2032c740209de847a",
     "status": "proposal"
   },
+  "case_lifecycle": {
+    "mode": "stateless-reference",
+    "passport_schema": "packages/schemas/case-passport.schema.json",
+    "event_schema": "packages/schemas/case-event.schema.json",
+    "step_request_schema": "packages/schemas/case-step-request.schema.json",
+    "step_response_schema": "packages/schemas/case-step-response.schema.json",
+    "normative_doc": "docs/CASE_LIFECYCLE.md"
+  },
   "api": {
     "openapi": "openapi/toledo.protocol.v1.yaml",
-    "implementation": "apps/protocol_api/main.py"
+    "implementation": "apps/protocol_api/main.py",
+    "case_step_endpoint": "/v1/cases/step"
   },
   "mcp": {
     "transport": "stdio",
-    "implementation": "apps/mcp_server/server.py"
+    "implementation": "apps/mcp_server/server.py",
+    "closed_loop_tools": ["initialize_case", "update_case", "advance_case"]
   },
   "ai_index": "llms.txt"
 }
