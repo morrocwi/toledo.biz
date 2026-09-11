@@ -9,7 +9,7 @@ Project maturity: pre-alpha executable reference release
 Current public citation version: 0.2.0
 Current runtime package: 0.6.0
 Current Protocol Compiler: v0.5
-Current API metadata: 0.4.0
+Current API metadata: 0.5.0
 Current architecture family: Toledo Citizen Platform aligned to Toledo v0.17
 Current release notes: docs/releases/v0.2.0.md
 ```
@@ -212,7 +212,7 @@ Implemented but still pre-alpha:
 - no-restart route-failure continuity;
 - local citizen-only closure separated from external Return-Gate closure;
 - Return Object evaluation and citizen-closure state;
-- HTTP Protocol API 0.4.0;
+- HTTP Protocol API 0.5.0;
 - MCP v2 server;
 - machine-readable equation mirror with upstream provenance.
 
