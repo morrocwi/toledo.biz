@@ -1,0 +1,111 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://toledo.biz/schemas/execution-routing.schema.json",
+  "title": "Toledo Flexible Execution Routing",
+  "description": "Machine contract for domain-neutral execution requirements. Phase is routing context, not a mandatory sequence. AI is mediator/translator, while expert roles, knowledge-like sources, tools and authority overlays remain distinct.",
+  "type": "object",
+  "additionalProperties": false,
+  "required": [
+    "matrix_version",
+    "phase",
+    "phase_semantics",
+    "route_mode",
+    "ai_role",
+    "expert_model",
+    "knowledge_like",
+    "signature_basis",
+    "authority_need",
+    "requirements",
+    "forward_experiment",
+    "hard_gate_reasons"
+  ],
+  "properties": {
+    "matrix_version": {"type": "string"},
+    "phase": {"type": "string", "enum": ["P0","P1","P2","P3","P4","P5","P6","P7","P8","P9","P10","P11"]},
+    "phase_semantics": {"const": "ROUTING_CONTEXT_NOT_MANDATORY_SEQUENCE"},
+    "route_mode": {
+      "type": "string",
+      "enum": [
+        "MINIMUM_SUFFICIENT_FLEXIBLE",
+        "PARALLEL_OR_FORWARD_EXPERIMENT",
+        "EXTERNAL_REQUIRED",
+        "DEPENDENCY_HOLD"
+      ]
+    },
+    "ai_role": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["class","connects","is_expert_class","confers_professional_authority","counts_as_independent_validation"],
+      "properties": {
+        "class": {"const": "MEDIATOR_TRANSLATOR"},
+        "connects": {"type": "array", "items": {"type": "string"}},
+        "is_expert_class": {"const": false},
+        "confers_professional_authority": {"const": false},
+        "counts_as_independent_validation": {"const": false}
+      }
+    },
+    "expert_model": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["expert_classes","interaction_expert","field_expert","authority_overlays","note"],
+      "properties": {
+        "expert_classes": {
+          "type": "array",
+          "items": {"type": "string", "enum": ["INTERACTION_EXPERT","FIELD_EXPERT"]},
+          "minItems": 2,
+          "uniqueItems": true
+        },
+        "interaction_expert": {"type": "string"},
+        "field_expert": {"type": "string"},
+        "authority_overlays": {
+          "type": "array",
+          "items": {"type": "string", "enum": ["LICENSED_PROFESSIONAL","LAB_INFRASTRUCTURE","REGULATORY_AUTHORITY"]},
+          "uniqueItems": true
+        },
+        "note": {"type": "string"}
+      }
+    },
+    "knowledge_like": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["class","status","is_human_expert","is_truth_certificate","note"],
+      "properties": {
+        "class": {"type": "string", "enum": ["K*_0","K*_I"]},
+        "status": {"const": "PROVISIONAL"},
+        "is_human_expert": {"const": false},
+        "is_truth_certificate": {"const": false},
+        "note": {"type": "string"}
+      }
+    },
+    "signature_basis": {"type": "string"},
+    "authority_need": {"type": "string"},
+    "requirements": {
+      "type": "array",
+      "items": {
+        "type": "object",
+        "additionalProperties": false,
+        "required": ["class","requiredness","reasons","basis"],
+        "properties": {
+          "class": {"type": "string", "minLength": 1},
+          "requiredness": {"type": "string", "enum": ["REQUIRED","CANDIDATE","OPTIONAL"]},
+          "reasons": {"type": "array", "items": {"type": "string"}},
+          "basis": {"type": "array", "items": {"type": "string"}}
+        }
+      }
+    },
+    "forward_experiment": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["allowed","market_test_candidate","rule","not_a_phase_skip_claim"],
+      "properties": {
+        "allowed": {"type": "boolean"},
+        "market_test_candidate": {"type": "boolean"},
+        "rule": {"type": "string"},
+        "not_a_phase_skip_claim": {"const": true}
+      }
+    },
+    "hard_gate_reasons": {"type": "array", "items": {"type": "string"}},
+    "observed_context_count": {"type": "integer", "minimum": 0},
+    "unknown_context_count": {"type": "integer", "minimum": 0}
+  }
+}
