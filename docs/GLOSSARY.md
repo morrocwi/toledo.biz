@@ -30,6 +30,33 @@ The AI-mediated structured version of the citizen problem used to organize obser
 ### `P_D` — Disciplinary Problem
 A specialist or institutional formulation used for research, technical service, regulation, or professional work. It MUST remain traceable to `P_C` and `P_S`.
 
+### Problem Signature
+A domain-neutral operational readout used for routing. It may contain intent, object readout, observed difference, evidence need, stakes, authority need, candidate alternatives and next discriminating action. It is **not** a diagnosis and does not replace `P_C`.
+
+### Candidate Signature
+One possible AI/human/evidence-supported translation of the case. Multiple candidates may remain live. A candidate is not promoted merely because an AI generated it.
+
+### Endorsed Signature
+A working Problem Signature explicitly selected through recorded citizen endorsement, evidence support, or the governed process appropriate to the case. Endorsement does not make it truth.
+
+### Problem Facet Provenance
+The recorded source of a material signature facet, such as citizen wording, citizen clarification, AI inference, world measurement, original document, expert return, or institutional return.
+
+### Context Gap
+A material event-specific condition that is not currently observed or recorded. A Context Gap MUST remain unknown rather than being silently converted into an AI-inferred fact.
+
+### Barrier Signature
+A separate description of what blocks progress. The reference barrier dimensions are knowledge, skill, language, tool, resource/time, network, credential, permission, opportunity, and unknown.
+
+### Practice Context
+Occupation, repeated practice, local setting, tacit distinctions, role, tools, and other situated information that may carry experiential expertise. Practice Context is relevant evidence/context but does not automatically select a bespoke core protocol.
+
+### Protocol Primitive
+An operational verb available to the compiler, such as observe, compare, measure, test, decide, repair, validate, or scale. A Protocol Primitive is not asserted to be a fundamental metaphysical kind of problem.
+
+### Domain Adapter
+An optional specialization that adds domain vocabulary, hazards, professional boundaries, measurements/sample rules, regulation or provider mappings without redefining global Case Passport, provenance, hard-gate, Return Gate, or equation semantics.
+
 ## Case continuity
 
 ### Case Passport
@@ -54,12 +81,15 @@ Two or more actors remain jointly active around the same persistent case state.
 The structured result returned by an external actor: plain-language result, technical result where needed, knowns, unknowns, limitations, next action, unsafe actions to avoid, returned data, rights state, and follow-up trigger.
 
 ### Return Gate
-The gate that prevents institutional work from being treated as complete until a usable result reaches the citizen or correct decision owner.
+The gate that prevents external institutional/professional work from being treated as complete until a usable result reaches the citizen or correct decision owner. A citizen+AI/world-only local case with no external actor may use `NOT_APPLICABLE` rather than manufacturing a fake Return Object.
+
+### External Actor Used
+A Case Passport state indicating that an expert, institution, provider, regulator, laboratory or equivalent external actor actually entered the execution route. When true, external closure requires a passing Return Gate.
 
 ## Routing terms
 
 ### Capability
-A concrete service or authority needed by the case, such as expert consultation, laboratory measurement, prototype support, regulatory classification, legal authorization, standards testing, incubation, funding, or market matching.
+A concrete service or authority needed by the case, such as expert consultation, field inspection, laboratory measurement, sample analysis, process audit, prototype support, regulatory classification, legal authorization, standards testing, incubation, funding, or market matching.
 
 ### Route
 A sequence of capabilities and actors selected to unlock the next justified decision.
@@ -142,6 +172,17 @@ Government is not one undifferentiated actor. Toledo distinguishes:
 
 ```text
 AI-first != AI-only
+Observation != Interpretation != Diagnosis
+Occupation != ProtocolSelector
+PracticeContext != IrrelevantContext
+P_C != ProblemSignature
+ProblemSignature != Diagnosis
+CandidateSignature != EndorsedSignature
+AITranslation != CitizenObservation
+Unknown != Failure
+MissingEvidence != NegativeEvidence
+DomainAdapter != NewCore
+ProviderName != Capability
 Academic capability != university executability
 Referral != Handoff != Collaboration
 Institutional output != Citizen outcome
