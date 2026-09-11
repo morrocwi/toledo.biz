@@ -1,0 +1,51 @@
+name: validate
+
+on:
+  push:
+    branches: [main]
+  pull_request:
+
+permissions:
+  contents: read
+
+jobs:
+  validate-json:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - name: Validate JSON files
+        shell: bash
+        run: |
+          set -euo pipefail
+          files=$(find . -type f -name '*.json' -not -path './.git/*')
+          if [ -z "$files" ]; then
+            echo "No JSON files found"
+            exit 0
+          fi
+          for f in $files; do
+            echo "Validating $f"
+            python -m json.tool "$f" >/dev/null
+          done
+
+  policy-guards:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - name: Check required architecture files
+        shell: bash
+        run: |
+          set -euo pipefail
+          test -f README.md
+          test -f AGENTS.md
+          test -f docs/ARCHITECTURE.md
+          test -f docs/CITIZEN_PROTOCOL.md
+          test -f docs/GOVERNANCE.md
+          test -f packages/schemas/case-passport.schema.json
+          test -f packages/schemas/return-object.schema.json
+          test -f packages/schemas/institution-record.schema.json
+      - name: Verify equation authority boundary is declared
+        shell: bash
+        run: |
+          set -euo pipefail
+          grep -q 'morrocwi/toledo' README.md
+          grep -q 'morrocwi/toledo' registry/README.md
