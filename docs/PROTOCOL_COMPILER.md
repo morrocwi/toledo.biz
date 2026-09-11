@@ -1,29 +1,46 @@
-# Toledo Protocol Compiler v0.1
+# Toledo Protocol Compiler v0.2
 
 Status: **reference implementation / pre-alpha**.
 
-The compiler turns a case state into the smallest relevant executable subgraph of Toledo.
+The compiler turns a Case State into the smallest relevant executable subgraph of Toledo, then supports an auditable loop back into the same Case Passport.
 
 ```text
-CaseState
-    → ProtocolCompiler
-    → MinimalRelevantSubgraph
-    → NextAction
+Citizen Input
+    → Case Passport
+    → Protocol Compiler
+    → Minimal Relevant Subgraph
+    → Next Action
     → World / Institution
-    → Return
-    → UpdatedCaseState
+    → Case Event / Return Object
+    → Updated Case Passport
+    → Recompile
 ```
 
-It is deliberately not a P0→P11 conveyor belt. A case may stop successfully at any phase.
+It is deliberately not a P0→P11 conveyor belt. A case may stop successfully at any appropriate phase.
 
 ## Design rule
 
 ```text
 AI interprets
 Protocol engine controls typed gates
+Case Passport preserves continuity
 ```
 
 The reference compiler is deterministic. It does not permit an LLM to silently override hard safety, authority, consent, rights or Return Gate semantics.
+
+## Stateless reference architecture
+
+The public reference runtime does not persist real citizen cases. The caller stores the Case Passport and sends it back on the next step.
+
+```text
+POST /v1/cases/step
+    input: case OR passport + optional event(s)
+    output: updated passport + next protocol instance
+```
+
+This makes the lifecycle executable without turning the public repository into a sensitive citizen-data store.
+
+Production deployments need private persistence, access control, encryption, retention/deletion controls, consent enforcement, and audit policy.
 
 ## Core actions
 
@@ -42,23 +59,76 @@ CLOSE_FIRST_CYCLE
 SCALE_CHECK
 GLOBAL_CHECK
 RETURN
+STOP
 ```
 
-## Input
+`STOP` is emitted only after the Case Passport records citizen closure. Closure is not inferred from institutional completion alone.
 
-Machine contract: `packages/schemas/protocol-compile-request.schema.json`.
+## Case lifecycle functions
 
-Minimum input:
+The reference runtime exposes:
 
-```json
-{"problem":"Trees in the lower corner of my orchard decline after heavy rain."}
+```text
+create_case_passport(case)
+apply_case_event(passport, event)
+step_case(payload)
 ```
 
-## Output
+`step_case` is the closed-loop entry point.
 
-Machine contract: `packages/schemas/protocol-instance.schema.json`.
+See `docs/CASE_LIFECYCLE.md`.
 
-Every instance exposes equation references rather than copying mathematical authority into product code.
+## P_C immutability
+
+The original citizen problem is stored as:
+
+```text
+P_C = citizen_problem_verbatim
+```
+
+A normal Case Event cannot overwrite it. Clarifications or disciplinary reframings are stored separately.
+
+```text
+P_C != P_S != P_D
+```
+
+This prevents later institutional language from silently replacing the citizen's original problem.
+
+## Return and closure
+
+A Return Object is evaluated against the implementation of `TCB-X005`.
+
+A case is marked `CLOSED` only when:
+
+```text
+latest_return_gate = PASS
+AND
+outcome_state ∈ {
+  resolved,
+  improved,
+  safely_held,
+  explicitly_rescoped_with_consent
+}
+```
+
+The compiler then emits:
+
+```text
+status = CLOSED
+next_action = STOP
+```
+
+This operationalizes the current `TCB-X008` Citizen Closure proposal without treating it as a validated universal law.
+
+## No-restart rerouting
+
+A failed route is recorded as a Case Event. The same Case Passport is recompiled with its prior problem, evidence, rights state, failed route and history intact.
+
+```text
+ROUTE_FAILED
+    !=
+RESTART_CASE
+```
 
 ## Hard escalation reference rule
 
