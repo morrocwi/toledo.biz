@@ -36,61 +36,91 @@ jobs:
             python -m json.tool "$f" >/dev/null
           done
 
-      - name: Validate JSON Schemas and reference datasets
+      - name: Validate schemas, adapters, and data catalog
         shell: python
         run: |
           import json
+          from collections import Counter
           from pathlib import Path
           from jsonschema import Draft202012Validator, FormatChecker
 
+          root = Path('.')
           schema_dir = Path('packages/schemas')
           schemas = {}
+
           for path in schema_dir.glob('*.schema.json'):
               data = json.loads(path.read_text())
               Draft202012Validator.check_schema(data)
               schemas[path.name] = data
               print(f'Valid JSON Schema: {path}')
 
-          institution_schema = schemas['institution-record.schema.json']
+          format_checker = FormatChecker()
           institution_validator = Draft202012Validator(
-              institution_schema,
-              format_checker=FormatChecker(),
+              schemas['institution-record.schema.json'],
+              format_checker=format_checker,
           )
-          institution_path = Path('adapters/thailand/institutions.seed.json')
-          institutions = json.loads(institution_path.read_text())
-          if not isinstance(institutions, list):
-              raise SystemExit('Thailand institution seed must be a JSON array')
+          adapter_validator = Draft202012Validator(
+              schemas['country-adapter-manifest.schema.json'],
+              format_checker=format_checker,
+          )
 
-          ids = []
-          for index, record in enumerate(institutions):
-              errors = sorted(
-                  institution_validator.iter_errors(record),
-                  key=lambda e: list(e.path),
-              )
+          manifests = sorted(Path('adapters').glob('*/adapter.manifest.json'))
+          if not manifests:
+              raise SystemExit('No country adapter manifests found')
+
+          for manifest_path in manifests:
+              manifest = json.loads(manifest_path.read_text())
+              errors = sorted(adapter_validator.iter_errors(manifest), key=lambda e: list(e.path))
               if errors:
                   for error in errors:
-                      print(f'{institution_path}[{index}] {list(error.path)}: {error.message}')
+                      print(f'{manifest_path} {list(error.path)}: {error.message}')
                   raise SystemExit(1)
-              ids.append(record['institution_id'])
+              print(f'Validated adapter manifest: {manifest_path}')
 
-          duplicates = sorted({x for x in ids if ids.count(x) > 1})
-          if duplicates:
-              raise SystemExit(f'Duplicate institution_id values: {duplicates}')
-          print(f'Validated {len(institutions)} Thailand institution records')
+              dataset_path = manifest_path.parent / manifest['institution_dataset']
+              if not dataset_path.exists():
+                  raise SystemExit(f'Manifest institution dataset does not exist: {dataset_path}')
 
-          adapter_schema = schemas['country-adapter-manifest.schema.json']
-          adapter_validator = Draft202012Validator(
-              adapter_schema,
-              format_checker=FormatChecker(),
-          )
-          manifest_path = Path('adapters/thailand/adapter.manifest.json')
-          manifest = json.loads(manifest_path.read_text())
-          errors = list(adapter_validator.iter_errors(manifest))
-          if errors:
-              for error in errors:
-                  print(f'{manifest_path} {list(error.path)}: {error.message}')
-              raise SystemExit(1)
-          print(f'Validated adapter manifest: {manifest_path}')
+              records = json.loads(dataset_path.read_text())
+              if not isinstance(records, list):
+                  raise SystemExit(f'Institution dataset must be an array: {dataset_path}')
+
+              ids = []
+              for index, record in enumerate(records):
+                  record_errors = sorted(
+                      institution_validator.iter_errors(record),
+                      key=lambda e: list(e.path),
+                  )
+                  if record_errors:
+                      for error in record_errors:
+                          print(f'{dataset_path}[{index}] {list(error.path)}: {error.message}')
+                      raise SystemExit(1)
+                  ids.append(record['institution_id'])
+
+              duplicate_ids = sorted(k for k, count in Counter(ids).items() if count > 1)
+              if duplicate_ids:
+                  raise SystemExit(f'Duplicate institution_id values in {dataset_path}: {duplicate_ids}')
+              print(f'Validated {len(records)} institution records: {dataset_path}')
+
+          catalog_path = Path('registry/DATA_CATALOG.json')
+          catalog = json.loads(catalog_path.read_text())
+          datasets = catalog.get('datasets', [])
+          dataset_ids = [item.get('dataset_id') for item in datasets]
+          duplicate_dataset_ids = sorted(k for k, count in Counter(dataset_ids).items() if count > 1)
+          if duplicate_dataset_ids:
+              raise SystemExit(f'Duplicate dataset_id values: {duplicate_dataset_ids}')
+
+          for item in datasets:
+              local_path = item.get('path')
+              if local_path and not Path(local_path).exists():
+                  raise SystemExit(f'Catalog path does not exist: {local_path}')
+              schema_path = item.get('schema')
+              if schema_path and not Path(schema_path).exists():
+                  raise SystemExit(f'Catalog schema does not exist: {schema_path}')
+              source_index = item.get('source_index')
+              if source_index and not Path(source_index).exists():
+                  raise SystemExit(f'Catalog source index does not exist: {source_index}')
+          print(f'Validated {len(datasets)} data catalog entries')
 
   policy-guards:
     runs-on: ubuntu-latest
@@ -107,12 +137,14 @@ jobs:
             CONTRIBUTING.md
             SECURITY.md
             ROADMAP.md
+            CHANGELOG.md
             docs/README.md
             docs/ARCHITECTURE.md
             docs/CITIZEN_PROTOCOL.md
             docs/GOVERNANCE.md
             docs/TRUST_AND_SAFETY.md
             docs/DATA_GOVERNANCE.md
+            docs/DATA_CATALOG.md
             docs/GLOSSARY.md
             docs/INSTITUTION_ROUTING.md
             docs/INSTITUTION_REGISTRY_STANDARD.md
@@ -120,11 +152,15 @@ jobs:
             docs/EQUATION_BINDINGS.md
             docs/RELEASE_AND_VERSIONING.md
             docs/SPECIFICATION_STATUS.md
+            registry/DATA_CATALOG.json
+            packages/schemas/README.md
             packages/schemas/case-passport.schema.json
             packages/schemas/return-object.schema.json
             packages/schemas/institution-record.schema.json
             packages/schemas/country-adapter-manifest.schema.json
+            adapters/README.md
             adapters/thailand/adapter.manifest.json
+            adapters/thailand/SOURCES.md
           )
           for f in "${required[@]}"; do
             test -f "$f" || { echo "Missing required file: $f"; exit 1; }
@@ -137,6 +173,7 @@ jobs:
           grep -q 'morrocwi/toledo' README.md
           grep -q 'morrocwi/toledo' registry/README.md
           grep -q 'morrocwi/toledo' docs/SPECIFICATION_STATUS.md
+          grep -q '361546c934829de56f3dcff2032c740209de847a' docs/EQUATION_BINDINGS.md
 
       - name: Verify citizen safety invariants are documented
         shell: bash
@@ -146,11 +183,13 @@ jobs:
           grep -q 'P_C' docs/GLOSSARY.md
           grep -q 'Return Gate' docs/GLOSSARY.md
           grep -q 'Case Passport' docs/ARCHITECTURE.md
+          grep -q 'Academic capability != University executability' docs/GLOSSARY.md
 
   repository-hygiene:
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v4
+
       - name: Reject common secret/private-case file patterns
         shell: bash
         run: |
