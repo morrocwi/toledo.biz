@@ -4,13 +4,19 @@
   "title": "Toledo Case Step Response",
   "type": "object",
   "additionalProperties": false,
-  "required": ["case_id", "passport_version", "case_status", "closed", "passport", "protocol"],
+  "required": ["case_id", "passport_version", "case_status", "closed", "primary_thread_id", "passport", "protocol", "thread_protocols"],
   "properties": {
     "case_id": {"type": "string", "minLength": 1},
     "passport_version": {"type": "integer", "minimum": 1},
     "case_status": {"type": "string", "enum": ["OPEN", "HOLD", "CLOSED"]},
     "closed": {"type": "boolean"},
+    "primary_thread_id": {"type": "string", "pattern": "^td-[a-f0-9]{16}$"},
     "passport": {"$ref": "case-passport.schema.json"},
-    "protocol": {"$ref": "protocol-instance.schema.json"}
+    "protocol": {"$ref": "protocol-instance.schema.json"},
+    "thread_protocols": {
+      "type": "array",
+      "minItems": 1,
+      "items": {"$ref": "protocol-instance.schema.json"}
+    }
   }
 }
