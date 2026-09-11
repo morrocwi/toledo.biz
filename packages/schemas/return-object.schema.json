@@ -1,0 +1,37 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://toledo.biz/schemas/return-object.schema.json",
+  "title": "Toledo Return Object",
+  "type": "object",
+  "additionalProperties": false,
+  "required": [
+    "case_id",
+    "source_actor",
+    "plain_language_result",
+    "what_is_known",
+    "what_is_unknown",
+    "recommended_next_action",
+    "return_gate_state"
+  ],
+  "properties": {
+    "case_id": {"type": "string", "minLength": 1},
+    "source_actor": {"type": "string", "minLength": 1},
+    "source_institution": {"type": ["string", "null"]},
+    "created_at": {"type": "string", "format": "date-time"},
+    "plain_language_result": {"type": "string", "minLength": 1},
+    "technical_result": {"type": ["string", "null"]},
+    "what_is_known": {"type": "array", "items": {"type": "string"}},
+    "what_is_unknown": {"type": "array", "items": {"type": "string"}},
+    "limits": {"type": "array", "items": {"type": "string"}},
+    "recommended_next_action": {"type": "string", "minLength": 1},
+    "unsafe_actions_to_avoid": {"type": "array", "items": {"type": "string"}},
+    "data_returned_refs": {"type": "array", "items": {"type": "string"}},
+    "rights_state": {"type": ["string", "null"]},
+    "followup_trigger": {"type": ["string", "null"]},
+    "citizen_correction_possible": {"type": "boolean", "default": true},
+    "return_gate_state": {
+      "type": "string",
+      "enum": ["PASS", "HOLD_UNKNOWN", "FAIL"]
+    }
+  }
+}
