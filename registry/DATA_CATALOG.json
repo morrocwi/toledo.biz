@@ -1,69 +1,17 @@
 {
-  "catalog_version": "1.0.0",
+  "catalog_version": "1.1.0",
   "last_updated": "2026-09-11",
   "datasets": [
-    {
-      "dataset_id": "schema.case-passport",
-      "type": "schema",
-      "path": "packages/schemas/case-passport.schema.json",
-      "scope": "global",
-      "authority": "machine-contract",
-      "volatility": "schema-versioned"
-    },
-    {
-      "dataset_id": "schema.return-object",
-      "type": "schema",
-      "path": "packages/schemas/return-object.schema.json",
-      "scope": "global",
-      "authority": "machine-contract",
-      "volatility": "schema-versioned"
-    },
-    {
-      "dataset_id": "schema.institution-record",
-      "type": "schema",
-      "path": "packages/schemas/institution-record.schema.json",
-      "scope": "global",
-      "authority": "machine-contract",
-      "volatility": "schema-versioned"
-    },
-    {
-      "dataset_id": "schema.country-adapter-manifest",
-      "type": "schema",
-      "path": "packages/schemas/country-adapter-manifest.schema.json",
-      "scope": "global",
-      "authority": "machine-contract",
-      "volatility": "schema-versioned"
-    },
-    {
-      "dataset_id": "adapter.TH.manifest",
-      "type": "adapter-manifest",
-      "path": "adapters/thailand/adapter.manifest.json",
-      "scope": "TH",
-      "authority": "adapter-metadata",
-      "volatility": "medium",
-      "snapshot_date": "2026-09-11"
-    },
-    {
-      "dataset_id": "adapter.TH.institutions",
-      "type": "institution-registry",
-      "path": "adapters/thailand/institutions.seed.json",
-      "schema": "packages/schemas/institution-record.schema.json",
-      "scope": "TH",
-      "authority": "evidence-backed-routing-metadata",
-      "volatility": "field-dependent",
-      "snapshot_date": "2026-09-11",
-      "source_index": "adapters/thailand/SOURCES.md"
-    },
-    {
-      "dataset_id": "binding.toledo-citizen-bridge-v0.17",
-      "type": "equation-binding",
-      "path": "docs/EQUATION_BINDINGS.md",
-      "scope": "global",
-      "authority": "implementation-binding-only",
-      "upstream_repository": "morrocwi/toledo",
-      "upstream_status": "proposal",
-      "upstream_commit": "361546c934829de56f3dcff2032c740209de847a",
-      "volatility": "upstream-dependent"
-    }
+    {"dataset_id":"schema.case-passport","type":"schema","path":"packages/schemas/case-passport.schema.json","scope":"global","authority":"machine-contract","volatility":"schema-versioned"},
+    {"dataset_id":"schema.return-object","type":"schema","path":"packages/schemas/return-object.schema.json","scope":"global","authority":"machine-contract","volatility":"schema-versioned"},
+    {"dataset_id":"schema.institution-record","type":"schema","path":"packages/schemas/institution-record.schema.json","scope":"global","authority":"machine-contract","volatility":"schema-versioned"},
+    {"dataset_id":"schema.country-adapter-manifest","type":"schema","path":"packages/schemas/country-adapter-manifest.schema.json","scope":"global","authority":"machine-contract","volatility":"schema-versioned"},
+    {"dataset_id":"schema.protocol-compile-request","type":"schema","path":"packages/schemas/protocol-compile-request.schema.json","scope":"global","authority":"machine-contract","volatility":"schema-versioned"},
+    {"dataset_id":"schema.protocol-instance","type":"schema","path":"packages/schemas/protocol-instance.schema.json","scope":"global","authority":"machine-contract","volatility":"schema-versioned"},
+    {"dataset_id":"contract.openapi.protocol-v1","type":"openapi","path":"openapi/toledo.protocol.v1.yaml","scope":"global","authority":"api-contract","volatility":"versioned"},
+    {"dataset_id":"adapter.TH.manifest","type":"adapter-manifest","path":"adapters/thailand/adapter.manifest.json","scope":"TH","authority":"adapter-metadata","volatility":"medium","snapshot_date":"2026-09-11"},
+    {"dataset_id":"adapter.TH.institutions","type":"institution-registry","path":"adapters/thailand/institutions.seed.json","schema":"packages/schemas/institution-record.schema.json","scope":"TH","authority":"evidence-backed-routing-metadata","volatility":"field-dependent","snapshot_date":"2026-09-11","source_index":"adapters/thailand/SOURCES.md"},
+    {"dataset_id":"binding.toledo-citizen-bridge-v0.17","type":"equation-binding","path":"docs/EQUATION_BINDINGS.md","scope":"global","authority":"implementation-binding-only","upstream_repository":"morrocwi/toledo","upstream_status":"proposal","upstream_commit":"361546c934829de56f3dcff2032c740209de847a","volatility":"upstream-dependent"},
+    {"dataset_id":"mirror.toledo-citizen-bridge-v0.17","type":"equation-read-mirror","path":"registry/equation-index.json","scope":"global","authority":"mirror-only","upstream_repository":"morrocwi/toledo","upstream_status":"proposal","upstream_commit":"361546c934829de56f3dcff2032c740209de847a","volatility":"upstream-dependent"}
   ]
 }

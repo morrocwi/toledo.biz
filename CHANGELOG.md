@@ -2,53 +2,45 @@
 
 All notable repository-level changes are recorded here.
 
-The project follows the spirit of Keep a Changelog while remaining pre-1.0 and specification-first.
+The project follows the spirit of Keep a Changelog while remaining pre-1.0.
 
 ## Unreleased
 
 ### Added
 
-- structured documentation index under `docs/README.md`;
-- controlled glossary and source-of-truth hierarchy;
-- data-governance and provenance standard;
-- institution capability registry standard;
-- global country-adapter standard;
-- trust and safety model;
-- release/versioning policy;
-- specification status map;
-- architecture decision records for repository authority, Case Passport continuity, country adapters, and institution provenance;
-- country adapter manifest schema;
-- Thailand adapter manifest with known gaps and compatibility metadata;
-- schema package documentation;
-- adapters index.
+- deterministic Toledo Protocol Compiler reference runtime;
+- HTTP Protocol API (`apps/protocol_api`) with equation, protocol, institution, handoff and Return Gate endpoints;
+- MCP stdio server (`apps/mcp_server`) exposing tools and resources for AI agents;
+- pinned 36-entry machine-readable equation mirror with upstream Toledo provenance;
+- `llms.txt` AI discovery index and `.well-known/toledo.json` service manifest;
+- versioned OpenAPI contract;
+- protocol compile request / protocol instance JSON Schemas;
+- runtime unit tests and service import validation;
+- structured documentation index, controlled glossary, data governance, institution registry standard, country-adapter standard, trust/safety model, ADRs and machine data catalog.
 
 ### Changed
 
-- institution-record schema expanded with optional provenance, verification, availability, delivery-mode, localization, lifecycle, and maintenance metadata;
-- Thailand adapter documentation reorganized around routing, data quality, evidence, gaps, and privacy;
-- CI upgraded from JSON syntax checks to JSON Schema validation, unique institution-ID checks, adapter-manifest validation, documentation policy guards, and repository hygiene checks.
+- project status advanced from specification-only to pre-alpha reference runtime;
+- CI now validates runtime contracts in addition to schemas, adapters, policy guards and repository hygiene;
+- institution-record and adapter governance remains evidence/freshness aware;
+- equation mirror is explicitly lower authority than `morrocwi/toledo`.
 
 ### Governance
 
-- clarified that institution identity, service availability, accreditation, legal authority, and eligibility are distinct claims;
-- formalized source classes `S0`–`S5` and verification levels `V0`–`V3`;
-- formalized global-core/local-adapter boundary and documentation authority precedence.
+- equation statements/status remain upstream-controlled;
+- machine interfaces must disclose equation provenance and proposal/canonical status;
+- Protocol Compiler uses deterministic typed-gate behavior rather than allowing an AI model to silently override hard gates.
 
 ## 0.1.0 — 2026-09-11
 
 ### Added
 
 - citizen-first project mission and North Star;
-- reference architecture;
-- Citizen Protocol;
-- governance/rights model;
-- institutional routing model;
-- Case Passport, Return Object, and Institution Capability JSON Schemas;
+- reference architecture and Citizen Protocol;
+- Case Passport, Return Object and Institution Capability schemas;
 - Thailand institution seed registry;
 - equation binding boundary to `morrocwi/toledo`;
-- security and contribution policies;
-- baseline validation workflow;
-- project roadmap and citation metadata.
+- security/contribution policies and baseline validation workflow.
 
 ### Notes
 

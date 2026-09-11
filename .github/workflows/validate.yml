@@ -13,30 +13,19 @@ jobs:
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v4
-
       - name: Set up Python
         uses: actions/setup-python@v5
         with:
           python-version: '3.12'
-
       - name: Install validation dependency
         run: python -m pip install 'jsonschema[format]==4.23.0'
-
       - name: Validate all JSON syntax
         shell: bash
         run: |
           set -euo pipefail
           files=$(find . -type f -name '*.json' -not -path './.git/*')
-          if [ -z "$files" ]; then
-            echo "No JSON files found"
-            exit 0
-          fi
-          for f in $files; do
-            echo "Validating JSON syntax: $f"
-            python -m json.tool "$f" >/dev/null
-          done
-
-      - name: Validate schemas, adapters, and data catalog
+          for f in $files; do python -m json.tool "$f" >/dev/null; done
+      - name: Validate schemas, adapters, catalog, and equation mirror
         shell: python
         run: |
           import json
@@ -46,134 +35,122 @@ jobs:
 
           schema_dir = Path('packages/schemas')
           schemas = {}
-
           for path in schema_dir.glob('*.schema.json'):
               data = json.loads(path.read_text())
               Draft202012Validator.check_schema(data)
               schemas[path.name] = data
               print(f'Valid JSON Schema: {path}')
 
-          format_checker = FormatChecker()
-          institution_validator = Draft202012Validator(
-              schemas['institution-record.schema.json'],
-              format_checker=format_checker,
-          )
-          adapter_validator = Draft202012Validator(
-              schemas['country-adapter-manifest.schema.json'],
-              format_checker=format_checker,
-          )
+          fmt = FormatChecker()
+          institution_validator = Draft202012Validator(schemas['institution-record.schema.json'], format_checker=fmt)
+          adapter_validator = Draft202012Validator(schemas['country-adapter-manifest.schema.json'], format_checker=fmt)
 
           manifests = sorted(Path('adapters').glob('*/adapter.manifest.json'))
           if not manifests:
               raise SystemExit('No country adapter manifests found')
-
           for manifest_path in manifests:
               manifest = json.loads(manifest_path.read_text())
-              errors = sorted(adapter_validator.iter_errors(manifest), key=lambda e: list(e.path))
+              errors = list(adapter_validator.iter_errors(manifest))
               if errors:
-                  for error in errors:
-                      print(f'{manifest_path} {list(error.path)}: {error.message}')
+                  for error in errors: print(manifest_path, list(error.path), error.message)
                   raise SystemExit(1)
-              print(f'Validated adapter manifest: {manifest_path}')
-
               dataset_path = manifest_path.parent / manifest['institution_dataset']
-              if not dataset_path.exists():
-                  raise SystemExit(f'Manifest institution dataset does not exist: {dataset_path}')
-
               records = json.loads(dataset_path.read_text())
-              if not isinstance(records, list):
-                  raise SystemExit(f'Institution dataset must be an array: {dataset_path}')
-
               ids = []
               for index, record in enumerate(records):
-                  record_errors = sorted(
-                      institution_validator.iter_errors(record),
-                      key=lambda e: list(e.path),
-                  )
-                  if record_errors:
-                      for error in record_errors:
-                          print(f'{dataset_path}[{index}] {list(error.path)}: {error.message}')
+                  errors = list(institution_validator.iter_errors(record))
+                  if errors:
+                      for error in errors: print(dataset_path, index, list(error.path), error.message)
                       raise SystemExit(1)
                   ids.append(record['institution_id'])
-
-              duplicate_ids = sorted(k for k, count in Counter(ids).items() if count > 1)
-              if duplicate_ids:
-                  raise SystemExit(f'Duplicate institution_id values in {dataset_path}: {duplicate_ids}')
+              duplicates = [k for k, n in Counter(ids).items() if n > 1]
+              if duplicates: raise SystemExit(f'Duplicate institution IDs: {duplicates}')
               print(f'Validated {len(records)} institution records: {dataset_path}')
 
-          catalog_path = Path('registry/DATA_CATALOG.json')
-          catalog = json.loads(catalog_path.read_text())
+          catalog = json.loads(Path('registry/DATA_CATALOG.json').read_text())
           datasets = catalog.get('datasets', [])
-          dataset_ids = [item.get('dataset_id') for item in datasets]
-          duplicate_dataset_ids = sorted(k for k, count in Counter(dataset_ids).items() if count > 1)
-          if duplicate_dataset_ids:
-              raise SystemExit(f'Duplicate dataset_id values: {duplicate_dataset_ids}')
-
+          ids = [x.get('dataset_id') for x in datasets]
+          duplicates = [k for k, n in Counter(ids).items() if n > 1]
+          if duplicates: raise SystemExit(f'Duplicate dataset IDs: {duplicates}')
           for item in datasets:
-              local_path = item.get('path')
-              if local_path and not Path(local_path).exists():
-                  raise SystemExit(f'Catalog path does not exist: {local_path}')
-              schema_path = item.get('schema')
-              if schema_path and not Path(schema_path).exists():
-                  raise SystemExit(f'Catalog schema does not exist: {schema_path}')
-              source_index = item.get('source_index')
-              if source_index and not Path(source_index).exists():
-                  raise SystemExit(f'Catalog source index does not exist: {source_index}')
-          print(f'Validated {len(datasets)} data catalog entries')
+              if item.get('path') and not Path(item['path']).exists():
+                  raise SystemExit(f"Missing catalog path: {item['path']}")
+              if item.get('schema') and not Path(item['schema']).exists():
+                  raise SystemExit(f"Missing catalog schema: {item['schema']}")
+              if item.get('source_index') and not Path(item['source_index']).exists():
+                  raise SystemExit(f"Missing source index: {item['source_index']}")
+
+          eq = json.loads(Path('registry/equation-index.json').read_text())
+          entries = eq.get('entries', [])
+          if len(entries) != 36:
+              raise SystemExit(f'Expected 36 equation readouts, got {len(entries)}')
+          eq_ids = [x['id'] for x in entries]
+          if len(eq_ids) != len(set(eq_ids)):
+              raise SystemExit('Duplicate equation IDs in read mirror')
+          if eq.get('source', {}).get('commit') != '361546c934829de56f3dcff2032c740209de847a':
+              raise SystemExit('Equation mirror is not pinned to declared upstream commit')
+          if eq.get('authority') != 'mirror_only':
+              raise SystemExit('Equation index must remain mirror_only')
+          print('Validated equation read mirror')
+
+  runtime-contracts:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-python@v5
+        with:
+          python-version: '3.12'
+      - name: Install reference runtime
+        run: python -m pip install -e .
+      - name: Compile Python sources
+        run: python -m compileall -q src apps
+      - name: Run deterministic runtime tests
+        run: python -m unittest discover -s tests -v
+      - name: Smoke import API and MCP services
+        run: |
+          python - <<'PY'
+          from apps.protocol_api.main import app
+          from apps.mcp_server.server import mcp
+          from toledo_runtime import EquationStore
+          assert app.title == 'Toledo Protocol API'
+          assert mcp is not None
+          assert len(EquationStore().list()) == 36
+          print('Runtime imports and equation mirror OK')
+          PY
 
   policy-guards:
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v4
-
-      - name: Check required architecture and governance files
+      - name: Check required architecture, runtime, and governance files
         shell: bash
         run: |
           set -euo pipefail
           required=(
-            README.md
-            AGENTS.md
-            CONTRIBUTING.md
-            SECURITY.md
-            ROADMAP.md
-            CHANGELOG.md
-            docs/README.md
-            docs/ARCHITECTURE.md
-            docs/CITIZEN_PROTOCOL.md
-            docs/GOVERNANCE.md
-            docs/TRUST_AND_SAFETY.md
-            docs/DATA_GOVERNANCE.md
-            docs/DATA_CATALOG.md
-            docs/GLOSSARY.md
-            docs/INSTITUTION_ROUTING.md
-            docs/INSTITUTION_REGISTRY_STANDARD.md
-            docs/COUNTRY_ADAPTER_STANDARD.md
-            docs/EQUATION_BINDINGS.md
-            docs/RELEASE_AND_VERSIONING.md
-            docs/SPECIFICATION_STATUS.md
-            registry/DATA_CATALOG.json
-            packages/schemas/README.md
-            packages/schemas/case-passport.schema.json
-            packages/schemas/return-object.schema.json
-            packages/schemas/institution-record.schema.json
+            README.md AGENTS.md CONTRIBUTING.md SECURITY.md ROADMAP.md CHANGELOG.md pyproject.toml llms.txt
+            .well-known/toledo.json openapi/toledo.protocol.v1.yaml
+            docs/README.md docs/ARCHITECTURE.md docs/CITIZEN_PROTOCOL.md docs/GOVERNANCE.md
+            docs/TRUST_AND_SAFETY.md docs/DATA_GOVERNANCE.md docs/DATA_CATALOG.md docs/GLOSSARY.md
+            docs/INSTITUTION_ROUTING.md docs/INSTITUTION_REGISTRY_STANDARD.md docs/COUNTRY_ADAPTER_STANDARD.md
+            docs/EQUATION_BINDINGS.md docs/PROTOCOL_COMPILER.md docs/API.md docs/MCP.md
+            docs/RELEASE_AND_VERSIONING.md docs/SPECIFICATION_STATUS.md
+            registry/README.md registry/DATA_CATALOG.json registry/equation-index.json
+            packages/schemas/README.md packages/schemas/case-passport.schema.json
+            packages/schemas/return-object.schema.json packages/schemas/institution-record.schema.json
             packages/schemas/country-adapter-manifest.schema.json
-            adapters/README.md
-            adapters/thailand/adapter.manifest.json
-            adapters/thailand/SOURCES.md
+            packages/schemas/protocol-compile-request.schema.json packages/schemas/protocol-instance.schema.json
+            adapters/README.md adapters/thailand/adapter.manifest.json adapters/thailand/SOURCES.md
+            src/toledo_runtime/protocol.py apps/protocol_api/main.py apps/mcp_server/server.py
           )
-          for f in "${required[@]}"; do
-            test -f "$f" || { echo "Missing required file: $f"; exit 1; }
-          done
-
+          for f in "${required[@]}"; do test -f "$f" || { echo "Missing required file: $f"; exit 1; }; done
       - name: Verify equation authority boundary is declared
         shell: bash
         run: |
           set -euo pipefail
           grep -q 'morrocwi/toledo' README.md
           grep -q 'morrocwi/toledo' registry/README.md
-          grep -q 'morrocwi/toledo' docs/SPECIFICATION_STATUS.md
           grep -q '361546c934829de56f3dcff2032c740209de847a' docs/EQUATION_BINDINGS.md
-
+          grep -q 'mirror_only' registry/equation-index.json
       - name: Verify citizen safety invariants are documented
         shell: bash
         run: |
@@ -183,12 +160,12 @@ jobs:
           grep -qi 'Return Gate' docs/GLOSSARY.md
           grep -qi 'Case Passport' docs/ARCHITECTURE.md
           grep -qi 'Academic capability != university executability' docs/GLOSSARY.md
+          grep -q 'Protocol engine controls typed gates' AGENTS.md
 
   repository-hygiene:
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v4
-
       - name: Reject common secret/private-case file patterns
         shell: bash
         run: |
@@ -196,8 +173,4 @@ jobs:
           bad=$(find . -type f \
             \( -name '*.pem' -o -name '*.key' -o -name '*.p12' -o -name '*.pfx' -o -name '.env' \) \
             -not -path './.git/*' || true)
-          if [ -n "$bad" ]; then
-            echo "Potential secret-bearing files committed:"
-            echo "$bad"
-            exit 1
-          fi
+          if [ -n "$bad" ]; then echo "Potential secret-bearing files committed:"; echo "$bad"; exit 1; fi

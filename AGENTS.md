@@ -4,159 +4,92 @@ Rules for AI/code agents working in this repository.
 
 ## Required read order
 
-Before making a material change, read:
+Before a material change, read:
 
 1. `docs/README.md`
 2. `docs/SPECIFICATION_STATUS.md`
 3. `docs/GLOSSARY.md`
 4. the normative document for the layer being changed
 5. `docs/EQUATION_BINDINGS.md` when behavior depends on Toledo mathematics
+6. `docs/PROTOCOL_COMPILER.md` for runtime/routing/compiler changes
+7. `docs/API.md` or `docs/MCP.md` when changing machine interfaces
 
-For institution/country data, also read:
+For institution/country data, also read `docs/DATA_GOVERNANCE.md`, `docs/INSTITUTION_REGISTRY_STANDARD.md`, and `docs/COUNTRY_ADAPTER_STANDARD.md`.
 
-- `docs/DATA_GOVERNANCE.md`
-- `docs/INSTITUTION_REGISTRY_STANDARD.md`
-- `docs/COUNTRY_ADAPTER_STANDARD.md`
+## Authority boundaries
 
-## 1. Authority boundaries
+- `morrocwi/toledo` is authoritative for Toledo equations and provenance.
+- `registry/equation-index.json` is a pinned read mirror only.
+- Do not invent, silently modify, or promote equations in `toledo.biz`.
+- JSON Schemas and OpenAPI are machine contracts for this repository.
+- Country adapters govern only their jurisdictional routing data, subject to freshness/provenance.
 
-- `morrocwi/toledo` is the authoritative source for Toledo mathematics and equation provenance.
-- Do not invent or silently modify Toledo equations in this repository.
-- If an equation is missing, propose/register it upstream before treating it as canonical here.
-- JSON Schemas are authoritative for machine-readable object shape.
-- Country adapters are authoritative only for their own jurisdictional data, subject to provenance/freshness.
+## Citizen-first invariant
 
-## 2. Citizen-first invariant
+Every feature must preserve a path back to the citizen's original problem and goal. Do not optimize for institutional completion while losing citizen outcome.
 
-Every feature must preserve a path from implementation behavior back to the citizen's original problem and goal.
+## AI role
 
-Do not optimize for institutional completion while losing citizen outcome.
+AI is mediator/translator/router, not universal expert or truth authority. AI may structure, retrieve, compare, question, hypothesize and route; it may not silently satisfy professional, laboratory, regulatory, legal or independent-validation requirements.
 
-## 3. AI role
+## Protocol-engine rule
 
-AI is a mediator/translator/router, not a universal expert or truth authority.
+```text
+AI interprets
+Protocol engine controls typed gates
+```
 
-AI may structure, retrieve, compare, question, hypothesize, and route.
+Hard `FAIL` or `HOLD_UNKNOWN` states must never be averaged into a soft score.
 
-AI may not silently satisfy professional, laboratory, regulatory, legal, or independent-validation requirements.
-
-## 4. Hard gates
-
-Never average a hard `FAIL` or `HOLD_UNKNOWN` into a soft readiness score.
-
-Safety, authority, rights, consent, and required regulatory gates remain typed.
-
-## 5. Meaning preservation
+## Meaning preservation
 
 Keep separate:
 
 ```text
 P_C = citizen problem verbatim
 P_S = AI-structured problem
-P_D = disciplinary / institutional problem
+P_D = disciplinary/institutional problem
 ```
 
 Never overwrite `P_C`.
 
-## 6. Case continuity
+## Case continuity
 
-Institution routing must carry a Case Passport.
+Institution routing must carry a Case Passport. A valid handoff requires meaning preservation, requested capability, decision owner, consent/data scope, return obligation, response-time fit and fallback. Do not treat a generic referral as successful handoff.
 
-A valid handoff requires meaning preservation, requested capability, decision owner, consent/data scope, return obligation, response-time fit, and fallback.
-
-Do not treat a generic referral as successful handoff.
-
-## 7. Return gate
+## Return Gate
 
 External institutional work is incomplete until a Return Object reaches the citizen/decision owner in usable form.
 
-## 8. Privacy
+## Privacy
 
-Never place real sensitive case data in this public repository.
+Never place real sensitive case data in this public repository. Use synthetic fixtures only.
 
-Use synthetic fixtures. Public issues are not a citizen case store.
+## Institution freshness
 
-## 9. Institution freshness
+Never assert current program availability without evidence appropriate to that claim. Preserve `unknown` when availability, timing, price, eligibility or accreditation cannot be confirmed.
 
-Never assert current program availability without evidence appropriate to that claim.
+## Global core / local adapters
 
-Preserve `unknown` when availability, timing, price, eligibility, or accreditation cannot be confirmed.
+Keep jurisdiction-neutral logic out of country-specific adapter code. Country adapters may specialize institutions, laws, regulators, standards, language and access constraints.
 
-Every institution record needs a public source and `last_verified` date; mature records should use verification metadata.
+## No forced innovation or entrepreneurship
 
-## 10. Data provenance
+A correct local fix is a valid terminal state. A useful innovation need not become a founder-operated startup.
 
-Do not collapse:
+## Runtime changes
 
-```text
-institution identity
-service availability
-legal authority
-accreditation
-eligibility
-operational capacity
-```
+Any compiler/routing change should test at least:
 
-They may require different sources and different verification dates.
-
-## 11. Global core / local adapters
-
-Keep jurisdiction-neutral logic out of country-specific adapter code where possible.
-
-Country adapters may specialize institutions, laws, regulators, standards, language, and access constraints.
-
-If a local case reveals a missing universal concept, propose a global-core change rather than hard-coding a country workaround into core semantics.
-
-## 12. No forced innovation or entrepreneurship
-
-A correct local fix is a valid terminal state.
-
-A useful innovation need not become a founder-operated startup.
-
-## 13. Architecture decisions
-
-Changes to architecture anchors require an ADR under `docs/adr/`.
-
-Do not silently change:
-
-```text
-repository authority
-Case Passport semantics
-Return Gate semantics
-hard-gate semantics
-P0-P11 meaning
-global/local boundary
-rights decomposition
-meaning-preservation rule
-```
-
-## 14. Tests for routing changes
-
-Any routing change should test at least:
-
-- low-risk citizen+AI-only path;
+- low-risk citizen+AI path;
 - hard escalation path;
-- `HOLD_UNKNOWN` path;
 - inaccessible/ineligible institution fallback;
-- response-time failure;
-- meaning-preservation failure;
-- consent/data-scope failure;
-- return-gate failure;
-- no-restart rerouting;
-- non-founder utilization route where relevant.
+- response-time or handoff failure where relevant;
+- Return Gate behavior;
+- equation provenance/status disclosure.
 
-## 15. Documentation discipline
+Machine interfaces MUST expose equation references rather than copy equations as local authority.
 
-Prefer one primary definition per concept. Link to the authoritative definition instead of creating competing versions.
+## Change hygiene
 
-When adding time-sensitive facts, include source and verification metadata.
-
-## 16. Change hygiene
-
-For material changes:
-
-- update `CHANGELOG.md`;
-- update status/version docs if contract maturity changes;
-- validate schemas/datasets;
-- preserve backward compatibility or document migration;
-- never fabricate a release/version or canonical equation status.
+For material changes update `CHANGELOG.md`, validate schemas/data, preserve backward compatibility or document migration, and never fabricate a release or canonical equation status.
