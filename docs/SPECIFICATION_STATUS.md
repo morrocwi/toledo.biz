@@ -1,18 +1,18 @@
 # Specification Status Map
 
-This document prevents draft ideas, implementation contracts, public data, and upstream mathematics from being mistaken for one another.
+This document prevents draft ideas, implementation contracts, public data, runtime architecture, and upstream mathematics from being mistaken for one another.
 
 ## Current repository maturity
 
 ```text
 Project maturity: pre-alpha executable reference runtime
 Current public citation version: 0.1.0
-Current runtime package: 0.4.0
-Current Protocol Compiler: v0.3
+Current runtime package: 0.5.0
+Current Protocol Compiler: v0.4
 Current architecture family: Toledo Citizen Platform aligned to Toledo v0.17
 ```
 
-The repository contains a coherent specification baseline, schemas, country-adapter seed data, governance contracts, a deterministic Protocol Compiler, a stateless closed-loop Case Passport engine, a domain-neutral Problem & Capability Grammar, an HTTP API and an MCP server. It is still not a production public service.
+The repository contains a coherent specification baseline, schemas, country-adapter seed data, governance contracts, a deterministic Protocol Compiler, a stateless closed-loop Case Passport engine, a domain-neutral Problem & Capability Grammar, anchor-preserved Decision Threads, an HTTP API and an MCP server. It is still not a production public service.
 
 ## Authority classes
 
@@ -46,6 +46,7 @@ openapi/
 Controls:
 
 - Case Passport structure;
+- Decision Thread structure;
 - Case Event structure;
 - Case Step request/response structure;
 - Problem Signature structure;
@@ -64,6 +65,7 @@ Current normative/reference-contract documents include:
 docs/CITIZEN_PROTOCOL.md
 docs/ARCHITECTURE.md
 docs/PROBLEM_CAPABILITY_GRAMMAR.md
+docs/DECISION_THREADS.md
 docs/GOVERNANCE.md
 docs/TRUST_AND_SAFETY.md
 docs/DATA_GOVERNANCE.md
@@ -77,9 +79,11 @@ docs/RELEASE_AND_VERSIONING.md
 docs/GLOSSARY.md
 ```
 
+Accepted architecture decisions include ADR 0005 for anchor-preserved Decision Threads.
+
 These define intended behavior, boundaries, terminology and the reference case lifecycle.
 
-The Domain-Neutral Problem & Capability Grammar is a product/runtime architecture. It is **not** a new equation family and is **not** claimed to be a validated universal ontology of human problems.
+The Domain-Neutral Problem & Capability Grammar and Decision Thread layer are product/runtime architecture. They are **not** new equation families and are **not** claimed to be validated universal laws or ontologies.
 
 ### D. Country/jurisdiction reference data
 
@@ -118,13 +122,15 @@ They MUST NOT redefine:
 ```text
 P_C preservation
 Case Passport identity
+Decision Thread semantics
+P0-P11 semantics
 provenance semantics
 hard-gate semantics
 Return Gate semantics
 equation authority
 ```
 
-A new occupation by itself does not justify a new core protocol.
+A new occupation or industry by itself does not justify a new core protocol.
 
 ### F. Informative material
 
@@ -151,16 +157,24 @@ P_C / P_S / P_D remain separate
 P_C is not silently overwritten
 Problem Signature is a routing readout, not a diagnosis
 Candidate Signature != Endorsed Signature
-Occupation != Protocol Selector
+Occupation / Industry != Protocol Selector
 Practice Context remains available as situated context
 Unknown / unresolved is a valid state
 Case Passport preserves continuity
 Case ID is stable across ordinary rerouting
 Case version advances through auditable events
-Hard gates precede soft optimization
+Case != SingleDecision
+DecisionThread != NewCase
+ThreadPhase != CaseMaturity
+BlockedThread != FailedCase
+ThreadClosure != CaseClosure
+P0-P11 meanings are preserved and apply per Decision Thread when a case is multi-decision
+current_phase / current_decision remain the primary-thread compatibility projection
+Hard gates precede soft optimization and ordinary dependency holds
 Referral != Handoff != Collaboration
 External work requires Return-to-Citizen
 Local citizen+AI/world closure must not require a fake institutional return
+Multi-decision case closure requires all required non-cancelled threads
 Institutional completion != citizen closure
 Academic capability != University executability
 Government functions remain typed
@@ -175,24 +189,31 @@ Changes to these require an ADR and explicit migration review.
 
 Implemented but still pre-alpha:
 
-- deterministic Protocol Compiler;
+- deterministic Protocol Compiler v0.4;
 - stateless Case Passport initialization/update/recompile loop;
 - domain-neutral candidate Problem Signatures with provenance/endorsement state;
 - Barrier Signature state;
-- Practice Context preservation without occupation-specific core branching;
+- Practice Context preservation without occupation/industry-specific core branching;
+- anchor-preserved Decision Threads with thread-local P0-P11 phase, evidence, gates, capability, return and outcome state;
+- dependency blocking through `HOLD` / `HOLD_FOR_DEPENDENCY`;
+- hard safety/authority escalation precedence over dependency hold;
+- primary-thread projection for legacy callers;
+- thread-scoped events and multi-decision closure;
 - no-restart route-failure continuity;
-- local citizen-only closure separated from external Return-Gate closure;
+- local citizen/thread-only closure separated from external Return-Gate closure;
 - Return Object evaluation and citizen-closure state;
 - HTTP Protocol API;
 - MCP v2 server;
-- machine-readable equation mirror with upstream provenance.
+- machine-readable equation mirror with upstream provenance;
+- cross-domain cosmetics regression proving concurrent P1/P3/P10 decisions without a cosmetics-specific core branch.
 
-These are reference implementations, not universal scientific validation of the underlying planning heuristics or the problem grammar.
+These are reference implementations, not universal scientific validation of the underlying planning heuristics, problem grammar or Decision Thread decomposition.
 
 ## Draft / evolving areas
 
 The following remain expected to evolve:
 
+- automatic candidate-thread identification from natural language;
 - exact routing/scoring implementation;
 - controlled capability vocabulary;
 - provider capability signatures;
@@ -201,12 +222,14 @@ The following remain expected to evolve:
 - deterministic phase classifier;
 - richer meaning-preservation checks;
 - response-time/fallback evaluation;
-- richer case reopening semantics;
+- thread-level deadlines/time fit;
+- dependency-cycle detection;
+- richer case/thread reopening semantics;
 - production persistence/privacy architecture;
 - steward operating workflow;
 - UI language and interaction patterns;
 - cross-country compatibility rules;
-- cross-domain falsification suite for the Problem & Capability Grammar;
+- cross-domain falsification suite for the Problem & Capability Grammar and Decision Threads;
 - canonical promotion of citizen-bridge equation proposals upstream.
 
 ## Equation binding status
@@ -222,7 +245,7 @@ docs/EQUATION_BINDINGS.md
 morrocwi/toledo/registry/proposals/TOLEDO_CITIZEN_BRIDGE_v0.17.json
 ```
 
-No equation-status promotion is implied by the addition of the Domain-Neutral Problem & Capability Grammar.
+No equation-status promotion is implied by the addition of the Domain-Neutral Problem & Capability Grammar or Decision Threads.
 
 ## Change-control rule
 
@@ -232,15 +255,17 @@ A change requires an ADR when it materially alters any of:
 repository authority boundary
 Case Passport concept
 Case identity/version semantics
+Decision Thread semantics
+primary-thread projection semantics
 Problem Signature semantics
-occupation-neutral core rule
+occupation/industry-neutral core rule
 Return Gate semantics
 citizen closure semantics
 hard-gate semantics
 global-core/country-adapter/domain-adapter boundary
 citizen meaning-preservation rule
 rights decomposition
-phase semantics
+P0-P11 phase semantics
 ```
 
 A data refresh or non-semantic wording fix normally does not require an ADR.
@@ -254,13 +279,16 @@ A downstream implementation may call itself Toledo Citizen Platform-compatible o
 - candidate/endorsed Problem Signature distinction when signatures are used;
 - provenance for material AI-added problem distinctions;
 - unknown/unresolved states instead of forced classification;
-- occupation/practice context without occupation-specific core lock-in;
-- typed hard gates;
+- occupation/practice context without occupation/industry-specific core lock-in;
+- P0-P11 phase meanings rather than replacing them with a new maturity system;
+- separate Decision Threads when materially different concurrent decisions cannot be represented faithfully by one phase;
+- explicit dependency blocking rather than premature downstream execution;
+- typed hard gates with safety/authority precedence;
 - explicit consent/data scope;
 - valid handoff requirements;
 - return-to-citizen requirement for external work;
 - valid local closure without a fake external Return Object;
-- no false closure from institutional output alone;
+- no false multi-decision closure while required threads remain unresolved;
 - non-collapse of academic fit and institutional executability;
 - jurisdiction-specific authority handling;
 - upstream equation provenance boundary.
