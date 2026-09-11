@@ -6,6 +6,7 @@ Purpose: help citizens turn lived experience into usable knowledge and safe next
 https://github.com/morrocwi/toledo.biz/blob/main/docs/PROTOCOL_COMPILER.md
 https://github.com/morrocwi/toledo.biz/blob/main/docs/CASE_LIFECYCLE.md
 https://github.com/morrocwi/toledo.biz/blob/main/docs/PROBLEM_CAPABILITY_GRAMMAR.md
+https://github.com/morrocwi/toledo.biz/blob/main/docs/EXECUTION_ROUTING.md
 https://github.com/morrocwi/toledo.biz/blob/main/docs/DECISION_THREADS.md
 https://github.com/morrocwi/toledo.biz/blob/main/docs/GLOSSARY.md
 https://github.com/morrocwi/toledo.biz/blob/main/docs/TRUST_AND_SAFETY.md
@@ -31,9 +32,32 @@ Machine contract:
 https://raw.githubusercontent.com/morrocwi/toledo.biz/main/packages/schemas/problem-signature.schema.json
 
 Core flow:
-P_C -> candidate signatures -> citizen/evidence endorsement -> barrier state -> minimal protocol -> capability need -> optional domain adapter -> provider/world action -> case update.
+P_C -> candidate signatures -> citizen/evidence endorsement -> barrier state -> minimal protocol -> capability need -> flexible execution routing -> optional domain adapter/provider/world action -> case update.
 
 Unknown and unresolved states are valid outputs. Do not fabricate missing context.
+
+## Flexible execution routing
+P0-P11 are routing context, not a mandatory sequence and not an expert selector.
+
+AI is `MEDIATOR_TRANSLATOR`: it connects citizen language, knowledge-like sources/readouts, interaction experts, field/front-line experts, tools/infrastructure, institutions/authorities and world return. AI is not an expert class, licensed authority, laboratory, regulator or independent validator.
+
+Keep distinct:
+- `INTERACTION_EXPERT`: expertise expressed through elicitation, interpretation, dialogue, teaching, negotiation, requirements clarification or stakeholder interaction.
+- `FIELD_EXPERT`: situated/front-line expertise grounded in direct practice, tacit distinctions, physical context and repeated world contact.
+- `KNOWLEDGE_LIKE_SOURCE` / `K*_0` / `K*_I`: provisional structured material, not a human expert and not a truth certificate.
+- licensed professional, lab infrastructure, regulatory authority, tools and original documents: separate overlays/requirements.
+
+A bounded reversible world or market test may run before later expert/institution phases when no hard safety, authority, permission, credential, unresolved Return Gate or Decision Thread dependency blocks it.
+
+ForwardExperiment != PermissionToIgnoreHardGates.
+MarketEntry != CaseClosure.
+
+Machine contract:
+https://raw.githubusercontent.com/morrocwi/toledo.biz/main/packages/schemas/execution-routing.schema.json
+
+Compiler output fields:
+- execution_routing
+- execution_requirements
 
 ## Decision Threads
 One Case Passport may contain several simultaneous decisions at different P0-P11 routing phases.
@@ -54,7 +78,7 @@ New agents should inspect all thread_protocols before recommending downstream co
 
 ## Closed-loop protocol
 Preferred loop:
-Citizen input -> initialize_case -> Case Passport -> candidate signatures / Decision Threads -> advance_case -> action/world/institution -> update_case/advance_case with event -> Return Object when external contribution is used -> thread outcomes -> citizen-level outcome -> STOP.
+Citizen input -> initialize_case -> Case Passport -> candidate signatures / Decision Threads -> advance_case -> execution routing -> action/world/institution -> update_case/advance_case with event -> Return Object when external contribution is used -> thread outcomes -> citizen-level outcome -> STOP.
 
 The Case Passport is caller-held in the public reference runtime. Do not assume this repository is a sensitive-data store.
 
@@ -79,21 +103,32 @@ Important routes:
 - /v1/returns/validate
 - /v1/schemas/problem-signature
 - /v1/schemas/decision-thread
+- /v1/schemas/execution-routing
 
 ## MCP
 Reference server: apps/mcp_server/server.py
 Equation tools: get_equation, search_equations
 Protocol tools: compile_citizen_protocol, compile_case_threads, initialize_case, update_case, advance_case
 Routing/gate tools: route_institutions, check_handoff, check_return_gate
-Resources: toledo://equations/index, toledo://equations/{id}, toledo://protocol/compiler, toledo://protocol/case-lifecycle, toledo://protocol/problem-capability-grammar, toledo://protocol/decision-threads, toledo://schema/problem-signature, toledo://schema/decision-thread, Toledo schemas.
+Resources: toledo://equations/index, toledo://equations/{id}, toledo://protocol/compiler, toledo://protocol/case-lifecycle, toledo://protocol/problem-capability-grammar, toledo://protocol/execution-routing, toledo://protocol/decision-threads, toledo://schema/problem-signature, toledo://schema/decision-thread, toledo://schema/execution-routing, Toledo schemas.
 
 ## Invariants
 AI-first != AI-only.
+AI != ExpertClass.
+AITranslation != IndependentValidation.
+KnowledgeLike != HumanExpert.
+KnowledgeLike != TruthCertificate.
+InteractionExpert != FieldExpert.
+Expertise != Authority.
 Observation != Interpretation != Diagnosis.
 Occupation != ProtocolSelector.
 Industry != ProtocolSelector.
 ProblemSignature != Diagnosis.
 CandidateSignature != EndorsedSignature.
+Phase != ExpertSelector.
+Phase != MandatorySequence.
+ForwardExperiment != PermissionToIgnoreHardGates.
+MarketEntry != CaseClosure.
 Case != SingleDecision.
 DecisionThread != NewCase.
 ThreadPhase != CaseMaturity.
@@ -104,4 +139,4 @@ Referral != Handoff != Collaboration.
 Institutional output != Citizen outcome.
 Route failure != case restart.
 Do not overwrite P_C, the citizen problem verbatim.
-Do not treat proposal equations or Decision Threads as validated universal laws.
+Do not treat proposal equations, execution routing or Decision Threads as validated universal laws.
