@@ -246,7 +246,7 @@ observe
 -> return to measurement or expert review later
 ```
 
-when the action is sufficiently bounded and reversible and no hard safety, confirmed authority, unresolved candidate high-authority signal, permission, credential, unresolved-return, or dependency gate blocks it.
+when the relevant action has enough positive evidence of boundedness/reversibility and no hard safety, confirmed authority, unresolved candidate high-authority signal, permission, credential, unresolved-return, or dependency gate blocks it.
 
 Therefore:
 
@@ -254,13 +254,14 @@ Therefore:
 EarlierPhase != MustWaitForAllLaterExpertise
 LaterMarketContact != ProofOfValidity
 MarketEntry != CaseClosure
+UnknownRisk != LowRisk
 ```
 
-A real transaction or market test can itself generate world-side evidence.
+A real transaction or market test can itself generate world-side evidence, but absence of a known risk is not evidence that a market-facing test is safe.
 
 ## 6. Bounded forward experiment
 
-A compiler may expose:
+A compiler may expose a generic world-side information action through:
 
 ```text
 forward_experiment.allowed = true
@@ -280,17 +281,34 @@ irreversibility is not known HIGH
 third-party exposure is not known HIGH
 ```
 
-When a market signal is present, the compiler may additionally expose:
+A **market-facing** forward test has a stronger condition. The reference runtime exposes:
 
 ```text
+market_test_candidate = true
 BOUNDED_MARKET_TEST
 ```
 
-as a candidate world-side information route.
+only when the working state positively establishes:
+
+```text
+Problem Signature is ENDORSED
+authority_need = NONE
+irreversibility = LOW
+third_party_exposure = LOW
+all generic forward-action gates above also pass
+```
+
+Therefore market language, a desire to launch, or the absence of known bad evidence is not enough by itself:
+
+```text
+MarketIntent != MarketTestPermission
+UnknownAuthority != AuthorityNone
+UnknownThirdPartyRisk != LowThirdPartyRisk
+```
+
+This preserves non-linear learning without turning uncertainty into permission.
 
 This is not permission to ignore law, safety, consent, rights, consumer protection, professional boundaries, or sector regulation.
-
-It is a rule against unnecessary sequencing.
 
 ## 7. Execution Requirement Matrix
 
@@ -359,7 +377,7 @@ P7-P11 often increase the value of partner, market, transaction, scale or cross-
 
 But these are not hard mappings.
 
-A P1 thread can reach a bounded customer test if safe and useful. A P10 thread can still need a basic field observation. A P3 thread may be resolved locally if the supposed need for escalation disappears after better evidence.
+A P1 thread can reach a bounded customer test if the positive bounded-market conditions are satisfied. A P10 thread can still need a basic field observation. A P3 thread may be resolved locally if the supposed need for escalation disappears after better evidence.
 
 ## 9. Expert selection
 
@@ -449,8 +467,9 @@ AI connects the operator's observations to a test plan and, if useful, a technic
 P_C:
 "Customers like the sample but I do not know whether they will pay."
 
-low-risk reversible offer
-no regulatory/permission block
+endorsed low-risk reversible offer
+authority_need = NONE
+third_party_exposure = LOW
 
 candidate route:
 INTERACTION_EXPERT (optional/candidate)
@@ -459,6 +478,20 @@ WORLD_TEST
 ```
 
 The bounded market test may occur before formal innovation or expert escalation. A sale is evidence of one economic interaction, not proof that every quality, legal, safety, or scale question is solved.
+
+### Unknown market state
+
+```text
+P_C:
+"I want to launch this product."
+
+authority / irreversibility / third-party exposure not yet established
+
+result:
+market_test_candidate = false
+```
+
+The system may still compile the next information action, but it does not infer permission to expose customers from missing safety/authority context.
 
 ### Candidate regulated claim
 
@@ -540,6 +573,8 @@ InteractionExpert != FieldExpert
 Expertise != Authority
 Phase != ExpertSelector
 Phase != MandatorySequence
+MarketIntent != MarketTestPermission
+UnknownRisk != LowRisk
 MarketTest != ValidationOfEverything
 MarketEntry != CaseClosure
 ForwardExperiment != PermissionToIgnoreHardGates
