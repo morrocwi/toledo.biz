@@ -2,7 +2,7 @@
 
 This directory is the documentation entry point for `morrocwi/toledo.biz`.
 
-The repository follows a **specification-first, evidence-aware, executable-protocol, global-core/local-adapter** structure. Citizen-facing behavior should stay simple; governance, data, equation provenance and routing contracts behind it should stay explicit and auditable.
+The repository follows a **specification-first, evidence-aware, executable-protocol, domain-neutral-core, global-core/local-adapter** structure. Citizen-facing behavior should stay simple; governance, data, equation provenance and routing contracts behind it should stay explicit and auditable.
 
 ## Runtime and machine access
 
@@ -10,6 +10,7 @@ The repository follows a **specification-first, evidence-aware, executable-proto
 |---|---|---|
 | [`PROTOCOL_COMPILER.md`](PROTOCOL_COMPILER.md) | Deterministic minimal-subgraph compiler and recompile semantics | Reference runtime contract |
 | [`CASE_LIFECYCLE.md`](CASE_LIFECYCLE.md) | Versioned Case Passport, event loop, return and closure semantics | Normative runtime contract |
+| [`PROBLEM_CAPABILITY_GRAMMAR.md`](PROBLEM_CAPABILITY_GRAMMAR.md) | Domain-neutral problem signatures, barriers, optional domain adapters, cross-domain scaling rules | Normative architecture extension |
 | [`API.md`](API.md) | HTTP API usage and endpoint map | Reference implementation |
 | [`MCP.md`](MCP.md) | MCP tools/resources for AI agents | Reference implementation |
 | [`../openapi/toledo.protocol.v1.yaml`](../openapi/toledo.protocol.v1.yaml) | Versioned API contract | Machine contract |
@@ -24,6 +25,7 @@ The repository follows a **specification-first, evidence-aware, executable-proto
 | [`../README.md`](../README.md) | Project overview, boundaries, current maturity | Informative |
 | [`CITIZEN_PROTOCOL.md`](CITIZEN_PROTOCOL.md) | Plain-language citizen workflow | Normative for product behavior |
 | [`ARCHITECTURE.md`](ARCHITECTURE.md) | Reference system architecture | Normative architecture baseline |
+| [`PROBLEM_CAPABILITY_GRAMMAR.md`](PROBLEM_CAPABILITY_GRAMMAR.md) | Scaling layer that prevents occupation/domain-specific core explosion | Normative |
 | [`GLOSSARY.md`](GLOSSARY.md) | Controlled vocabulary | Normative terminology |
 | [`SPECIFICATION_STATUS.md`](SPECIFICATION_STATUS.md) | Stable/draft/upstream-controlled status map | Normative status map |
 
@@ -40,12 +42,32 @@ The repository follows a **specification-first, evidence-aware, executable-proto
 
 | Document | Purpose | Status |
 |---|---|---|
+| [`PROBLEM_CAPABILITY_GRAMMAR.md`](PROBLEM_CAPABILITY_GRAMMAR.md) | Problem/Barrier Signature to required capability; optional domain adapter boundary | Normative |
 | [`INSTITUTION_ROUTING.md`](INSTITUTION_ROUTING.md) | Capability-first routing model | Normative |
 | [`INSTITUTION_REGISTRY_STANDARD.md`](INSTITUTION_REGISTRY_STANDARD.md) | Institution-record data standard and verification rules | Normative |
 | [`COUNTRY_ADAPTER_STANDARD.md`](COUNTRY_ADAPTER_STANDARD.md) | Requirements for jurisdiction/country adapters | Normative |
 | [`DATA_CATALOG.md`](DATA_CATALOG.md) | Human-readable dataset catalog | Reference |
 | [`../registry/DATA_CATALOG.json`](../registry/DATA_CATALOG.json) | Machine-readable dataset catalog | Machine reference |
-| [`../adapters/thailand/README.md`](../adapters/thailand/README.md) | Thailand reference adapter | Reference implementation |
+| [`../adapters/thailand/README.md`](../adapters/thailand/README.md) | Thailand reference country adapter | Reference implementation |
+
+## Machine schemas
+
+Important contracts include:
+
+```text
+case-passport.schema.json
+case-event.schema.json
+case-step-request.schema.json
+case-step-response.schema.json
+problem-signature.schema.json
+return-object.schema.json
+institution-record.schema.json
+country-adapter-manifest.schema.json
+protocol-compile-request.schema.json
+protocol-instance.schema.json
+```
+
+`problem-signature.schema.json` is deliberately domain-neutral. It carries candidate signatures, facet provenance, context gaps, barrier state and whether an optional domain adapter may be needed. It is not an ontology of truth.
 
 ## Mathematical authority and bindings
 
@@ -70,7 +92,7 @@ When artifacts disagree, use this precedence:
 1. **Upstream Toledo mathematics** in `morrocwi/toledo` for equation statement, lineage and status.
 2. **JSON Schemas / OpenAPI** for machine-readable data and API contracts.
 3. **Normative documentation** for behavior and governance.
-4. **Country adapters / evidence-backed snapshots** for jurisdiction-specific routing facts.
+4. **Country/domain adapters / evidence-backed snapshots** for jurisdiction- or domain-specific routing constraints.
 5. **Equation mirror** only as a pinned convenience readout; never higher than upstream.
 6. **Examples, README prose, issues and roadmap** as informative material.
 
