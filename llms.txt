@@ -4,6 +4,7 @@ Purpose: help citizens turn lived experience into usable knowledge and safe next
 
 ## Read first
 https://github.com/morrocwi/toledo.biz/blob/main/docs/PROTOCOL_COMPILER.md
+https://github.com/morrocwi/toledo.biz/blob/main/docs/CASE_LIFECYCLE.md
 https://github.com/morrocwi/toledo.biz/blob/main/docs/GLOSSARY.md
 https://github.com/morrocwi/toledo.biz/blob/main/docs/TRUST_AND_SAFETY.md
 https://github.com/morrocwi/toledo.biz/blob/main/docs/EQUATION_BINDINGS.md
@@ -17,15 +18,35 @@ Current status: proposal/new derivation unless upstream says otherwise.
 ## Machine-readable equation mirror
 https://raw.githubusercontent.com/morrocwi/toledo.biz/main/registry/equation-index.json
 
+Use equation IDs directly. Preserve each equation's upstream status and provenance.
+
+## Closed-loop protocol
+Preferred loop:
+Citizen input -> initialize_case -> Case Passport -> advance_case -> action/world/institution -> update_case/advance_case with event -> Return Object -> outcome -> STOP.
+
+The Case Passport is caller-held in the public reference runtime. Do not assume this repository is a sensitive-data store.
+
+P_C = citizen_problem_verbatim is immutable under ordinary events. P_S and P_D are separate representations.
+
 ## API
 Reference implementation: apps/protocol_api/main.py
 OpenAPI contract: openapi/toledo.protocol.v1.yaml
-Important routes: /v1/equations, /v1/protocols/compile, /v1/institutions, /v1/handoffs/validate, /v1/returns/validate
+Important routes:
+- /v1/equations
+- /v1/protocols/compile
+- /v1/cases/init
+- /v1/cases/update
+- /v1/cases/step
+- /v1/institutions
+- /v1/handoffs/validate
+- /v1/returns/validate
 
 ## MCP
 Reference server: apps/mcp_server/server.py
-Tools: get_equation, search_equations, compile_citizen_protocol, route_institutions, check_handoff, check_return_gate
-Resources: toledo://equations/index, toledo://equations/{id}, toledo://protocol/compiler, Toledo schemas.
+Equation tools: get_equation, search_equations
+Protocol tools: compile_citizen_protocol, initialize_case, update_case, advance_case
+Routing/gate tools: route_institutions, check_handoff, check_return_gate
+Resources: toledo://equations/index, toledo://equations/{id}, toledo://protocol/compiler, toledo://protocol/case-lifecycle, Toledo schemas.
 
 ## Invariants
 AI-first != AI-only.
@@ -33,5 +54,6 @@ Observation != Interpretation != Diagnosis.
 Academic capability != University executability.
 Referral != Handoff != Collaboration.
 Institutional output != Citizen outcome.
+Route failure != case restart.
 Do not overwrite P_C, the citizen problem verbatim.
 Do not treat proposal equations as validated universal laws.
