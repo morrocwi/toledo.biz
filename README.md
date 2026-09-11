@@ -12,9 +12,10 @@ Toledo Citizen Platform is the citizen-facing implementation layer of the Toledo
 |---|---|
 | Product maturity | **Pre-alpha reference runtime** |
 | Public citation version | `0.1.0` |
-| Runtime package | `0.3.0` |
+| Runtime package | `0.4.0` |
 | Architecture baseline | aligned to Toledo citizen/cross-actor framework v0.17 |
-| Protocol Compiler | **reference v0.2 implemented** |
+| Protocol Compiler | **reference v0.3 implemented** |
+| Domain-neutral Problem & Capability Grammar | **normative architecture + machine schema implemented** |
 | Closed-loop Case Passport | **implemented; stateless reference lifecycle** |
 | Protocol API | **reference implementation available** |
 | MCP server | **reference stdio server available** |
@@ -28,11 +29,15 @@ This repository is not yet a production public service. The runtime is intention
 ## Closed-loop citizen flow
 
 ```text
-REAL-LIFE PROBLEM
+REAL-LIFE PROBLEM (P_C preserved)
       ↓
 CASE PASSPORT v1
       ↓
-AI-MEDIATED STRUCTURE
+AI-MEDIATED CANDIDATE SIGNATURE(S)
+      ↓
+CITIZEN / EVIDENCE ENDORSEMENT or HOLD_UNKNOWN
+      ↓
+PROBLEM + BARRIER STATE
       ↓
 PROTOCOL COMPILER
       ↓
@@ -40,18 +45,43 @@ MINIMUM RELEVANT SUBGRAPH / NEXT ACTION
       ↓
 Citizen+AI / World / Expert / Lab / University / Public Service / Regulator
       ↓
-CASE EVENT or RETURN OBJECT
+CASE EVENT or RETURN OBJECT when external work is used
       ↓
 CASE PASSPORT v2...vN
       ↓
 RECOMPILE
       ↓
-RETURN GATE + CITIZEN OUTCOME
+CITIZEN OUTCOME
       ↓
 STOP / or continue from the same case
 ```
 
 A good local solution is a complete success. A citizen does **not** have to become a researcher, inventor, or entrepreneur.
+
+## Scale without one protocol per occupation
+
+Toledo does not attempt to maintain a mushroom-farmer protocol, mechanic protocol, teacher protocol, shop-owner protocol, and thousands of other bespoke cores.
+
+```text
+Occupation != ProtocolSelector
+```
+
+Occupation and practice history are preserved as context because they may contain experiential expertise. The core instead represents the problem through candidate signatures, context gaps, barriers, risk/authority needs and required capabilities.
+
+```text
+P_C
+→ Candidate Signature(s)
+→ Endorsed / unresolved working signature
+→ Barrier State
+→ Minimal Protocol
+→ Capability Need
+→ Optional Domain Adapter
+→ Provider / World Action
+```
+
+The Problem Signature is a routing readout, not a diagnosis and not a universal ontology of reality.
+
+See [`docs/PROBLEM_CAPABILITY_GRAMMAR.md`](docs/PROBLEM_CAPABILITY_GRAMMAR.md) and [`packages/schemas/problem-signature.schema.json`](packages/schemas/problem-signature.schema.json).
 
 ## Machine access for AI systems
 
@@ -65,6 +95,7 @@ Start here:
 
 ```text
 llms.txt
+docs/PROBLEM_CAPABILITY_GRAMMAR.md
 docs/PROTOCOL_COMPILER.md
 docs/CASE_LIFECYCLE.md
 docs/API.md
@@ -86,10 +117,11 @@ The preferred machine loop is:
 
 ```text
 initialize_case
+→ optional SIGNATURE_CANDIDATES_UPDATED / SIGNATURE_ENDORSED / BARRIER_UPDATED
 → advance_case
 → world/institution action
 → update_case or advance_case(event)
-→ Return Object
+→ Return Object when an external actor was used
 → OUTCOME_UPDATED
 → STOP when citizen closure is satisfied
 ```
@@ -114,12 +146,22 @@ The current citizen-bridge family is pinned to upstream proposal commit:
 
 `registry/equation-index.json` is a **read mirror**, not canonical authority. Responses preserve proposal status and upstream provenance.
 
+The Problem & Capability Grammar does not create new Toledo equations. Any future equation change belongs upstream.
+
 ## Core invariants
 
 ```text
 AI-first != AI-only
 Observation != Interpretation != Diagnosis
-P_C != P_S != P_D
+P_C != P_S != P_D != ProblemSignature
+Occupation != ProtocolSelector
+PracticeContext != IrrelevantContext
+ProblemSignature != Diagnosis
+CandidateSignature != EndorsedSignature
+Unknown != Failure
+MissingEvidence != NegativeEvidence
+DomainAdapter != NewCore
+ProviderName != Capability
 Academic capability != University executability
 Referral != Handoff != Collaboration
 Institutional output != Citizen outcome
@@ -132,6 +174,27 @@ Vehicle != Matching channel
 ```
 
 The citizen's original problem `P_C = citizen_problem_verbatim` is preserved and cannot be silently overwritten by ordinary Case Events.
+
+## Closure semantics
+
+External work must return to the citizen through the Return Gate.
+
+A local citizen+AI/world case that never used an external actor does not need a fake institutional Return Object. It may close only when the citizen outcome reaches a closure state and no unresolved hard safety/authority trigger remains.
+
+```text
+local:
+external_actor_used = false
++ Return Gate = NOT_APPLICABLE
++ citizen outcome
++ safety/authority satisfied
+→ CLOSED
+
+external route:
+external_actor_used = true
++ Return Gate = PASS
++ citizen outcome
+→ CLOSED
+```
 
 ## Routing phases
 
@@ -176,13 +239,17 @@ CITIZEN ↔ AI ↔ CASE STEWARD ↔ CASE PASSPORT
                           CASE EVENT / RECOMPILE
 ```
 
-The platform routes by **capability, eligibility, access, evidence need, time fit, rights, and burden** — not prestige.
+The platform routes by **capability, eligibility, access, evidence need, time fit, rights, and burden** — not prestige or occupation label.
 
 ## Global core, local adapters
 
-The global core is jurisdiction-neutral. Country adapters contain institutions, regulators, standards, public programs, language, and local access constraints.
+The global core is jurisdiction-neutral and domain-neutral at the protocol level.
 
-Current adapter:
+Country adapters contain institutions, regulators, standards, public programs, language, and local access constraints.
+
+Optional domain adapters add specialized vocabulary, hazards, measurement/sample rules, professional boundaries, regulation or provider mappings only when materially required.
+
+Current country adapter:
 
 - [`adapters/thailand/`](adapters/thailand/) — reference adapter with evidence-backed institution seed data and explicit known gaps.
 
@@ -192,6 +259,7 @@ Start with [`docs/README.md`](docs/README.md).
 
 Key runtime documents:
 
+- [`docs/PROBLEM_CAPABILITY_GRAMMAR.md`](docs/PROBLEM_CAPABILITY_GRAMMAR.md)
 - [`docs/PROTOCOL_COMPILER.md`](docs/PROTOCOL_COMPILER.md)
 - [`docs/CASE_LIFECYCLE.md`](docs/CASE_LIFECYCLE.md)
 - [`docs/API.md`](docs/API.md)
@@ -210,7 +278,7 @@ Key governance documents:
 
 ## Schemas
 
-Machine-readable contracts live in [`packages/schemas/`](packages/schemas/), including Case Passport, Case Event, Case Step request/response, Return Object, institution records, country adapters, protocol compile requests and protocol instances.
+Machine-readable contracts live in [`packages/schemas/`](packages/schemas/), including Case Passport, Case Event, Case Step request/response, Problem Signature, Return Object, institution records, country adapters, protocol compile requests and protocol instances.
 
 ## Repository layout
 
