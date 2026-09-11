@@ -7,12 +7,12 @@ This document prevents draft ideas, implementation contracts, public data, and u
 ```text
 Project maturity: pre-alpha executable reference runtime
 Current public citation version: 0.1.0
-Current runtime package: 0.3.0
-Current Protocol Compiler: v0.2
+Current runtime package: 0.4.0
+Current Protocol Compiler: v0.3
 Current architecture family: Toledo Citizen Platform aligned to Toledo v0.17
 ```
 
-The repository contains a coherent specification baseline, schemas, country-adapter seed data, governance contracts, a deterministic Protocol Compiler, a stateless closed-loop Case Passport engine, an HTTP API and an MCP server. It is still not a production public service.
+The repository contains a coherent specification baseline, schemas, country-adapter seed data, governance contracts, a deterministic Protocol Compiler, a stateless closed-loop Case Passport engine, a domain-neutral Problem & Capability Grammar, an HTTP API and an MCP server. It is still not a production public service.
 
 ## Authority classes
 
@@ -48,6 +48,7 @@ Controls:
 - Case Passport structure;
 - Case Event structure;
 - Case Step request/response structure;
+- Problem Signature structure;
 - Return Object structure;
 - Institution Capability Record structure;
 - protocol instance shape;
@@ -62,6 +63,7 @@ Current normative/reference-contract documents include:
 ```text
 docs/CITIZEN_PROTOCOL.md
 docs/ARCHITECTURE.md
+docs/PROBLEM_CAPABILITY_GRAMMAR.md
 docs/GOVERNANCE.md
 docs/TRUST_AND_SAFETY.md
 docs/DATA_GOVERNANCE.md
@@ -76,6 +78,8 @@ docs/GLOSSARY.md
 ```
 
 These define intended behavior, boundaries, terminology and the reference case lifecycle.
+
+The Domain-Neutral Problem & Capability Grammar is a product/runtime architecture. It is **not** a new equation family and is **not** claimed to be a validated universal ontology of human problems.
 
 ### D. Country/jurisdiction reference data
 
@@ -92,9 +96,37 @@ Status:
 - not universal;
 - not mathematical authority.
 
-Thailand is currently the reference adapter.
+Thailand is currently the reference country adapter.
 
-### E. Informative material
+### E. Optional domain adapters
+
+Domain adapters may be added when safety, professional authority, specialized measurement/sample handling, regulation, high-risk terminology, or provider matching materially requires specialization.
+
+They may add:
+
+```text
+vocabulary
+hazards
+professional boundaries
+measurement/sample rules
+sector regulation
+provider mappings
+```
+
+They MUST NOT redefine:
+
+```text
+P_C preservation
+Case Passport identity
+provenance semantics
+hard-gate semantics
+Return Gate semantics
+equation authority
+```
+
+A new occupation by itself does not justify a new core protocol.
+
+### F. Informative material
 
 Includes:
 
@@ -117,18 +149,24 @@ Citizen owns the original life problem
 AI-first != AI-only
 P_C / P_S / P_D remain separate
 P_C is not silently overwritten
+Problem Signature is a routing readout, not a diagnosis
+Candidate Signature != Endorsed Signature
+Occupation != Protocol Selector
+Practice Context remains available as situated context
+Unknown / unresolved is a valid state
 Case Passport preserves continuity
 Case ID is stable across ordinary rerouting
 Case version advances through auditable events
 Hard gates precede soft optimization
 Referral != Handoff != Collaboration
-Return-to-citizen is mandatory
+External work requires Return-to-Citizen
+Local citizen+AI/world closure must not require a fake institutional return
 Institutional completion != citizen closure
 Academic capability != University executability
 Government functions remain typed
 Problem resolution does not require innovation
 Innovation does not require founder entrepreneurship
-Global core / local adapter separation
+Global core / country adapter / optional domain adapter separation
 ```
 
 Changes to these require an ADR and explicit migration review.
@@ -139,13 +177,17 @@ Implemented but still pre-alpha:
 
 - deterministic Protocol Compiler;
 - stateless Case Passport initialization/update/recompile loop;
+- domain-neutral candidate Problem Signatures with provenance/endorsement state;
+- Barrier Signature state;
+- Practice Context preservation without occupation-specific core branching;
 - no-restart route-failure continuity;
+- local citizen-only closure separated from external Return-Gate closure;
 - Return Object evaluation and citizen-closure state;
 - HTTP Protocol API;
 - MCP v2 server;
 - machine-readable equation mirror with upstream provenance.
 
-These are reference implementations, not universal scientific validation of the underlying planning heuristics.
+These are reference implementations, not universal scientific validation of the underlying planning heuristics or the problem grammar.
 
 ## Draft / evolving areas
 
@@ -153,13 +195,18 @@ The following remain expected to evolve:
 
 - exact routing/scoring implementation;
 - controlled capability vocabulary;
+- provider capability signatures;
+- domain-adapter trigger logic;
 - institution data freshness automation;
 - deterministic phase classifier;
+- richer meaning-preservation checks;
+- response-time/fallback evaluation;
 - richer case reopening semantics;
 - production persistence/privacy architecture;
 - steward operating workflow;
 - UI language and interaction patterns;
 - cross-country compatibility rules;
+- cross-domain falsification suite for the Problem & Capability Grammar;
 - canonical promotion of citizen-bridge equation proposals upstream.
 
 ## Equation binding status
@@ -175,6 +222,8 @@ docs/EQUATION_BINDINGS.md
 morrocwi/toledo/registry/proposals/TOLEDO_CITIZEN_BRIDGE_v0.17.json
 ```
 
+No equation-status promotion is implied by the addition of the Domain-Neutral Problem & Capability Grammar.
+
 ## Change-control rule
 
 A change requires an ADR when it materially alters any of:
@@ -183,10 +232,12 @@ A change requires an ADR when it materially alters any of:
 repository authority boundary
 Case Passport concept
 Case identity/version semantics
+Problem Signature semantics
+occupation-neutral core rule
 Return Gate semantics
 citizen closure semantics
 hard-gate semantics
-global-core/local-adapter boundary
+global-core/country-adapter/domain-adapter boundary
 citizen meaning-preservation rule
 rights decomposition
 phase semantics
@@ -200,10 +251,15 @@ A downstream implementation may call itself Toledo Citizen Platform-compatible o
 
 - original citizen problem representation;
 - stable Case Passport identity and auditable version changes;
+- candidate/endorsed Problem Signature distinction when signatures are used;
+- provenance for material AI-added problem distinctions;
+- unknown/unresolved states instead of forced classification;
+- occupation/practice context without occupation-specific core lock-in;
 - typed hard gates;
 - explicit consent/data scope;
 - valid handoff requirements;
-- return-to-citizen requirement;
+- return-to-citizen requirement for external work;
+- valid local closure without a fake external Return Object;
 - no false closure from institutional output alone;
 - non-collapse of academic fit and institutional executability;
 - jurisdiction-specific authority handling;
