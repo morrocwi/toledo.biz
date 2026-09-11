@@ -1,8 +1,8 @@
 {
   "name": "Toledo Citizen Platform",
   "protocol": "toledo-citizen",
-  "protocol_version": "0.3.0",
-  "runtime_version": "0.4.0",
+  "protocol_version": "0.4.0",
+  "runtime_version": "0.5.0",
   "repository": "https://github.com/morrocwi/toledo.biz",
   "mathematical_authority": "https://github.com/morrocwi/toledo",
   "equation_registry": {
@@ -16,6 +16,15 @@
     "signature_schema": "packages/schemas/problem-signature.schema.json",
     "rule": "occupation/practice context is context, not a bespoke core protocol selector"
   },
+  "decision_threads": {
+    "normative_doc": "docs/DECISION_THREADS.md",
+    "adr": "docs/adr/0005-anchor-preserved-decision-threads.md",
+    "schema": "packages/schemas/decision-thread.schema.json",
+    "rule": "one Case Passport may contain several decision-specific subgraphs at different P0-P11 phases",
+    "compatibility": "current_phase and current_decision remain the primary-thread projection",
+    "dependency_action": "HOLD",
+    "dependency_status": "HOLD_FOR_DEPENDENCY"
+  },
   "case_lifecycle": {
     "mode": "stateless-reference",
     "passport_schema": "packages/schemas/case-passport.schema.json",
@@ -23,21 +32,26 @@
     "step_request_schema": "packages/schemas/case-step-request.schema.json",
     "step_response_schema": "packages/schemas/case-step-response.schema.json",
     "normative_doc": "docs/CASE_LIFECYCLE.md",
-    "local_closure": "allowed when no external actor was used, outcome closes, and safety/authority constraints are satisfied",
-    "external_closure": "requires Return Gate PASS plus citizen outcome"
+    "local_closure": "allowed per thread when no external actor was used, outcome closes, and safety/authority constraints are satisfied",
+    "external_closure": "requires thread Return Gate PASS plus thread outcome",
+    "multi_decision_case_closure": "requires all required non-cancelled threads closed plus citizen-level outcome"
   },
   "api": {
     "openapi": "openapi/toledo.protocol.v1.yaml",
     "implementation": "apps/protocol_api/main.py",
     "case_step_endpoint": "/v1/cases/step",
-    "problem_signature_schema_endpoint": "/v1/schemas/problem-signature"
+    "compile_threads_endpoint": "/v1/cases/threads/compile",
+    "problem_signature_schema_endpoint": "/v1/schemas/problem-signature",
+    "decision_thread_schema_endpoint": "/v1/schemas/decision-thread"
   },
   "mcp": {
     "transport": "stdio",
     "implementation": "apps/mcp_server/server.py",
-    "closed_loop_tools": ["initialize_case", "update_case", "advance_case"],
+    "closed_loop_tools": ["initialize_case", "update_case", "advance_case", "compile_case_threads"],
     "problem_grammar_resource": "toledo://protocol/problem-capability-grammar",
-    "problem_signature_resource": "toledo://schema/problem-signature"
+    "problem_signature_resource": "toledo://schema/problem-signature",
+    "decision_threads_resource": "toledo://protocol/decision-threads",
+    "decision_thread_schema_resource": "toledo://schema/decision-thread"
   },
   "ai_index": "llms.txt"
 }
