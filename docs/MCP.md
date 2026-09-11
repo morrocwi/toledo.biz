@@ -56,31 +56,71 @@ toledo://equations/index
 toledo://equations/{equation_id}
 toledo://protocol/compiler
 toledo://protocol/case-lifecycle
+toledo://protocol/problem-capability-grammar
 toledo://schema/case-passport
 toledo://schema/case-event
 toledo://schema/case-step-request
+toledo://schema/problem-signature
 toledo://schema/protocol-instance
 ```
+
+## Problem & Capability Grammar rule
+
+An AI agent MUST NOT create one core protocol per occupation merely because the citizen names a profession or domain.
+
+```text
+Occupation != ProtocolSelector
+PracticeContext != IrrelevantContext
+ProblemSignature != Diagnosis
+CandidateSignature != EndorsedSignature
+```
+
+The citizen's occupation/practice history may carry important situated experience and should remain in `practice_context`. Candidate Problem Signatures may be proposed with provenance and may remain unresolved.
+
+Agents should read:
+
+```text
+toledo://protocol/problem-capability-grammar
+toledo://schema/problem-signature
+```
+
+before implementing their own problem abstraction layer.
 
 ## Authority rule
 
 MCP responses MUST preserve upstream equation provenance. The equation mirror in `toledo.biz` is a read mirror; mathematical authority remains `morrocwi/toledo`.
 
+The Problem & Capability Grammar is a product/runtime architecture, not a new canonical equation family or validated universal ontology.
+
 ## Suggested AI workflow
 
-1. read `toledo://protocol/compiler` and `toledo://protocol/case-lifecycle`;
+1. read `toledo://protocol/problem-capability-grammar`, `toledo://protocol/compiler` and `toledo://protocol/case-lifecycle`;
 2. call `initialize_case` for a new citizen problem;
-3. use `advance_case` after each observation, action, route result or institutional return;
-4. search/get only equations needed for the current Protocol Instance;
-5. route institutions only when the protocol requires external capability;
-6. validate handoff before treating referral as collaboration;
-7. preserve the same Case Passport when a route fails;
-8. require Return Gate plus citizen outcome before closure;
-9. stop when the compiler emits `STOP`.
+3. preserve `P_C` and, when useful, record multiple candidate Problem Signatures rather than forcing one diagnosis;
+4. use `SIGNATURE_ENDORSED` only when endorsement is actually obtained;
+5. keep unobserved context as unknown rather than inventing event-specific facts;
+6. use `advance_case` after each observation, action, route result or institutional return;
+7. search/get only equations needed for the current Protocol Instance;
+8. route institutions only when the protocol requires external capability;
+9. validate handoff before treating referral as collaboration;
+10. preserve the same Case Passport when a route fails;
+11. require Return Gate plus citizen outcome when an external actor was used;
+12. allow a low-risk citizen+AI/world-only local case to close without fabricating an institutional Return Object;
+13. stop when the compiler emits `STOP`.
 
 ## P_C rule
 
-`citizen_problem_verbatim` is the machine representation of `P_C` and ordinary Case Events cannot overwrite it. AI restructuring and disciplinary reframing must use separate fields.
+`citizen_problem_verbatim` is the machine representation of `P_C` and ordinary Case Events cannot overwrite it. AI restructuring, candidate Problem Signatures and disciplinary reframing must use separate fields.
+
+## Unknown/context rule
+
+```text
+Unknown != Failure
+MissingEvidence != NegativeEvidence
+UnobservedContext != AIInferredFact
+```
+
+If the available record does not support a distinction, ask, observe, retrieve, measure, or preserve `HOLD_UNKNOWN` rather than silently lifting the claim.
 
 ## Storage boundary
 
