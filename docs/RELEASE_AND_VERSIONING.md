@@ -17,6 +17,8 @@ Upstream Toledo equation baseline
 
 These MUST remain distinguishable.
 
+Decision Threads and the Domain-Neutral Problem & Capability Grammar are runtime/specification architecture within those version families; they do not create a separate mathematical version line.
+
 ## 2. Platform version
 
 Use Semantic Versioning for the citizen platform implementation/specification:
@@ -39,7 +41,13 @@ The public citation version does not have to change for every pre-alpha runtime 
 
 The executable Python package has its own SemVer declared in `pyproject.toml` and `toledo_runtime.__version__`.
 
-The current pre-alpha runtime line is `0.3.x`.
+Current reference runtime:
+
+```text
+0.5.0
+```
+
+This version introduces anchor-preserved Decision Threads while retaining legacy single-decision projection behavior.
 
 ## 4. Protocol Compiler version
 
@@ -48,10 +56,10 @@ Compiler semantics are versioned separately because a runtime release may contai
 Current reference line:
 
 ```text
-Protocol Compiler v0.2
+Protocol Compiler v0.4
 ```
 
-A material change to case-state transition, typed-gate behavior, closure semantics or next-action selection requires a compiler version review.
+A material change to case/thread state transition, typed-gate behavior, dependency precedence, closure semantics or next-action selection requires a compiler version review.
 
 ## 5. Schema version
 
@@ -63,6 +71,8 @@ A schema breaking change requires either:
 - a documented migration path with compatibility handling.
 
 Do not change required semantics silently while leaving consumers unable to identify the schema generation.
+
+The current Case Passport extension preserves old `current_phase` and `current_decision` as a primary-thread projection while adding `decision_threads[]` and `primary_thread_id`.
 
 ## 6. Country-adapter version
 
@@ -104,6 +114,8 @@ binding status
 
 Implementation behavior tied to an upstream equation should be reproducible against that exact baseline.
 
+Adding runtime architecture such as Problem Signatures or Decision Threads MUST NOT silently imply an equation-status promotion upstream.
+
 ## 9. Binding status
 
 Recommended equation-binding states:
@@ -130,7 +142,7 @@ production-candidate
 stable
 ```
 
-The current repository is a **pre-alpha executable reference runtime**: deterministic compiler, closed-loop Case Passport engine, schemas, API and MCP exist, but production persistence, domain validation, security deployment and broad interoperability testing are not complete.
+The current repository is a **pre-alpha executable reference runtime**: deterministic compiler, closed-loop Case Passport/Decision Thread engine, schemas, API and MCP exist, but production persistence, domain validation, security deployment and broad interoperability testing are not complete.
 
 ## 11. Document status
 
@@ -167,8 +179,10 @@ Examples of breaking changes:
 - removing a required Case Passport field;
 - changing Case Event meaning incompatibly;
 - changing case identity/version semantics;
-- changing hard-gate semantics;
-- changing citizen closure semantics;
+- changing Decision Thread identity/dependency semantics incompatibly;
+- removing primary-thread projection compatibility;
+- changing hard-gate semantics or its precedence over ordinary dependency holds;
+- changing citizen/thread closure semantics;
 - changing `P0`–`P11` meanings incompatibly;
 - changing `PASS/HOLD_UNKNOWN/FAIL/N/A` interpretation;
 - collapsing separate rights fields into one;
@@ -182,6 +196,7 @@ Examples:
 - adding optional institution metadata;
 - adding a new country adapter;
 - adding new capability codes while preserving existing mapping;
+- adding a new optional Decision Thread field without changing existing semantics;
 - improving documentation;
 - adding a new fallback route;
 - refreshing `last_verified` data.
@@ -191,7 +206,7 @@ Examples:
 Before a tagged release:
 
 - [ ] schemas parse and validation tests pass;
-- [ ] runtime tests pass;
+- [ ] runtime tests pass, including multi-decision regressions;
 - [ ] API and MCP smoke imports pass;
 - [ ] normative docs agree with schemas;
 - [ ] equation bindings identify upstream status;
@@ -199,6 +214,7 @@ Before a tagged release:
 - [ ] changelog is updated;
 - [ ] security/privacy boundary is unchanged or explicitly reviewed;
 - [ ] migration notes exist for breaking changes;
+- [ ] primary-thread projection compatibility is tested when Case Passport/thread contracts change;
 - [ ] synthetic examples contain no sensitive real case data;
 - [ ] repository status document is updated;
 - [ ] citation metadata version is updated when a release is actually cut.
