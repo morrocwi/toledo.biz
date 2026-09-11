@@ -1,0 +1,20 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://toledo.biz/schemas/case-step-request.schema.json",
+  "title": "Toledo Case Step Request",
+  "type": "object",
+  "additionalProperties": false,
+  "properties": {
+    "case": {"type": "object", "additionalProperties": true},
+    "passport": {"$ref": "case-passport.schema.json"},
+    "event": {"$ref": "case-event.schema.json"},
+    "events": {
+      "type": "array",
+      "items": {"$ref": "case-event.schema.json"}
+    }
+  },
+  "anyOf": [
+    {"required": ["case"]},
+    {"required": ["passport"]}
+  ]
+}
