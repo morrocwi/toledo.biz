@@ -6,6 +6,7 @@ Purpose: help citizens turn lived experience into usable knowledge and safe next
 https://github.com/morrocwi/toledo.biz/blob/main/docs/PROTOCOL_COMPILER.md
 https://github.com/morrocwi/toledo.biz/blob/main/docs/CASE_LIFECYCLE.md
 https://github.com/morrocwi/toledo.biz/blob/main/docs/PROBLEM_CAPABILITY_GRAMMAR.md
+https://github.com/morrocwi/toledo.biz/blob/main/docs/DECISION_THREADS.md
 https://github.com/morrocwi/toledo.biz/blob/main/docs/GLOSSARY.md
 https://github.com/morrocwi/toledo.biz/blob/main/docs/TRUST_AND_SAFETY.md
 https://github.com/morrocwi/toledo.biz/blob/main/docs/EQUATION_BINDINGS.md
@@ -22,7 +23,7 @@ https://raw.githubusercontent.com/morrocwi/toledo.biz/main/registry/equation-ind
 Use equation IDs directly. Preserve each equation's upstream status and provenance.
 
 ## Domain-neutral problem grammar
-The core does not select protocols by occupation. Preserve occupation/practice as context, not as a bespoke routing branch.
+The core does not select protocols by occupation or industry. Preserve occupation/practice as context, not as a bespoke routing branch.
 
 P_C = citizen_problem_verbatim remains immutable. AI may produce multiple candidate signatures, each with provenance. A candidate signature is not a diagnosis and is not promoted merely because AI generated it.
 
@@ -34,15 +35,34 @@ P_C -> candidate signatures -> citizen/evidence endorsement -> barrier state -> 
 
 Unknown and unresolved states are valid outputs. Do not fabricate missing context.
 
+## Decision Threads
+One Case Passport may contain several simultaneous decisions at different P0-P11 routing phases.
+
+Case != SingleDecision.
+DecisionThread != NewCase.
+ThreadPhase != CaseMaturity.
+BlockedThread != FailedCase.
+
+Machine contract:
+https://raw.githubusercontent.com/morrocwi/toledo.biz/main/packages/schemas/decision-thread.schema.json
+
+The original current_phase/current_decision fields remain a primary-thread projection for backward compatibility.
+
+If a thread depends on unresolved threads, it is blocked and the compiler returns HOLD / HOLD_FOR_DEPENDENCY. Hard safety or authority escalation has higher priority than an ordinary dependency hold.
+
+New agents should inspect all thread_protocols before recommending downstream commitments such as scale, commercialization, public release, or irreversible action.
+
 ## Closed-loop protocol
 Preferred loop:
-Citizen input -> initialize_case -> Case Passport -> advance_case -> action/world/institution -> update_case/advance_case with event -> Return Object when external contribution is used -> outcome -> STOP.
+Citizen input -> initialize_case -> Case Passport -> candidate signatures / Decision Threads -> advance_case -> action/world/institution -> update_case/advance_case with event -> Return Object when external contribution is used -> thread outcomes -> citizen-level outcome -> STOP.
 
 The Case Passport is caller-held in the public reference runtime. Do not assume this repository is a sensitive-data store.
 
 P_C = citizen_problem_verbatim is immutable under ordinary events. P_S and P_D are separate representations.
 
-Local citizen+AI/world cases may close without a fake institutional Return Object when no external actor was used and safety/authority constraints are satisfied. External routes still require the Return Gate.
+Local citizen+AI/world threads may close without a fake institutional Return Object when no external actor was used and safety/authority constraints are satisfied. External routes still require the Return Gate.
+
+A multi-decision case closes only after all required non-cancelled threads close and the citizen-level outcome condition is satisfied.
 
 ## API
 Reference implementation: apps/protocol_api/main.py
@@ -53,27 +73,35 @@ Important routes:
 - /v1/cases/init
 - /v1/cases/update
 - /v1/cases/step
+- /v1/cases/threads/compile
 - /v1/institutions
 - /v1/handoffs/validate
 - /v1/returns/validate
 - /v1/schemas/problem-signature
+- /v1/schemas/decision-thread
 
 ## MCP
 Reference server: apps/mcp_server/server.py
 Equation tools: get_equation, search_equations
-Protocol tools: compile_citizen_protocol, initialize_case, update_case, advance_case
+Protocol tools: compile_citizen_protocol, compile_case_threads, initialize_case, update_case, advance_case
 Routing/gate tools: route_institutions, check_handoff, check_return_gate
-Resources: toledo://equations/index, toledo://equations/{id}, toledo://protocol/compiler, toledo://protocol/case-lifecycle, toledo://protocol/problem-capability-grammar, toledo://schema/problem-signature, Toledo schemas.
+Resources: toledo://equations/index, toledo://equations/{id}, toledo://protocol/compiler, toledo://protocol/case-lifecycle, toledo://protocol/problem-capability-grammar, toledo://protocol/decision-threads, toledo://schema/problem-signature, toledo://schema/decision-thread, Toledo schemas.
 
 ## Invariants
 AI-first != AI-only.
 Observation != Interpretation != Diagnosis.
 Occupation != ProtocolSelector.
+Industry != ProtocolSelector.
 ProblemSignature != Diagnosis.
 CandidateSignature != EndorsedSignature.
+Case != SingleDecision.
+DecisionThread != NewCase.
+ThreadPhase != CaseMaturity.
+BlockedThread != FailedCase.
+ThreadClosure != CaseClosure.
 Academic capability != University executability.
 Referral != Handoff != Collaboration.
 Institutional output != Citizen outcome.
 Route failure != case restart.
 Do not overwrite P_C, the citizen problem verbatim.
-Do not treat proposal equations as validated universal laws.
+Do not treat proposal equations or Decision Threads as validated universal laws.
