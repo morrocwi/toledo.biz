@@ -1,64 +1,113 @@
 # Implementation Registry Contract
 
-This repository does **not** own Toledo mathematics.
+This directory contains **implementation-side registries and bindings** for Toledo Citizen Platform.
+
+It does **not** own Toledo mathematics.
 
 Canonical equation provenance belongs to:
 
 `https://github.com/morrocwi/toledo`
 
-## Rule
-
-Every implementation rule that depends on Toledo mathematics should carry:
+## Authority boundary
 
 ```text
-equation_ref
-source_repo
-source_version_or_commit
-implementation_note
+morrocwi/toledo
+    equation statement / lineage / canonical status
+
+morrocwi/toledo.biz/registry
+    implementation binding / compatibility / local registry metadata
 ```
 
-Do not copy an equation into application code and later treat the copy as authoritative.
+A copied equation string is never more authoritative than the upstream registry entry it came from.
 
-## Registry roles
+## What may live here
 
 This repository may maintain implementation registries for:
 
 - institution capabilities;
 - country/jurisdiction adapters;
-- UI state labels;
+- UI/state labels;
 - route adapters;
 - safety-policy mappings;
 - localization strings;
-- equation-to-code bindings.
+- equation-to-code bindings;
+- compatibility and migration metadata.
 
-It must not silently redefine the canonical statement of an equation.
+It must not silently redefine the canonical statement of an upstream Toledo equation.
+
+## Required equation binding fields
+
+Every implementation rule that materially depends on Toledo mathematics should be able to identify:
+
+```text
+equation_ref
+source_repo
+source_commit_or_release
+upstream_status
+implementation_version
+implementation_note
+```
+
+Recommended upstream status values:
+
+```text
+canonical
+proposal
+superseded
+unbound
+```
+
+`proposal` must remain visibly a proposal until upstream canonical promotion.
+
+## Citizen bridge equation family
+
+The citizen / institutional / cross-actor equation family developed through Toledo v0.17 is currently registered upstream through:
+
+```text
+morrocwi/toledo/docs/TOLEDO_CITIZEN_BRIDGE_EQUATIONS_v0.17.md
+morrocwi/toledo/registry/proposals/TOLEDO_CITIZEN_BRIDGE_v0.17.json
+```
+
+These are repository-grounded proposals pending canonical registry promotion. `toledo.biz` should bind to proposal IDs/status honestly rather than invent canonical codes.
 
 ## Versioning
 
-When a canonical Toledo equation changes:
+When an upstream equation changes:
 
 1. update the binding;
-2. preserve the old implementation version where needed for audit;
+2. preserve old implementation behavior where audit/migration requires it;
 3. record migration impact;
-4. re-run affected route/safety tests.
+4. re-run affected routing/safety tests;
+5. update changelog/status documentation when behavior changes materially.
 
-## Initial equation family
+See [`../docs/RELEASE_AND_VERSIONING.md`](../docs/RELEASE_AND_VERSIONING.md).
 
-The first implementation family is the citizen / institutional / cross-actor layer developed through Toledo v0.17:
+## Data registries are different
+
+Institution/country data follows a different governance path from equations.
+
+Institution data is:
 
 ```text
-experiential capital
-provisional K*_0
-minimum-sufficient routing
-institution utility
-field information action
-risk exposure
-innovation promotion
-knowledge utilization
-Business-0 formation / closure
-cross-actor handoff
-return-to-citizen
-bridge integrity
+time-sensitive
+jurisdiction-specific
+provenance-dependent
+operationally re-verifiable
 ```
 
-The corresponding equation registration belongs in `morrocwi/toledo`.
+See:
+
+- [`../docs/DATA_GOVERNANCE.md`](../docs/DATA_GOVERNANCE.md)
+- [`../docs/INSTITUTION_REGISTRY_STANDARD.md`](../docs/INSTITUTION_REGISTRY_STANDARD.md)
+- [`../docs/COUNTRY_ADAPTER_STANDARD.md`](../docs/COUNTRY_ADAPTER_STANDARD.md)
+
+Do not confuse equation authority with public-service data freshness.
+
+## Short rule
+
+```text
+Equation meaning comes from morrocwi/toledo.
+Implementation meaning comes from bound code/spec here.
+Country/service facts come from evidence-backed adapters.
+Citizen case data does not belong in this public registry.
+```
