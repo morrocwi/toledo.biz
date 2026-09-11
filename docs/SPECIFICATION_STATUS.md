@@ -7,14 +7,14 @@ This document prevents draft ideas, implementation contracts, public data, and u
 ```text
 Project maturity: pre-alpha executable reference release
 Current public citation version: 0.2.0
-Current runtime package: 0.5.0
-Current Protocol Compiler: v0.4
+Current runtime package: 0.6.0
+Current Protocol Compiler: v0.5
 Current API metadata: 0.4.0
 Current architecture family: Toledo Citizen Platform aligned to Toledo v0.17
 Current release notes: docs/releases/v0.2.0.md
 ```
 
-The repository contains a coherent specification baseline, schemas, country-adapter seed data, governance contracts, a deterministic Protocol Compiler, a stateless closed-loop Case Passport engine, a domain-neutral Problem & Capability Grammar, anchor-preserved Decision Threads, an HTTP API and an MCP server. It is still not a production public service.
+The repository contains a coherent specification baseline, schemas, country-adapter seed data, governance contracts, a deterministic Protocol Compiler, a stateless closed-loop Case Passport engine, a domain-neutral Problem & Capability Grammar, anchor-preserved Decision Threads, flexible execution routing, an HTTP API and an MCP server. It is still not a production public service.
 
 ## Authority classes
 
@@ -52,6 +52,7 @@ Controls:
 - Case Event structure;
 - Case Step request/response structure;
 - Problem Signature structure;
+- flexible execution-routing structure;
 - Return Object structure;
 - Institution Capability Record structure;
 - protocol instance shape;
@@ -67,6 +68,7 @@ Current normative/reference-contract documents include:
 docs/CITIZEN_PROTOCOL.md
 docs/ARCHITECTURE.md
 docs/PROBLEM_CAPABILITY_GRAMMAR.md
+docs/EXECUTION_ROUTING.md
 docs/DECISION_THREADS.md
 docs/GOVERNANCE.md
 docs/TRUST_AND_SAFETY.md
@@ -83,7 +85,7 @@ docs/GLOSSARY.md
 
 These define intended behavior, boundaries, terminology and the reference case lifecycle.
 
-The Domain-Neutral Problem & Capability Grammar and Decision Thread layer are product/runtime architecture. They are **not** new equation families and are **not** claimed to be validated universal ontologies or scientific laws.
+The Domain-Neutral Problem & Capability Grammar, Decision Thread layer, and Flexible Execution Routing layer are product/runtime architecture. They are **not** new equation families and are **not** claimed to be validated universal ontologies or scientific laws.
 
 ### D. Country/jurisdiction reference data
 
@@ -153,10 +155,16 @@ The following concepts are architecture anchors and should not be changed casual
 ```text
 Citizen owns the original life problem
 AI-first != AI-only
+AI != ExpertClass
+AI acts as mediator/translator across citizen, knowledge-like, expert, tool, institution and world-return layers
 P_C / P_S / P_D remain separate
 P_C is not silently overwritten
 Problem Signature is a routing readout, not a diagnosis
 Candidate Signature != Endorsed Signature
+KnowledgeLike != HumanExpert
+KnowledgeLike != TruthCertificate
+InteractionExpert != FieldExpert
+Expertise != Authority
 Occupation != Protocol Selector
 Industry != Protocol Selector
 Practice Context remains available as situated context
@@ -170,6 +178,10 @@ ThreadPhase != CaseMaturity
 BlockedThread != FailedCase
 ThreadClosure != CaseClosure
 Legacy current_phase/current_decision remain primary-thread projections
+Phase != ExpertSelector
+Phase != MandatorySequence
+Bounded reversible world/market testing may occur before later phases when no hard gate blocks it
+ForwardExperiment != PermissionToIgnoreHardGates
 Hard gates precede soft optimization and ordinary dependency holds
 Referral != Handoff != Collaboration
 External work requires Return-to-Citizen
@@ -188,13 +200,15 @@ Changes to these require an ADR and explicit migration review.
 
 Implemented but still pre-alpha:
 
-- deterministic Protocol Compiler v0.4;
+- deterministic Protocol Compiler v0.5;
 - stateless Case Passport initialization/update/recompile loop;
 - domain-neutral candidate Problem Signatures with provenance/endorsement state;
 - Barrier Signature state;
 - Practice Context preservation without occupation-specific core branching;
 - anchor-preserved Decision Threads with dependency-aware compilation;
 - primary-thread backward-compatibility projection;
+- flexible Execution Requirement Matrix with interaction-vs-field expert distinction, knowledge-like state, tool/authority overlays and bounded forward experiment support;
+- explicit AI mediator/translator role in execution routing;
 - no-restart route-failure continuity;
 - local citizen-only closure separated from external Return-Gate closure;
 - Return Object evaluation and citizen-closure state;
@@ -202,7 +216,7 @@ Implemented but still pre-alpha:
 - MCP v2 server;
 - machine-readable equation mirror with upstream provenance.
 
-These are reference implementations, not universal scientific validation of the underlying planning heuristics, problem grammar or thread decomposition.
+These are reference implementations, not universal scientific validation of the underlying planning heuristics, problem grammar, execution matrix or thread decomposition.
 
 ## Draft / evolving areas
 
@@ -211,6 +225,7 @@ The following remain expected to evolve:
 - exact routing/scoring implementation;
 - controlled capability vocabulary;
 - provider capability signatures;
+- richer expert-role selection between interaction and field expertise when both are plausible;
 - domain-adapter trigger logic;
 - institution data freshness automation;
 - deterministic phase/thread classifier;
@@ -221,7 +236,7 @@ The following remain expected to evolve:
 - steward operating workflow;
 - UI language and interaction patterns;
 - cross-country compatibility rules;
-- cross-domain falsification suite for the Problem & Capability Grammar and Decision Threads;
+- cross-domain falsification suite for the Problem & Capability Grammar, Flexible Execution Routing and Decision Threads;
 - canonical promotion of citizen-bridge equation proposals upstream.
 
 ## Equation binding status
@@ -237,7 +252,7 @@ docs/EQUATION_BINDINGS.md
 morrocwi/toledo/registry/proposals/TOLEDO_CITIZEN_BRIDGE_v0.17.json
 ```
 
-No equation-status promotion is implied by the addition of the Domain-Neutral Problem & Capability Grammar or Decision Threads.
+No equation-status promotion is implied by the addition of the Domain-Neutral Problem & Capability Grammar, Decision Threads or Flexible Execution Routing.
 
 ## Change-control rule
 
@@ -258,6 +273,9 @@ global-core/country-adapter/domain-adapter boundary
 citizen meaning-preservation rule
 rights decomposition
 phase semantics
+AI mediator/expert boundary
+interaction-vs-field expert distinction
+forward-experiment hard-gate boundary
 ```
 
 A data refresh or non-semantic wording fix normally does not require an ADR.
@@ -275,6 +293,10 @@ A downstream implementation may call itself Toledo Citizen Platform-compatible o
 - Decision Thread identity/dependency behavior when multi-decision cases are used;
 - primary-thread compatibility if claiming compatibility with the v0.2.0 reference release;
 - typed hard gates;
+- AI mediation without silently treating AI as expert authority or independent validation;
+- distinction between knowledge-like material and human expertise;
+- distinction between interaction expertise and field/front-line expertise when expert routing is material;
+- non-linear phase semantics that permit bounded reversible world/market testing when gates allow it;
 - explicit consent/data scope;
 - valid handoff requirements;
 - return-to-citizen requirement for external work;
