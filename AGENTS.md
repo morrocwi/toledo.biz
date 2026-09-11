@@ -12,10 +12,11 @@ Before a material change, read:
 4. the normative document for the layer being changed
 5. `docs/EQUATION_BINDINGS.md` when behavior depends on Toledo mathematics
 6. `docs/PROBLEM_CAPABILITY_GRAMMAR.md` for problem abstraction, candidate signatures, barriers, capability mapping, or domain adapters
-7. `docs/DECISION_THREADS.md` for multi-decision cases, dependencies, blocking, thread-local events, or closure
-8. `docs/PROTOCOL_COMPILER.md` for runtime/routing/compiler changes
-9. `docs/CASE_LIFECYCLE.md` for Case Passport/event/closure changes
-10. `docs/API.md` or `docs/MCP.md` when changing machine interfaces
+7. `docs/EXECUTION_ROUTING.md` for AI mediation, interaction-vs-field expert roles, knowledge-like/tool/authority routing, or bounded forward/world/market testing
+8. `docs/DECISION_THREADS.md` for multi-decision cases, dependencies, blocking, thread-local events, or closure
+9. `docs/PROTOCOL_COMPILER.md` for runtime/routing/compiler changes
+10. `docs/CASE_LIFECYCLE.md` for Case Passport/event/closure changes
+11. `docs/API.md` or `docs/MCP.md` when changing machine interfaces
 
 For institution/country data, also read `docs/DATA_GOVERNANCE.md`, `docs/INSTITUTION_REGISTRY_STANDARD.md`, and `docs/COUNTRY_ADAPTER_STANDARD.md`.
 
@@ -28,7 +29,7 @@ For institution/country data, also read `docs/DATA_GOVERNANCE.md`, `docs/INSTITU
 - Accepted ADRs govern product/runtime architecture unless a later ADR explicitly supersedes them.
 - Country adapters govern only their jurisdictional routing data, subject to freshness/provenance.
 - Domain adapters may specialize vocabulary, hazards, measurements, professional boundaries, regulation or provider mappings; they may not redefine the global core.
-- Decision Threads are runtime/product architecture. Do not present them as a new canonical Toledo equation or scientific law.
+- Decision Threads and Flexible Execution Routing are runtime/product architecture. Do not present them as new canonical Toledo equations or scientific laws.
 
 ## Citizen-first invariant
 
@@ -36,14 +37,24 @@ Every feature must preserve a path back to the citizen's original problem and go
 
 ## AI role
 
-AI is mediator/translator/router, not universal expert or truth authority. AI may structure, retrieve, compare, question, hypothesize and route; it may not silently satisfy professional, laboratory, regulatory, legal or independent-validation requirements.
+AI is mediator/translator/router, not universal expert or truth authority. AI may structure, retrieve, compare, question, hypothesize, translate and route; it may not silently satisfy professional, laboratory, regulatory, legal or independent-validation requirements.
 
 AI-generated Problem Signatures and proposed Decision Threads are candidate translations/orchestration objects. They are not diagnoses, observations, truths, or authority merely because an AI produced them.
+
+Execution routing MUST preserve:
+
+```text
+AI != ExpertClass
+AITranslation != IndependentValidation
+KnowledgeLike != HumanExpert
+InteractionExpert != FieldExpert
+Expertise != Authority
+```
 
 ## Protocol-engine rule
 
 ```text
-AI interprets
+AI interprets and translates
 Protocol engine controls typed gates
 ```
 
@@ -66,6 +77,26 @@ CandidateSignature != EndorsedSignature
 Preserve occupation/practice history as context when it carries experiential knowledge, constraints, tools, vocabulary or repeated observations.
 
 Use an optional domain adapter only when safety, professional authority, specialized measurement/sample handling, regulation, high-risk terminology, or provider matching materially requires it.
+
+## Flexible execution rule
+
+Do not convert P0-P11 into a fixed expert/tool conveyor belt.
+
+```text
+Phase != ExpertSelector
+Phase != MandatorySequence
+```
+
+A bounded reversible world or market test may occur before later expert/institution phases when no hard safety, authority, permission, credential, unresolved Return Gate, or Decision Thread dependency blocks it.
+
+```text
+ForwardExperiment != PermissionToIgnoreHardGates
+MarketEntry != CaseClosure
+```
+
+When expert input is material, distinguish interaction expertise from field/front-line expertise. A single person may satisfy both roles, but the routing reason must remain explicit.
+
+Knowledge-like material such as structured readouts, documents, standards, papers, datasets, prior cases or provisional synthesis is not a human expert and not a truth certificate.
 
 ## Multi-decision rule
 
@@ -169,6 +200,8 @@ Keep domain-neutral problem/routing semantics out of occupation-specific code. D
 
 A correct local fix is a valid terminal state. A useful innovation need not become a founder-operated startup. A P10/P11 thread must not pull unrelated unresolved P1/P3 decisions forward merely because the business is mature elsewhere.
 
+A bounded market test is allowed to generate world evidence when gates permit it, but a transaction does not prove that unrelated safety, rights, regulatory, quality or scale decisions are solved.
+
 ## Runtime changes
 
 Any compiler/routing/case-lifecycle change should test at least:
@@ -179,6 +212,11 @@ Any compiler/routing/case-lifecycle change should test at least:
 - Case Passport schema validity;
 - Decision Thread schema validity when relevant;
 - Problem Signature schema validity when relevant;
+- Execution Routing schema validity when relevant;
+- AI mediator/translator role remains distinct from expert/authority when relevant;
+- interaction-vs-field expert distinction when relevant;
+- bounded forward/world/market route remains available in a reversible low-gate case when relevant;
+- forward route is blocked by hard safety/authority gates when relevant;
 - monotonic version update;
 - `P_C` preservation;
 - primary-thread projection compatibility;
