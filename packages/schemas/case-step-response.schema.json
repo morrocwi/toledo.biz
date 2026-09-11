@@ -1,0 +1,16 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://toledo.biz/schemas/case-step-response.schema.json",
+  "title": "Toledo Case Step Response",
+  "type": "object",
+  "additionalProperties": false,
+  "required": ["case_id", "passport_version", "case_status", "closed", "passport", "protocol"],
+  "properties": {
+    "case_id": {"type": "string", "minLength": 1},
+    "passport_version": {"type": "integer", "minimum": 1},
+    "case_status": {"type": "string", "enum": ["OPEN", "HOLD", "CLOSED"]},
+    "closed": {"type": "boolean"},
+    "passport": {"$ref": "case-passport.schema.json"},
+    "protocol": {"$ref": "protocol-instance.schema.json"}
+  }
+}
