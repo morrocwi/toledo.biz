@@ -22,8 +22,9 @@ mcp = MCPServer(
     instructions=(
         "Use Toledo as a citizen-centered protocol and equation readout layer. "
         "Preserve equation provenance and proposal/canonical status. "
-        "Preserve P_C, Case Passport continuity, typed gates, and Return-to-Citizen. "
-        "Do not treat AI as professional, regulatory, laboratory, or truth authority."
+        "Preserve P_C, Case Passport continuity, typed gates, candidate-signature provenance, "
+        "and Return-to-Citizen. Treat occupation/practice context as context, not as a bespoke "
+        "core protocol selector. Do not treat AI as professional, regulatory, laboratory, or truth authority."
     ),
 )
 _eq = EquationStore()
@@ -125,6 +126,11 @@ def case_lifecycle_spec() -> str:
     return (_ROOT / "docs" / "CASE_LIFECYCLE.md").read_text(encoding="utf-8")
 
 
+@mcp.resource("toledo://protocol/problem-capability-grammar")
+def problem_capability_grammar_spec() -> str:
+    return (_ROOT / "docs" / "PROBLEM_CAPABILITY_GRAMMAR.md").read_text(encoding="utf-8")
+
+
 @mcp.resource("toledo://schema/case-passport")
 def case_passport_schema() -> str:
     return (_ROOT / "packages" / "schemas" / "case-passport.schema.json").read_text(encoding="utf-8")
@@ -138,6 +144,11 @@ def case_event_schema() -> str:
 @mcp.resource("toledo://schema/case-step-request")
 def case_step_request_schema() -> str:
     return (_ROOT / "packages" / "schemas" / "case-step-request.schema.json").read_text(encoding="utf-8")
+
+
+@mcp.resource("toledo://schema/problem-signature")
+def problem_signature_schema() -> str:
+    return (_ROOT / "packages" / "schemas" / "problem-signature.schema.json").read_text(encoding="utf-8")
 
 
 @mcp.resource("toledo://schema/protocol-instance")
