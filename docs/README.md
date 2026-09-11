@@ -2,7 +2,7 @@
 
 This directory is the documentation entry point for `morrocwi/toledo.biz`.
 
-The repository follows a **specification-first, evidence-aware, executable-protocol, domain-neutral-core, anchor-preserved multi-decision, global-core/local-adapter** structure. Citizen-facing behavior should stay simple; governance, data, equation provenance and routing contracts behind it should stay explicit and auditable.
+The repository follows a **specification-first, evidence-aware, executable-protocol, domain-neutral-core, anchor-preserved multi-decision, flexible-execution, global-core/local-adapter** structure. Citizen-facing behavior should stay simple; governance, data, equation provenance and routing contracts behind it should stay explicit and auditable.
 
 ## Runtime and machine access
 
@@ -11,6 +11,7 @@ The repository follows a **specification-first, evidence-aware, executable-proto
 | [`PROTOCOL_COMPILER.md`](PROTOCOL_COMPILER.md) | Deterministic minimal-subgraph compiler, dependency holds and recompile semantics | Reference runtime contract |
 | [`CASE_LIFECYCLE.md`](CASE_LIFECYCLE.md) | Versioned Case Passport, event loop, Decision Threads, return and closure semantics | Normative runtime contract |
 | [`PROBLEM_CAPABILITY_GRAMMAR.md`](PROBLEM_CAPABILITY_GRAMMAR.md) | Domain-neutral problem signatures, barriers, optional domain adapters, cross-domain scaling rules | Normative architecture extension |
+| [`EXECUTION_ROUTING.md`](EXECUTION_ROUTING.md) | Flexible execution matrix; AI translation; interaction-vs-field expert roles; knowledge-like, tool and authority routing | Normative additive runtime contract |
 | [`DECISION_THREADS.md`](DECISION_THREADS.md) | Concurrent decision subgraphs that preserve P0-P11 and Case Passport anchors | Normative additive runtime contract |
 | [`API.md`](API.md) | HTTP API usage and endpoint map | Reference implementation |
 | [`MCP.md`](MCP.md) | MCP tools/resources for AI agents | Reference implementation |
@@ -27,6 +28,7 @@ The repository follows a **specification-first, evidence-aware, executable-proto
 | [`CITIZEN_PROTOCOL.md`](CITIZEN_PROTOCOL.md) | Plain-language citizen workflow | Normative for product behavior |
 | [`ARCHITECTURE.md`](ARCHITECTURE.md) | Reference system architecture | Normative architecture baseline |
 | [`PROBLEM_CAPABILITY_GRAMMAR.md`](PROBLEM_CAPABILITY_GRAMMAR.md) | Scaling layer that prevents occupation/domain-specific core explosion | Normative |
+| [`EXECUTION_ROUTING.md`](EXECUTION_ROUTING.md) | Execution layer that keeps phase non-linear and separates AI, knowledge-like, interaction expert, field expert, tools and authority | Normative |
 | [`DECISION_THREADS.md`](DECISION_THREADS.md) | Multi-decision layer that prevents one scalar phase from erasing concurrent decisions | Normative |
 | [`GLOSSARY.md`](GLOSSARY.md) | Controlled vocabulary | Normative terminology |
 | [`SPECIFICATION_STATUS.md`](SPECIFICATION_STATUS.md) | Stable/draft/upstream-controlled status map | Normative status map |
@@ -43,7 +45,7 @@ Important ADRs include:
 0005 anchor-preserved Decision Threads
 ```
 
-ADR 0005 explicitly preserves the existing Case Passport and P0-P11 semantics while permitting several decision subgraphs in one real-life case.
+ADR 0005 explicitly preserves the existing Case Passport and P0-P11 semantics while permitting several decision subgraphs in one real-life case. Flexible Execution Routing remains additive to those anchors and does not introduce a second phase system.
 
 ## Trust, governance, and safety
 
@@ -59,6 +61,7 @@ ADR 0005 explicitly preserves the existing Case Passport and P0-P11 semantics wh
 | Document | Purpose | Status |
 |---|---|---|
 | [`PROBLEM_CAPABILITY_GRAMMAR.md`](PROBLEM_CAPABILITY_GRAMMAR.md) | Problem/Barrier Signature to required capability; optional domain adapter boundary | Normative |
+| [`EXECUTION_ROUTING.md`](EXECUTION_ROUTING.md) | Capability/evidence state to flexible knowledge/expert/tool/world/authority execution requirements | Normative |
 | [`DECISION_THREADS.md`](DECISION_THREADS.md) | Decision dependencies, blocking, thread-local gates and closure | Normative |
 | [`INSTITUTION_ROUTING.md`](INSTITUTION_ROUTING.md) | Capability-first routing model | Normative |
 | [`INSTITUTION_REGISTRY_STANDARD.md`](INSTITUTION_REGISTRY_STANDARD.md) | Institution-record data standard and verification rules | Normative |
@@ -78,6 +81,7 @@ case-event.schema.json
 case-step-request.schema.json
 case-step-response.schema.json
 problem-signature.schema.json
+execution-routing.schema.json
 return-object.schema.json
 institution-record.schema.json
 country-adapter-manifest.schema.json
@@ -86,6 +90,8 @@ protocol-instance.schema.json
 ```
 
 `problem-signature.schema.json` is deliberately domain-neutral. It carries candidate signatures, facet provenance, context gaps, barrier state and whether an optional domain adapter may be needed. It is not an ontology of truth.
+
+`execution-routing.schema.json` separates AI mediation, knowledge-like material, interaction expertise, field/front-line expertise, tools/infrastructure, authority overlays and bounded forward/world tests. It does not map phases to mandatory experts.
 
 `decision-thread.schema.json` is deliberately phase-preserving. A thread uses the existing P0-P11 coordinates; it does not create a new maturity system.
 
@@ -96,7 +102,7 @@ protocol-instance.schema.json
 | [`EQUATION_BINDINGS.md`](EQUATION_BINDINGS.md) | Product-to-upstream equation binding | Normative binding contract |
 | [`../registry/README.md`](../registry/README.md) | Local registry authority boundary | Normative |
 
-Decision Threads and the Problem & Capability Grammar are runtime/product architecture. They do not silently create new mathematical authority.
+Decision Threads, the Problem & Capability Grammar, and Flexible Execution Routing are runtime/product architecture. They do not silently create new mathematical authority.
 
 ## Project operations
 
