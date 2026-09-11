@@ -5,6 +5,7 @@ import json
 from datetime import datetime, timezone
 from typing import Any
 
+from .cases import evaluate_hard_risk
 from .institutions import InstitutionStore
 
 PHASES = {f"P{i}" for i in range(12)}
@@ -24,25 +25,27 @@ _ACTION_EQUATIONS = {
     "SCALE_CHECK": ["TCB-G001", "TCB-G002", "TCB-G003", "TCB-G004"],
     "GLOBAL_CHECK": ["TCB-U001", "TCB-X004"],
     "RETURN": ["TCB-X005", "TCB-X008", "TCB-X009"],
+    "STOP": ["TCB-X008", "TCB-X009"],
 }
 
 
 def _hard_escalation(risk: dict[str, Any]) -> tuple[bool, list[str]]:
-    reasons: list[str] = []
-    if risk.get("professional_authority_required"):
-        reasons.append("professional_authority_required")
-    if risk.get("regulatory_required"):
-        reasons.append("regulatory_required")
-    if float(risk.get("severity", 0) or 0) >= 0.7:
-        reasons.append("high_severity")
-    if float(risk.get("irreversibility", 0) or 0) >= 0.8:
-        reasons.append("high_irreversibility")
-    if float(risk.get("third_party_exposure", 0) or 0) >= 0.7:
-        reasons.append("high_third_party_exposure")
-    return bool(reasons), reasons
+    return evaluate_hard_risk(risk)
 
 
-def _next_action(phase: str, observations: list[str], unknowns: list[str], hard: bool) -> str:
+def _next_action(
+    phase: str,
+    observations: list[str],
+    unknowns: list[str],
+    hard: bool,
+    *,
+    case_status: str = "OPEN",
+    latest_return_gate: str = "NOT_APPLICABLE",
+) -> str:
+    if case_status == "CLOSED":
+        return "STOP"
+    if latest_return_gate in {"FAIL", "HOLD_UNKNOWN"}:
+        return "RETURN"
     if hard:
         return "ESCALATE"
     if phase == "P0":
@@ -85,7 +88,17 @@ def compile_protocol(case: dict[str, Any]) -> dict[str, Any]:
     unknowns = [str(x) for x in evidence.get("unknowns", [])]
     risk = case.get("risk") or {}
     hard, hard_reasons = _hard_escalation(risk)
-    action = _next_action(phase, observations, unknowns, hard)
+
+    case_status = str(case.get("case_status") or "OPEN").upper()
+    latest_return_gate = str(case.get("latest_return_gate") or "NOT_APPLICABLE").upper()
+    action = _next_action(
+        phase,
+        observations,
+        unknowns,
+        hard,
+        case_status=case_status,
+        latest_return_gate=latest_return_gate,
+    )
 
     requested_capability = case.get("requested_capability")
     if action == "ESCALATE" and not requested_capability:
@@ -113,19 +126,32 @@ def compile_protocol(case: dict[str, Any]) -> dict[str, Any]:
     canonical_input = json.dumps(case, ensure_ascii=False, sort_keys=True)
     protocol_id = "tp-" + hashlib.sha256(canonical_input.encode("utf-8")).hexdigest()[:16]
 
+    if case_status == "CLOSED":
+        status = "CLOSED"
+        why = ["citizen_closure_condition_recorded"]
+    elif action == "RETURN":
+        status = "HOLD_FOR_RETURN"
+        why = ["return_gate_not_yet_passed"]
+    elif hard:
+        status = "HOLD_FOR_ESCALATION"
+        why = hard_reasons
+    else:
+        status = "ACTIONABLE"
+        why = [
+            "minimal_relevant_subgraph_selected",
+            "action_is_phase_and_evidence_sensitive",
+        ]
+
     return {
         "protocol_id": protocol_id,
-        "protocol_version": "0.1.0",
+        "protocol_version": "0.2.0",
         "generated_at": datetime.now(timezone.utc).isoformat(),
         "phase": phase,
         "citizen_problem": problem,
         "goal": case.get("goal"),
-        "status": "HOLD_FOR_ESCALATION" if hard else "ACTIONABLE",
+        "status": status,
         "next_action": action,
-        "why_this_action": hard_reasons or [
-            "minimal_relevant_subgraph_selected",
-            "action_is_phase_and_evidence_sensitive",
-        ],
+        "why_this_action": why,
         "hard_gates": {
             "escalation_required": hard,
             "reasons": hard_reasons,
@@ -136,10 +162,18 @@ def compile_protocol(case: dict[str, Any]) -> dict[str, Any]:
         "institution_candidates": institutions,
         "equation_refs": _ACTION_EQUATIONS.get(action, []),
         "equation_status": "proposal unless upstream registry says otherwise",
-        "stop_condition": "return a usable result to the citizen/decision owner",
+        "stop_condition": (
+            "case is closed; reopen only on a new material trigger"
+            if action == "STOP"
+            else "return a usable result to the citizen/decision owner"
+        ),
         "escalation_trigger": "hard safety/authority gate or evidence need exceeds citizen+AI route",
         "fallback": "preserve Case Passport and reroute without restarting the case",
         "return_requirement": "RETURN_GATE must pass before institutional work closes the case",
+        "case_id": case.get("case_id"),
+        "case_passport_version": case.get("case_passport_version"),
+        "outcome_state": case.get("outcome_state"),
+        "failed_routes": case.get("failed_routes") or [],
     }
 
 
