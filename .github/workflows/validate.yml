@@ -9,11 +9,20 @@ permissions:
   contents: read
 
 jobs:
-  validate-json:
+  json-and-schema-validation:
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v4
-      - name: Validate JSON files
+
+      - name: Set up Python
+        uses: actions/setup-python@v5
+        with:
+          python-version: '3.12'
+
+      - name: Install validation dependency
+        run: python -m pip install 'jsonschema[format]==4.23.0'
+
+      - name: Validate all JSON syntax
         shell: bash
         run: |
           set -euo pipefail
@@ -23,29 +32,134 @@ jobs:
             exit 0
           fi
           for f in $files; do
-            echo "Validating $f"
+            echo "Validating JSON syntax: $f"
             python -m json.tool "$f" >/dev/null
           done
+
+      - name: Validate JSON Schemas and reference datasets
+        shell: python
+        run: |
+          import json
+          from pathlib import Path
+          from jsonschema import Draft202012Validator, FormatChecker
+
+          schema_dir = Path('packages/schemas')
+          schemas = {}
+          for path in schema_dir.glob('*.schema.json'):
+              data = json.loads(path.read_text())
+              Draft202012Validator.check_schema(data)
+              schemas[path.name] = data
+              print(f'Valid JSON Schema: {path}')
+
+          institution_schema = schemas['institution-record.schema.json']
+          institution_validator = Draft202012Validator(
+              institution_schema,
+              format_checker=FormatChecker(),
+          )
+          institution_path = Path('adapters/thailand/institutions.seed.json')
+          institutions = json.loads(institution_path.read_text())
+          if not isinstance(institutions, list):
+              raise SystemExit('Thailand institution seed must be a JSON array')
+
+          ids = []
+          for index, record in enumerate(institutions):
+              errors = sorted(
+                  institution_validator.iter_errors(record),
+                  key=lambda e: list(e.path),
+              )
+              if errors:
+                  for error in errors:
+                      print(f'{institution_path}[{index}] {list(error.path)}: {error.message}')
+                  raise SystemExit(1)
+              ids.append(record['institution_id'])
+
+          duplicates = sorted({x for x in ids if ids.count(x) > 1})
+          if duplicates:
+              raise SystemExit(f'Duplicate institution_id values: {duplicates}')
+          print(f'Validated {len(institutions)} Thailand institution records')
+
+          adapter_schema = schemas['country-adapter-manifest.schema.json']
+          adapter_validator = Draft202012Validator(
+              adapter_schema,
+              format_checker=FormatChecker(),
+          )
+          manifest_path = Path('adapters/thailand/adapter.manifest.json')
+          manifest = json.loads(manifest_path.read_text())
+          errors = list(adapter_validator.iter_errors(manifest))
+          if errors:
+              for error in errors:
+                  print(f'{manifest_path} {list(error.path)}: {error.message}')
+              raise SystemExit(1)
+          print(f'Validated adapter manifest: {manifest_path}')
 
   policy-guards:
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v4
-      - name: Check required architecture files
+
+      - name: Check required architecture and governance files
         shell: bash
         run: |
           set -euo pipefail
-          test -f README.md
-          test -f AGENTS.md
-          test -f docs/ARCHITECTURE.md
-          test -f docs/CITIZEN_PROTOCOL.md
-          test -f docs/GOVERNANCE.md
-          test -f packages/schemas/case-passport.schema.json
-          test -f packages/schemas/return-object.schema.json
-          test -f packages/schemas/institution-record.schema.json
+          required=(
+            README.md
+            AGENTS.md
+            CONTRIBUTING.md
+            SECURITY.md
+            ROADMAP.md
+            docs/README.md
+            docs/ARCHITECTURE.md
+            docs/CITIZEN_PROTOCOL.md
+            docs/GOVERNANCE.md
+            docs/TRUST_AND_SAFETY.md
+            docs/DATA_GOVERNANCE.md
+            docs/GLOSSARY.md
+            docs/INSTITUTION_ROUTING.md
+            docs/INSTITUTION_REGISTRY_STANDARD.md
+            docs/COUNTRY_ADAPTER_STANDARD.md
+            docs/EQUATION_BINDINGS.md
+            docs/RELEASE_AND_VERSIONING.md
+            docs/SPECIFICATION_STATUS.md
+            packages/schemas/case-passport.schema.json
+            packages/schemas/return-object.schema.json
+            packages/schemas/institution-record.schema.json
+            packages/schemas/country-adapter-manifest.schema.json
+            adapters/thailand/adapter.manifest.json
+          )
+          for f in "${required[@]}"; do
+            test -f "$f" || { echo "Missing required file: $f"; exit 1; }
+          done
+
       - name: Verify equation authority boundary is declared
         shell: bash
         run: |
           set -euo pipefail
           grep -q 'morrocwi/toledo' README.md
           grep -q 'morrocwi/toledo' registry/README.md
+          grep -q 'morrocwi/toledo' docs/SPECIFICATION_STATUS.md
+
+      - name: Verify citizen safety invariants are documented
+        shell: bash
+        run: |
+          set -euo pipefail
+          grep -q 'AI-first' docs/TRUST_AND_SAFETY.md
+          grep -q 'P_C' docs/GLOSSARY.md
+          grep -q 'Return Gate' docs/GLOSSARY.md
+          grep -q 'Case Passport' docs/ARCHITECTURE.md
+
+  repository-hygiene:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - name: Reject common secret/private-case file patterns
+        shell: bash
+        run: |
+          set -euo pipefail
+          bad=$(find . -type f \
+            \( -name '*.pem' -o -name '*.key' -o -name '*.p12' -o -name '*.pfx' -o -name '.env' \) \
+            -not -path './.git/*' || true)
+          if [ -n "$bad" ]; then
+            echo "Potential secret-bearing files committed:"
+            echo "$bad"
+            exit 1
+          fi
