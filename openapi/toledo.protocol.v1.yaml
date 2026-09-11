@@ -1,8 +1,8 @@
 openapi: 3.1.0
 info:
   title: Toledo Protocol API
-  version: 0.1.0
-  description: Reference API for Toledo citizen protocol compilation and governed readouts.
+  version: 0.2.0
+  description: Reference API for Toledo citizen protocol compilation, closed-loop Case Passport lifecycle, equation readouts and governed routing.
 servers:
   - url: http://127.0.0.1:8787
 paths:
@@ -50,6 +50,54 @@ paths:
             application/json:
               schema:
                 $ref: '../packages/schemas/protocol-instance.schema.json'
+  /v1/cases/init:
+    post:
+      operationId: initializeCase
+      description: Create a Case Passport and compile its first protocol step. The reference API does not persist the passport.
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '../packages/schemas/protocol-compile-request.schema.json'
+      responses:
+        '200': {description: Case Passport plus initial protocol}
+        '422': {description: Invalid case input}
+  /v1/cases/update:
+    post:
+      operationId: updateCase
+      description: Apply one auditable Case Event to a caller-held Case Passport.
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              required: [passport, event]
+              properties:
+                passport: {$ref: '../packages/schemas/case-passport.schema.json'}
+                event: {$ref: '../packages/schemas/case-event.schema.json'}
+      responses:
+        '200': {description: Updated Case Passport}
+        '422': {description: Invalid passport or event}
+  /v1/cases/step:
+    post:
+      operationId: advanceCase
+      description: Initialize or update a Case Passport and compile the next deterministic Toledo action.
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '../packages/schemas/case-step-request.schema.json'
+      responses:
+        '200':
+          description: Updated passport and next protocol instance
+          content:
+            application/json:
+              schema:
+                $ref: '../packages/schemas/case-step-response.schema.json'
+        '422': {description: Invalid case transition}
   /v1/institutions:
     get:
       operationId: routeInstitutions
