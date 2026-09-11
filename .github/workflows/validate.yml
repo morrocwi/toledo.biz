@@ -46,6 +46,7 @@ jobs:
               'case-event.schema.json',
               'case-step-request.schema.json',
               'case-step-response.schema.json',
+              'problem-signature.schema.json',
               'return-object.schema.json',
               'institution-record.schema.json',
               'country-adapter-manifest.schema.json',
@@ -134,8 +135,8 @@ jobs:
           result = step_case({'passport': passport})
           assert result['case_id'] == passport['case_id']
           assert result['passport_version'] == 1
-          assert __version__ == '0.3.0'
-          print('Runtime, case lifecycle, API, MCP, and equation mirror OK')
+          assert __version__ == '0.4.0'
+          print('Runtime, case lifecycle, API, MCP, problem grammar, and equation mirror OK')
           PY
 
   policy-guards:
@@ -151,12 +152,14 @@ jobs:
             .well-known/toledo.json openapi/toledo.protocol.v1.yaml
             docs/README.md docs/ARCHITECTURE.md docs/CITIZEN_PROTOCOL.md docs/GOVERNANCE.md
             docs/TRUST_AND_SAFETY.md docs/DATA_GOVERNANCE.md docs/DATA_CATALOG.md docs/GLOSSARY.md
+            docs/PROBLEM_CAPABILITY_GRAMMAR.md
             docs/INSTITUTION_ROUTING.md docs/INSTITUTION_REGISTRY_STANDARD.md docs/COUNTRY_ADAPTER_STANDARD.md
             docs/EQUATION_BINDINGS.md docs/PROTOCOL_COMPILER.md docs/CASE_LIFECYCLE.md docs/API.md docs/MCP.md
             docs/RELEASE_AND_VERSIONING.md docs/SPECIFICATION_STATUS.md
             registry/README.md registry/DATA_CATALOG.json registry/equation-index.json
             packages/schemas/README.md packages/schemas/case-passport.schema.json packages/schemas/case-event.schema.json
             packages/schemas/case-step-request.schema.json packages/schemas/case-step-response.schema.json
+            packages/schemas/problem-signature.schema.json
             packages/schemas/return-object.schema.json packages/schemas/institution-record.schema.json
             packages/schemas/country-adapter-manifest.schema.json
             packages/schemas/protocol-compile-request.schema.json packages/schemas/protocol-instance.schema.json
@@ -184,6 +187,8 @@ jobs:
           grep -q 'Protocol engine controls typed gates' AGENTS.md
           grep -q 'Route Failure != Case Failure' docs/CASE_LIFECYCLE.md
           grep -q 'P_C = citizen_problem_verbatim' docs/CASE_LIFECYCLE.md
+          grep -q 'Occupation != ProtocolSelector' docs/PROBLEM_CAPABILITY_GRAMMAR.md
+          grep -q 'ProblemSignature != Diagnosis' docs/PROBLEM_CAPABILITY_GRAMMAR.md
 
   repository-hygiene:
     runs-on: ubuntu-latest
