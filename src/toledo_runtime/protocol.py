@@ -142,9 +142,11 @@ def compile_protocol(case: dict[str, Any]) -> dict[str, Any]:
             "action_is_phase_and_evidence_sensitive",
         ]
 
+    problem_signature = case.get("problem_signature") or {}
+
     return {
         "protocol_id": protocol_id,
-        "protocol_version": "0.2.0",
+        "protocol_version": "0.3.0",
         "generated_at": datetime.now(timezone.utc).isoformat(),
         "phase": phase,
         "citizen_problem": problem,
@@ -158,6 +160,9 @@ def compile_protocol(case: dict[str, Any]) -> dict[str, Any]:
         },
         "known": observations,
         "unknown": unknowns,
+        "practice_context": case.get("practice_context") or {},
+        "problem_signature_state": problem_signature.get("status", "NOT_PROVIDED"),
+        "endorsed_signature_id": problem_signature.get("endorsed_signature_id"),
         "requested_capability": requested_capability,
         "institution_candidates": institutions,
         "equation_refs": _ACTION_EQUATIONS.get(action, []),
@@ -165,13 +170,16 @@ def compile_protocol(case: dict[str, Any]) -> dict[str, Any]:
         "stop_condition": (
             "case is closed; reopen only on a new material trigger"
             if action == "STOP"
-            else "return a usable result to the citizen/decision owner"
+            else "return a usable result to the citizen/decision owner when external work is used"
         ),
         "escalation_trigger": "hard safety/authority gate or evidence need exceeds citizen+AI route",
         "fallback": "preserve Case Passport and reroute without restarting the case",
-        "return_requirement": "RETURN_GATE must pass before institutional work closes the case",
+        "return_requirement": (
+            "RETURN_GATE must pass before external institutional work closes the case; local citizen+AI closure may use NOT_APPLICABLE"
+        ),
         "case_id": case.get("case_id"),
         "case_passport_version": case.get("case_passport_version"),
+        "external_actor_used": bool(case.get("external_actor_used", False)),
         "outcome_state": case.get("outcome_state"),
         "failed_routes": case.get("failed_routes") or [],
     }
