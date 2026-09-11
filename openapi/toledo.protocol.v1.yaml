@@ -1,8 +1,8 @@
 openapi: 3.1.0
 info:
   title: Toledo Protocol API
-  version: 0.2.0
-  description: Reference API for Toledo citizen protocol compilation, closed-loop Case Passport lifecycle, equation readouts and governed routing.
+  version: 0.3.0
+  description: Reference API for Toledo citizen protocol compilation, domain-neutral problem signatures, closed-loop Case Passport lifecycle, equation readouts and governed routing.
 servers:
   - url: http://127.0.0.1:8787
 paths:
@@ -53,7 +53,7 @@ paths:
   /v1/cases/init:
     post:
       operationId: initializeCase
-      description: Create a Case Passport and compile its first protocol step. The reference API does not persist the passport.
+      description: Create a Case Passport and compile its first protocol step. The reference API does not persist the passport. Practice context and an optional Problem Signature may be carried without replacing P_C.
       requestBody:
         required: true
         content:
@@ -66,7 +66,7 @@ paths:
   /v1/cases/update:
     post:
       operationId: updateCase
-      description: Apply one auditable Case Event to a caller-held Case Passport.
+      description: Apply one auditable Case Event to a caller-held Case Passport. Problem-grammar events include SIGNATURE_CANDIDATES_UPDATED, SIGNATURE_ENDORSED and BARRIER_UPDATED.
       requestBody:
         required: true
         content:
@@ -83,7 +83,7 @@ paths:
   /v1/cases/step:
     post:
       operationId: advanceCase
-      description: Initialize or update a Case Passport and compile the next deterministic Toledo action.
+      description: Initialize or update a Case Passport and compile the next deterministic Toledo action. External routes require Return Gate before closure; local low-risk citizen+AI/world closure may use Return Gate NOT_APPLICABLE.
       requestBody:
         required: true
         content:
@@ -108,7 +108,7 @@ paths:
         - {name: target_user, in: query, schema: {type: string}}
         - {name: limit, in: query, schema: {type: integer, minimum: 1, maximum: 25, default: 5}}
       responses:
-        '200': {description: Institution candidates}
+        '200': {description: Institution candidates matched by capability/phase/access constraints}
   /v1/handoffs/validate:
     post:
       operationId: validateHandoff
@@ -119,3 +119,25 @@ paths:
       operationId: validateReturnGate
       responses:
         '200': {description: TCB-X005 predicate readout}
+  /v1/schemas/{schema_name}:
+    get:
+      operationId: getSchema
+      parameters:
+        - name: schema_name
+          in: path
+          required: true
+          schema:
+            type: string
+            enum:
+              - case-passport
+              - case-event
+              - case-step-request
+              - case-step-response
+              - problem-signature
+              - return-object
+              - institution-record
+              - protocol-compile-request
+              - protocol-instance
+      responses:
+        '200': {description: Repository-controlled JSON Schema}
+        '404': {description: Schema not found}
