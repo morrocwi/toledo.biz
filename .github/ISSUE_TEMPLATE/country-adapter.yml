@@ -1,0 +1,76 @@
+name: Country adapter proposal
+description: Propose or coordinate a new Toledo country/jurisdiction adapter.
+title: "[adapter] "
+labels: []
+body:
+  - type: markdown
+    attributes:
+      value: |
+        Country adapters localize institutions, regulators, standards, public programs, language, and access constraints while preserving the global core.
+
+  - type: input
+    id: country
+    attributes:
+      label: Country / jurisdiction
+    validations:
+      required: true
+
+  - type: input
+    id: code
+    attributes:
+      label: ISO country code
+      placeholder: TH
+    validations:
+      required: true
+
+  - type: input
+    id: languages
+    attributes:
+      label: Languages
+      placeholder: th, en
+    validations:
+      required: true
+
+  - type: textarea
+    id: frontdoors
+    attributes:
+      label: Low-friction citizen/public entry points
+      description: List candidate official services, extension mechanisms, universities, or local intermediaries with source URLs.
+    validations:
+      required: true
+
+  - type: textarea
+    id: institutions
+    attributes:
+      label: Candidate institutional coverage
+      description: Experts/labs, innovation, IP, SME, regulators/standards, growth/export, policy bodies.
+    validations:
+      required: true
+
+  - type: textarea
+    id: regulatory
+    attributes:
+      label: Important legal/regulatory distinctions
+      description: Identify only what is necessary to understand adapter scope. Do not provide citizen-specific legal advice.
+
+  - type: textarea
+    id: gaps
+    attributes:
+      label: Known gaps / unknowns
+      description: Missing regions, sources, regulator coverage, language, or operational data.
+    validations:
+      required: true
+
+  - type: checkboxes
+    id: checks
+    attributes:
+      label: Adapter principles
+      options:
+        - label: I have read `docs/COUNTRY_ADAPTER_STANDARD.md`.
+          required: true
+        - label: The proposal does not redefine global Toledo equations or hard-gate semantics.
+          required: true
+        - label: Public institutional facts will include source URLs and verification dates.
+          required: true
+        - label: No sensitive real citizen case data is included.
+          required: true
