@@ -1,0 +1,108 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://toledo.biz/schemas/case-passport.schema.json",
+  "title": "Toledo Case Passport",
+  "type": "object",
+  "additionalProperties": false,
+  "required": [
+    "case_id",
+    "version",
+    "citizen_problem_verbatim",
+    "citizen_goal",
+    "current_phase",
+    "current_decision",
+    "consent",
+    "case_steward",
+    "return_obligation"
+  ],
+  "properties": {
+    "case_id": {"type": "string", "minLength": 1},
+    "version": {"type": "integer", "minimum": 1},
+    "created_at": {"type": "string", "format": "date-time"},
+    "updated_at": {"type": "string", "format": "date-time"},
+
+    "citizen_problem_verbatim": {"type": "string", "minLength": 1},
+    "citizen_goal": {"type": "string", "minLength": 1},
+    "citizen_constraints": {"type": "array", "items": {"type": "string"}},
+
+    "ai_structured_problem": {"type": ["string", "null"]},
+    "disciplinary_problem": {"type": ["string", "null"]},
+    "meaning_preservation_state": {
+      "type": "string",
+      "enum": ["PASS", "HOLD_UNKNOWN", "FAIL", "NOT_CHECKED"]
+    },
+
+    "observations": {"type": "array", "items": {"type": "string"}},
+    "evidence_refs": {"type": "array", "items": {"type": "string"}},
+    "unknowns": {"type": "array", "items": {"type": "string"}},
+    "hypotheses": {"type": "array", "items": {"type": "string"}},
+    "risk_state": {"type": ["string", "null"]},
+
+    "current_phase": {
+      "type": "string",
+      "enum": ["P0", "P1", "P2", "P3", "P4", "P5", "P6", "P7", "P8", "P9", "P10", "P11"]
+    },
+    "current_decision": {"type": "string", "minLength": 1},
+    "next_decision": {"type": ["string", "null"]},
+
+    "requested_capability": {"type": ["string", "null"]},
+    "why_capability_is_needed": {"type": ["string", "null"]},
+    "current_actor": {"type": ["string", "null"]},
+    "current_institution": {"type": ["string", "null"]},
+    "decision_owner": {"type": ["string", "null"]},
+
+    "consent": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["status", "scope"],
+      "properties": {
+        "status": {"type": "string", "enum": ["PASS", "HOLD_UNKNOWN", "FAIL"]},
+        "scope": {"type": "array", "items": {"type": "string"}},
+        "expires_at": {"type": ["string", "null"], "format": "date-time"}
+      }
+    },
+
+    "allowed_data_use": {"type": "array", "items": {"type": "string"}},
+    "publication_permission": {"type": "string", "enum": ["ALLOWED", "NOT_ALLOWED", "CONDITIONAL", "UNKNOWN"]},
+    "commercial_use_permission": {"type": "string", "enum": ["ALLOWED", "NOT_ALLOWED", "CONDITIONAL", "UNKNOWN"]},
+
+    "experience_provenance": {"type": "array", "items": {"type": "string"}},
+    "inventorship_state": {"type": ["string", "null"]},
+    "authorship_state": {"type": ["string", "null"]},
+    "ip_state": {"type": ["string", "null"]},
+    "benefit_sharing_state": {"type": ["string", "null"]},
+
+    "previous_actions": {"type": "array", "items": {"type": "string"}},
+    "previous_results": {"type": "array", "items": {"type": "string"}},
+    "failed_routes": {"type": "array", "items": {"type": "string"}},
+
+    "case_steward": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["steward_id", "authority_scope"],
+      "properties": {
+        "steward_id": {"type": "string", "minLength": 1},
+        "host_institution": {"type": ["string", "null"]},
+        "authority_scope": {"type": "array", "items": {"type": "string"}}
+      }
+    },
+
+    "expected_return": {"type": ["string", "null"]},
+    "response_deadline": {"type": ["string", "null"], "format": "date-time"},
+    "decision_window": {"type": ["string", "null"]},
+    "known_cost": {"type": ["number", "null"], "minimum": 0},
+    "currency": {"type": ["string", "null"], "minLength": 3, "maxLength": 3},
+    "fallback_route": {"type": ["string", "null"]},
+
+    "return_obligation": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["required"],
+      "properties": {
+        "required": {"const": true},
+        "return_format": {"type": ["string", "null"]},
+        "return_to": {"type": ["string", "null"]}
+      }
+    }
+  }
+}
