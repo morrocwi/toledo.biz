@@ -2,6 +2,14 @@
 
 This catalog identifies the machine-readable and evidence-backed datasets currently maintained in Toledo Citizen Platform.
 
+Machine-readable catalog:
+
+```text
+registry/DATA_CATALOG.json
+```
+
+The JSON catalog is checked in CI for unique dataset IDs and valid local paths. This document explains the domains and governance expectations around those entries.
+
 ## Catalog
 
 | Dataset / contract | Path | Scope | Authority | Volatility |
@@ -127,3 +135,13 @@ which result returned
 ```
 
 This is necessary for trustworthy citizen/institution orchestration.
+
+## Catalog update rule
+
+Whenever a new maintained dataset or machine contract is added:
+
+1. add it to `registry/DATA_CATALOG.json`;
+2. document its scope and authority;
+3. link its schema when applicable;
+4. record source/freshness policy for external data;
+5. update this human-readable catalog when the data domain is materially new.
