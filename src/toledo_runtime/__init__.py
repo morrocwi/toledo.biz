@@ -14,11 +14,15 @@ from .cases import (
 from .equations import EquationStore
 from .institutions import InstitutionStore
 from .protocol import compile_protocol, validate_handoff, validate_return_gate
+from .threads import compile_decision_threads, ensure_decision_threads, required_threads_closed
 
 __all__ = [
     "EquationStore",
     "InstitutionStore",
     "compile_protocol",
+    "compile_decision_threads",
+    "ensure_decision_threads",
+    "required_threads_closed",
     "validate_handoff",
     "validate_return_gate",
     "create_case_passport",
@@ -28,4 +32,4 @@ __all__ = [
     "step_case",
 ]
 
-__version__ = "0.4.0"
+__version__ = "0.5.0"
