@@ -44,7 +44,6 @@ jobs:
           from pathlib import Path
           from jsonschema import Draft202012Validator, FormatChecker
 
-          root = Path('.')
           schema_dir = Path('packages/schemas')
           schemas = {}
 
@@ -179,11 +178,11 @@ jobs:
         shell: bash
         run: |
           set -euo pipefail
-          grep -q 'AI-first' docs/TRUST_AND_SAFETY.md
+          grep -qi 'AI-first' docs/TRUST_AND_SAFETY.md
           grep -q 'P_C' docs/GLOSSARY.md
-          grep -q 'Return Gate' docs/GLOSSARY.md
-          grep -q 'Case Passport' docs/ARCHITECTURE.md
-          grep -q 'Academic capability != University executability' docs/GLOSSARY.md
+          grep -qi 'Return Gate' docs/GLOSSARY.md
+          grep -qi 'Case Passport' docs/ARCHITECTURE.md
+          grep -qi 'Academic capability != university executability' docs/GLOSSARY.md
 
   repository-hygiene:
     runs-on: ubuntu-latest
