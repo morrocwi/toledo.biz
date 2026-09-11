@@ -16,6 +16,8 @@
     "hard_gates": {"type": "object"},
     "known": {"type": "array", "items": {"type": "string"}},
     "unknown": {"type": "array", "items": {"type": "string"}},
+    "execution_routing": {"type": "object"},
+    "execution_requirements": {"type": "array", "items": {"type": "object"}},
     "institution_candidates": {"type": "array", "items": {"type": "object"}},
     "equation_refs": {"type": "array", "items": {"type": "string"}},
     "return_requirement": {"type": "string"},
