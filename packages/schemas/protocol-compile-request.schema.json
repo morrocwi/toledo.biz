@@ -1,0 +1,36 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://toledo.biz/schemas/protocol-compile-request.schema.json",
+  "title": "Toledo Protocol Compile Request",
+  "type": "object",
+  "additionalProperties": true,
+  "required": ["problem"],
+  "properties": {
+    "problem": {"type": "string", "minLength": 1},
+    "goal": {"type": ["string", "null"]},
+    "phase": {"type": "string", "enum": ["P0","P1","P2","P3","P4","P5","P6","P7","P8","P9","P10","P11"]},
+    "jurisdiction": {"type": "string", "default": "TH"},
+    "target_user": {"type": ["string", "null"]},
+    "requested_capability": {"type": ["string", "null"]},
+    "institution_limit": {"type": "integer", "minimum": 1, "maximum": 25, "default": 5},
+    "evidence": {
+      "type": "object",
+      "additionalProperties": true,
+      "properties": {
+        "observations": {"type": "array", "items": {"type": "string"}},
+        "unknowns": {"type": "array", "items": {"type": "string"}}
+      }
+    },
+    "risk": {
+      "type": "object",
+      "additionalProperties": true,
+      "properties": {
+        "severity": {"type": "number", "minimum": 0, "maximum": 1},
+        "irreversibility": {"type": "number", "minimum": 0, "maximum": 1},
+        "third_party_exposure": {"type": "number", "minimum": 0, "maximum": 1},
+        "professional_authority_required": {"type": "boolean"},
+        "regulatory_required": {"type": "boolean"}
+      }
+    }
+  }
+}

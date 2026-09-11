@@ -1,0 +1,37 @@
+# Toledo Citizen Platform
+
+Purpose: help citizens turn lived experience into usable knowledge and safe next actions with AI first and institutions only when necessary.
+
+## Read first
+https://github.com/morrocwi/toledo.biz/blob/main/docs/PROTOCOL_COMPILER.md
+https://github.com/morrocwi/toledo.biz/blob/main/docs/GLOSSARY.md
+https://github.com/morrocwi/toledo.biz/blob/main/docs/TRUST_AND_SAFETY.md
+https://github.com/morrocwi/toledo.biz/blob/main/docs/EQUATION_BINDINGS.md
+
+## Mathematical authority
+Upstream: https://github.com/morrocwi/toledo
+Citizen-bridge registry: registry/proposals/TOLEDO_CITIZEN_BRIDGE_v0.17.json
+Pinned proposal commit: 361546c934829de56f3dcff2032c740209de847a
+Current status: proposal/new derivation unless upstream says otherwise.
+
+## Machine-readable equation mirror
+https://raw.githubusercontent.com/morrocwi/toledo.biz/main/registry/equation-index.json
+
+## API
+Reference implementation: apps/protocol_api/main.py
+OpenAPI contract: openapi/toledo.protocol.v1.yaml
+Important routes: /v1/equations, /v1/protocols/compile, /v1/institutions, /v1/handoffs/validate, /v1/returns/validate
+
+## MCP
+Reference server: apps/mcp_server/server.py
+Tools: get_equation, search_equations, compile_citizen_protocol, route_institutions, check_handoff, check_return_gate
+Resources: toledo://equations/index, toledo://equations/{id}, toledo://protocol/compiler, Toledo schemas.
+
+## Invariants
+AI-first != AI-only.
+Observation != Interpretation != Diagnosis.
+Academic capability != University executability.
+Referral != Handoff != Collaboration.
+Institutional output != Citizen outcome.
+Do not overwrite P_C, the citizen problem verbatim.
+Do not treat proposal equations as validated universal laws.

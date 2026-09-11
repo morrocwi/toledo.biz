@@ -1,0 +1,23 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://toledo.biz/schemas/protocol-instance.schema.json",
+  "title": "Toledo Protocol Instance",
+  "type": "object",
+  "additionalProperties": true,
+  "required": ["protocol_id","protocol_version","phase","citizen_problem","status","next_action","hard_gates","equation_refs","return_requirement"],
+  "properties": {
+    "protocol_id": {"type": "string", "pattern": "^tp-[a-f0-9]{16}$"},
+    "protocol_version": {"type": "string"},
+    "generated_at": {"type": "string", "format": "date-time"},
+    "phase": {"type": "string", "enum": ["P0","P1","P2","P3","P4","P5","P6","P7","P8","P9","P10","P11"]},
+    "citizen_problem": {"type": "string"},
+    "status": {"type": "string", "enum": ["ACTIONABLE","HOLD_FOR_ESCALATION"]},
+    "next_action": {"type": "string"},
+    "hard_gates": {"type": "object"},
+    "known": {"type": "array", "items": {"type": "string"}},
+    "unknown": {"type": "array", "items": {"type": "string"}},
+    "institution_candidates": {"type": "array", "items": {"type": "object"}},
+    "equation_refs": {"type": "array", "items": {"type": "string"}},
+    "return_requirement": {"type": "string"}
+  }
+}

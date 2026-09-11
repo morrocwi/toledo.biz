@@ -1,0 +1,29 @@
+[build-system]
+requires = ["setuptools>=75"]
+build-backend = "setuptools.build_meta"
+
+[project]
+name = "toledo-citizen-runtime"
+version = "0.2.0"
+description = "Reference Protocol API and MCP runtime for Toledo Citizen Platform"
+requires-python = ">=3.11"
+dependencies = [
+  "fastapi>=0.115",
+  "uvicorn[standard]>=0.30",
+  "mcp>=1.12"
+]
+
+[project.optional-dependencies]
+dev = ["pytest>=8"]
+
+[project.scripts]
+toledo-api = "apps.protocol_api.main:run"
+toledo-mcp = "apps.mcp_server.server:run"
+
+[tool.setuptools.packages.find]
+where = ["src", "."]
+include = ["toledo_runtime*", "apps*"]
+
+[tool.pytest.ini_options]
+addopts = "-q"
+testpaths = ["tests"]

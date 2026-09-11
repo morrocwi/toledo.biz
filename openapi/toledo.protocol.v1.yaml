@@ -1,0 +1,73 @@
+openapi: 3.1.0
+info:
+  title: Toledo Protocol API
+  version: 0.1.0
+  description: Reference API for Toledo citizen protocol compilation and governed readouts.
+servers:
+  - url: http://127.0.0.1:8787
+paths:
+  /health:
+    get:
+      operationId: health
+      responses:
+        '200': {description: Service health}
+  /.well-known/toledo:
+    get:
+      operationId: getToledoManifest
+      responses:
+        '200': {description: Toledo service manifest}
+  /v1/equations:
+    get:
+      operationId: searchEquations
+      parameters:
+        - {name: q, in: query, schema: {type: string}}
+        - {name: domain, in: query, schema: {type: string}}
+        - {name: live, in: query, schema: {type: boolean, default: false}}
+      responses:
+        '200': {description: Equation list/readouts}
+  /v1/equations/{equation_id}:
+    get:
+      operationId: getEquation
+      parameters:
+        - {name: equation_id, in: path, required: true, schema: {type: string}}
+        - {name: live, in: query, schema: {type: boolean, default: false}}
+      responses:
+        '200': {description: Equation readout with provenance}
+        '404': {description: Equation not found}
+  /v1/protocols/compile:
+    post:
+      operationId: compileProtocol
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '../packages/schemas/protocol-compile-request.schema.json'
+      responses:
+        '200':
+          description: Compiled protocol instance
+          content:
+            application/json:
+              schema:
+                $ref: '../packages/schemas/protocol-instance.schema.json'
+  /v1/institutions:
+    get:
+      operationId: routeInstitutions
+      parameters:
+        - {name: jurisdiction, in: query, schema: {type: string, default: TH}}
+        - {name: phase, in: query, schema: {type: string}}
+        - {name: capability, in: query, schema: {type: string}}
+        - {name: target_user, in: query, schema: {type: string}}
+        - {name: limit, in: query, schema: {type: integer, minimum: 1, maximum: 25, default: 5}}
+      responses:
+        '200': {description: Institution candidates}
+  /v1/handoffs/validate:
+    post:
+      operationId: validateHandoff
+      responses:
+        '200': {description: TCB-X003 predicate readout}
+  /v1/returns/validate:
+    post:
+      operationId: validateReturnGate
+      responses:
+        '200': {description: TCB-X005 predicate readout}
