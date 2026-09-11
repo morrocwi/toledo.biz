@@ -11,6 +11,7 @@ from toledo_runtime import (
     EquationStore,
     InstitutionStore,
     apply_case_event,
+    compile_decision_threads,
     compile_protocol,
     create_case_passport,
     step_case,
@@ -20,11 +21,11 @@ from toledo_runtime import (
 
 app = FastAPI(
     title="Toledo Protocol API",
-    version="0.3.0",
+    version="0.4.0",
     description=(
         "Reference API for the Toledo Citizen Protocol Compiler, domain-neutral problem grammar, "
-        "stateless Case Passport lifecycle, equation readouts, institution routing, handoff validation "
-        "and Return Gate checks."
+        "anchor-preserved Decision Threads, stateless Case Passport lifecycle, equation readouts, "
+        "institution routing, handoff validation and Return Gate checks."
     ),
 )
 
@@ -35,7 +36,7 @@ _ROOT = Path(__file__).resolve().parents[2]
 
 @app.get("/health")
 def health() -> dict[str, Any]:
-    return {"ok": True, "service": "toledo-protocol-api", "version": "0.3.0"}
+    return {"ok": True, "service": "toledo-protocol-api", "version": "0.4.0"}
 
 
 @app.get("/.well-known/toledo")
@@ -69,7 +70,7 @@ def protocol_compile(case: dict[str, Any]) -> dict[str, Any]:
 def case_init(case: dict[str, Any]) -> dict[str, Any]:
     try:
         passport = create_case_passport(case)
-        return {"passport": passport, "protocol": step_case({"passport": passport})["protocol"]}
+        return step_case({"passport": passport})
     except ValueError as exc:
         raise HTTPException(status_code=422, detail=str(exc)) from exc
 
@@ -81,7 +82,8 @@ def case_update(payload: dict[str, Any]) -> dict[str, Any]:
         event = payload.get("event")
         if not isinstance(passport, dict) or not isinstance(event, dict):
             raise ValueError("passport and event objects are required")
-        return {"passport": apply_case_event(passport, event)}
+        updated = apply_case_event(passport, event)
+        return {"passport": updated, "thread_protocols": compile_decision_threads(updated)}
     except ValueError as exc:
         raise HTTPException(status_code=422, detail=str(exc)) from exc
 
@@ -90,6 +92,21 @@ def case_update(payload: dict[str, Any]) -> dict[str, Any]:
 def case_step(payload: dict[str, Any]) -> dict[str, Any]:
     try:
         return step_case(payload)
+    except ValueError as exc:
+        raise HTTPException(status_code=422, detail=str(exc)) from exc
+
+
+@app.post("/v1/cases/threads/compile")
+def case_threads_compile(passport: dict[str, Any]) -> dict[str, Any]:
+    """Compile every Decision Thread without mutating the caller-held passport."""
+    try:
+        rows = compile_decision_threads(passport)
+        return {
+            "case_id": passport.get("case_id"),
+            "primary_thread_id": passport.get("primary_thread_id"),
+            "count": len(rows),
+            "thread_protocols": rows,
+        }
     except ValueError as exc:
         raise HTTPException(status_code=422, detail=str(exc)) from exc
 
@@ -130,6 +147,7 @@ def schema(schema_name: str) -> JSONResponse:
         "case-step-request": "case-step-request.schema.json",
         "case-step-response": "case-step-response.schema.json",
         "problem-signature": "problem-signature.schema.json",
+        "decision-thread": "decision-thread.schema.json",
         "return-object": "return-object.schema.json",
         "institution-record": "institution-record.schema.json",
         "protocol-compile-request": "protocol-compile-request.schema.json",
