@@ -20,10 +20,11 @@ from toledo_runtime import (
 
 app = FastAPI(
     title="Toledo Protocol API",
-    version="0.2.0",
+    version="0.3.0",
     description=(
-        "Reference API for the Toledo Citizen Protocol Compiler, stateless Case Passport lifecycle, "
-        "equation readouts, institution routing, handoff validation and Return Gate checks."
+        "Reference API for the Toledo Citizen Protocol Compiler, domain-neutral problem grammar, "
+        "stateless Case Passport lifecycle, equation readouts, institution routing, handoff validation "
+        "and Return Gate checks."
     ),
 )
 
@@ -34,7 +35,7 @@ _ROOT = Path(__file__).resolve().parents[2]
 
 @app.get("/health")
 def health() -> dict[str, Any]:
-    return {"ok": True, "service": "toledo-protocol-api", "version": "0.2.0"}
+    return {"ok": True, "service": "toledo-protocol-api", "version": "0.3.0"}
 
 
 @app.get("/.well-known/toledo")
@@ -128,6 +129,7 @@ def schema(schema_name: str) -> JSONResponse:
         "case-event": "case-event.schema.json",
         "case-step-request": "case-step-request.schema.json",
         "case-step-response": "case-step-response.schema.json",
+        "problem-signature": "problem-signature.schema.json",
         "return-object": "return-object.schema.json",
         "institution-record": "institution-record.schema.json",
         "protocol-compile-request": "protocol-compile-request.schema.json",
