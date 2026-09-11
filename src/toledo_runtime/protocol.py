@@ -26,6 +26,9 @@ _ACTION_EQUATIONS = {
     "GLOBAL_CHECK": ["TCB-U001", "TCB-X004"],
     "RETURN": ["TCB-X005", "TCB-X008", "TCB-X009"],
     "STOP": ["TCB-X008", "TCB-X009"],
+    # HOLD is an implementation state for unresolved thread dependencies. It is
+    # intentionally not presented as a new upstream Toledo equation.
+    "HOLD": [],
 }
 
 
@@ -41,13 +44,18 @@ def _next_action(
     *,
     case_status: str = "OPEN",
     latest_return_gate: str = "NOT_APPLICABLE",
+    dependency_blocked: bool = False,
 ) -> str:
     if case_status == "CLOSED":
         return "STOP"
     if latest_return_gate in {"FAIL", "HOLD_UNKNOWN"}:
         return "RETURN"
+    # A hard safety/authority requirement remains higher priority than waiting
+    # for another ordinary decision thread.
     if hard:
         return "ESCALATE"
+    if dependency_blocked:
+        return "HOLD"
     if phase == "P0":
         return "OBSERVE" if not observations else "STRUCTURE"
     if phase == "P1":
@@ -91,6 +99,9 @@ def compile_protocol(case: dict[str, Any]) -> dict[str, Any]:
 
     case_status = str(case.get("case_status") or "OPEN").upper()
     latest_return_gate = str(case.get("latest_return_gate") or "NOT_APPLICABLE").upper()
+    dependency_blocked = bool(case.get("dependency_blocked", False))
+    dependency_reasons = [str(x) for x in case.get("dependency_reasons", [])]
+
     action = _next_action(
         phase,
         observations,
@@ -98,6 +109,7 @@ def compile_protocol(case: dict[str, Any]) -> dict[str, Any]:
         hard,
         case_status=case_status,
         latest_return_gate=latest_return_gate,
+        dependency_blocked=dependency_blocked,
     )
 
     requested_capability = case.get("requested_capability")
@@ -135,6 +147,9 @@ def compile_protocol(case: dict[str, Any]) -> dict[str, Any]:
     elif hard:
         status = "HOLD_FOR_ESCALATION"
         why = hard_reasons
+    elif action == "HOLD":
+        status = "HOLD_FOR_DEPENDENCY"
+        why = dependency_reasons or ["decision_thread_dependency_unresolved"]
     else:
         status = "ACTIONABLE"
         why = [
@@ -146,7 +161,7 @@ def compile_protocol(case: dict[str, Any]) -> dict[str, Any]:
 
     return {
         "protocol_id": protocol_id,
-        "protocol_version": "0.3.0",
+        "protocol_version": "0.4.0",
         "generated_at": datetime.now(timezone.utc).isoformat(),
         "phase": phase,
         "citizen_problem": problem,
@@ -168,15 +183,17 @@ def compile_protocol(case: dict[str, Any]) -> dict[str, Any]:
         "equation_refs": _ACTION_EQUATIONS.get(action, []),
         "equation_status": "proposal unless upstream registry says otherwise",
         "stop_condition": (
-            "case is closed; reopen only on a new material trigger"
+            "case/thread is closed; reopen only on a new material trigger"
             if action == "STOP"
             else "return a usable result to the citizen/decision owner when external work is used"
         ),
         "escalation_trigger": "hard safety/authority gate or evidence need exceeds citizen+AI route",
         "fallback": "preserve Case Passport and reroute without restarting the case",
         "return_requirement": (
-            "RETURN_GATE must pass before external institutional work closes the case; local citizen+AI closure may use NOT_APPLICABLE"
+            "RETURN_GATE must pass before external institutional work closes the case/thread; local citizen+AI closure may use NOT_APPLICABLE"
         ),
+        "dependency_blocked": dependency_blocked,
+        "dependency_reasons": dependency_reasons,
         "case_id": case.get("case_id"),
         "case_passport_version": case.get("case_passport_version"),
         "external_actor_used": bool(case.get("external_actor_used", False)),
