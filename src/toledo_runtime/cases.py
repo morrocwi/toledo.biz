@@ -7,6 +7,20 @@ from datetime import datetime, timezone
 from typing import Any
 from uuid import uuid4
 
+from .threads import (
+    THREAD_SCOPABLE_EVENTS,
+    apply_thread_scoped_event,
+    cancel_thread,
+    compile_decision_threads,
+    create_thread,
+    ensure_decision_threads,
+    initialize_decision_threads,
+    required_threads_closed,
+    set_primary_thread,
+    sync_primary_projection,
+    update_dependencies,
+)
+
 PHASES = {f"P{i}" for i in range(12)}
 
 EVENT_TYPES = {
@@ -30,6 +44,10 @@ EVENT_TYPES = {
     "HANDOFF_CHECKED",
     "RETURN_RECEIVED",
     "OUTCOME_UPDATED",
+    "DECISION_THREAD_CREATED",
+    "DECISION_THREAD_DEPENDENCIES_UPDATED",
+    "DECISION_THREAD_CANCELLED",
+    "PRIMARY_THREAD_SET",
     "NOTE",
 }
 
@@ -138,8 +156,9 @@ def risk_state(risk: dict[str, Any] | None) -> str:
 def create_case_passport(case: dict[str, Any]) -> dict[str, Any]:
     """Create a versioned Case Passport from a citizen-facing case input.
 
-    This is a pure in-memory constructor. The public repository does not persist
-    sensitive citizen cases. Deployments are responsible for private storage.
+    The original single-decision fields remain intact. If callers provide no
+    decision threads, the runtime creates one primary thread as a backward-
+    compatible projection of current_phase/current_decision.
     """
     problem = _text(case.get("problem") or case.get("citizen_problem_verbatim"))
     if not problem:
@@ -235,19 +254,30 @@ def create_case_passport(case: dict[str, Any]) -> dict[str, Any]:
             "return_format": "plain-language result + knowns + unknowns + next action",
             "return_to": "citizen/decision owner",
         }),
+        "decision_threads": [],
+        "primary_thread_id": None,
         "events": [],
     }
 
+    supplied_threads = case.get("decision_threads") if isinstance(case.get("decision_threads"), list) else None
+    initialize_decision_threads(
+        passport,
+        supplied=supplied_threads,
+        primary_thread_id=case.get("primary_thread_id"),
+    )
+
     creation_event = {
-        "event_id": _event_id(case_id, 1, "CASE_CREATED", {"phase": phase}),
+        "event_id": _event_id(case_id, 1, "CASE_CREATED", {"phase": passport["current_phase"]}),
         "event_type": "CASE_CREATED",
         "occurred_at": now,
         "actor": "system",
         "payload": {
-            "phase": phase,
+            "phase": passport["current_phase"],
             "goal_state": goal_state,
             "risk_state": passport["risk_state"],
             "problem_signature_state": problem_signature["status"],
+            "primary_thread_id": passport["primary_thread_id"],
+            "decision_thread_count": len(passport["decision_threads"]),
         },
     }
     passport["events"].append(creation_event)
@@ -284,8 +314,6 @@ def evaluate_return_object(return_object: dict[str, Any]) -> dict[str, Any]:
     }
     computed = validate_return_gate(gate_input)
     declared = _text(return_object.get("return_gate_state")) or "HOLD_UNKNOWN"
-
-    # Conservative rule: PASS requires both the declared state and computed gate.
     final_state = "PASS" if declared == "PASS" and computed["pass"] else (
         "FAIL" if declared == "FAIL" else "HOLD_UNKNOWN"
     )
@@ -298,6 +326,30 @@ def evaluate_return_object(return_object: dict[str, Any]) -> dict[str, Any]:
         "computed": computed,
         "equation_ref": "TCB-X005",
     }
+
+
+def _mirror_legacy_event_to_single_thread(
+    updated: dict[str, Any],
+    event_type: str,
+    payload: dict[str, Any],
+    *,
+    return_gate_state: str | None = None,
+) -> None:
+    """Keep old single-decision callers synchronized with the primary thread.
+
+    Multi-thread cases require explicit thread_id for decision-specific events.
+    """
+    ensure_decision_threads(updated)
+    if len(updated["decision_threads"]) != 1 or event_type not in THREAD_SCOPABLE_EVENTS:
+        return
+    scoped = copy.deepcopy(payload)
+    scoped["thread_id"] = updated["primary_thread_id"]
+    apply_thread_scoped_event(
+        updated,
+        event_type,
+        scoped,
+        return_gate_state=return_gate_state,
+    )
 
 
 def apply_case_event(passport: dict[str, Any], event: dict[str, Any]) -> dict[str, Any]:
@@ -327,6 +379,7 @@ def apply_case_event(passport: dict[str, Any], event: dict[str, Any]) -> dict[st
     updated.setdefault("practice_context", {})
     updated["problem_signature"] = _normalize_problem_signature(updated.get("problem_signature"))
     updated.setdefault("external_actor_used", False)
+    ensure_decision_threads(updated)
 
     new_version = int(updated.get("version", 0)) + 1
     occurred_at = _text(event.get("occurred_at")) or _now()
@@ -338,169 +391,242 @@ def apply_case_event(passport: dict[str, Any], event: dict[str, Any]) -> dict[st
         "payload": payload,
     }
 
-    if event_type == "OBSERVATION_ADDED":
-        _append_unique(updated["observations"], payload.get("value") or payload.get("observation"))
+    # Structural thread events are additive and never rewrite P0-P11 semantics.
+    if event_type == "DECISION_THREAD_CREATED":
+        thread = create_thread(updated, payload)
+        record["thread_id"] = thread["thread_id"]
 
-    elif event_type == "UNKNOWN_ADDED":
-        _append_unique(updated["unknowns"], payload.get("value") or payload.get("unknown"))
+    elif event_type == "DECISION_THREAD_DEPENDENCIES_UPDATED":
+        thread_id = _text(payload.get("thread_id"))
+        dependencies = payload.get("depends_on")
+        if not thread_id or not isinstance(dependencies, list):
+            raise ValueError("DECISION_THREAD_DEPENDENCIES_UPDATED requires thread_id and depends_on[]")
+        update_dependencies(updated, thread_id, dependencies)
+        record["thread_id"] = thread_id
 
-    elif event_type == "UNKNOWN_RESOLVED":
-        target = _text(payload.get("value") or payload.get("unknown"))
-        if target:
-            updated["unknowns"] = [x for x in updated["unknowns"] if _text(x) != target]
-        resolution = _text(payload.get("resolution"))
-        if resolution:
-            _append_unique(updated["previous_results"], resolution)
+    elif event_type == "DECISION_THREAD_CANCELLED":
+        thread_id = _text(payload.get("thread_id"))
+        if not thread_id:
+            raise ValueError("DECISION_THREAD_CANCELLED requires thread_id")
+        cancel_thread(updated, thread_id)
+        record["thread_id"] = thread_id
 
-    elif event_type == "HYPOTHESIS_ADDED":
-        _append_unique(updated["hypotheses"], payload.get("value") or payload.get("hypothesis"))
+    elif event_type == "PRIMARY_THREAD_SET":
+        thread_id = _text(payload.get("thread_id"))
+        if not thread_id:
+            raise ValueError("PRIMARY_THREAD_SET requires thread_id")
+        set_primary_thread(updated, thread_id)
+        record["thread_id"] = thread_id
 
-    elif event_type == "ACTION_RECORDED":
-        _append_unique(updated["previous_actions"], payload.get("action") or payload.get("value"))
+    else:
+        # Thread-scoped RETURN_RECEIVED needs the same independently computed
+        # Return Gate as the legacy case-level path.
+        thread_id = _text(payload.get("thread_id"))
+        scoped_gate: dict[str, Any] | None = None
+        if thread_id and event_type == "RETURN_RECEIVED":
+            return_object = payload.get("return_object") if isinstance(payload.get("return_object"), dict) else payload
+            if _text(return_object.get("case_id")) not in {"", _text(updated.get("case_id"))}:
+                raise ValueError("Return Object case_id does not match Case Passport")
+            scoped_gate = evaluate_return_object(return_object)
 
-    elif event_type == "RESULT_RECORDED":
-        _append_unique(updated["previous_results"], payload.get("result") or payload.get("value"))
-
-    elif event_type == "RISK_UPDATED":
-        patch = payload.get("risk") if isinstance(payload.get("risk"), dict) else payload
-        updated["risk_profile"].update(copy.deepcopy(patch))
-        updated["risk_state"] = risk_state(updated["risk_profile"])
-
-    elif event_type == "PHASE_CHANGED":
-        phase = _text(payload.get("phase")).upper()
-        if phase not in PHASES:
-            raise ValueError("phase must be P0..P11")
-        updated["current_phase"] = phase
-
-    elif event_type == "GOAL_CONFIRMED":
-        goal = _text(payload.get("goal"))
-        if not goal:
-            raise ValueError("GOAL_CONFIRMED requires payload.goal")
-        updated["citizen_goal"] = goal
-        updated["goal_state"] = "CONFIRMED"
-
-    elif event_type == "STRUCTURED_PROBLEM_UPDATED":
-        structured = _text(payload.get("structured_problem"))
-        if not structured:
-            raise ValueError("STRUCTURED_PROBLEM_UPDATED requires payload.structured_problem")
-        updated["ai_structured_problem"] = structured
-        updated["meaning_preservation_state"] = _text(payload.get("meaning_preservation_state")) or "HOLD_UNKNOWN"
-
-    elif event_type == "DISCIPLINARY_PROBLEM_UPDATED":
-        disciplinary = _text(payload.get("disciplinary_problem"))
-        if not disciplinary:
-            raise ValueError("DISCIPLINARY_PROBLEM_UPDATED requires payload.disciplinary_problem")
-        updated["disciplinary_problem"] = disciplinary
-        updated["meaning_preservation_state"] = _text(payload.get("meaning_preservation_state")) or "HOLD_UNKNOWN"
-
-    elif event_type == "SIGNATURE_CANDIDATES_UPDATED":
-        incoming = payload.get("problem_signature") if isinstance(payload.get("problem_signature"), dict) else payload
-        updated["problem_signature"] = _normalize_problem_signature(incoming)
-        if updated["problem_signature"]["candidate_signatures"] and updated["problem_signature"]["status"] == "NOT_PROVIDED":
-            updated["problem_signature"]["status"] = "CANDIDATE"
-
-    elif event_type == "SIGNATURE_ENDORSED":
-        signature_id = _text(payload.get("signature_id"))
-        if not signature_id:
-            raise ValueError("SIGNATURE_ENDORSED requires payload.signature_id")
-        candidates = updated["problem_signature"].get("candidate_signatures", [])
-        match = None
-        for candidate in candidates:
-            if _text(candidate.get("signature_id")) == signature_id:
-                match = candidate
-                break
-        if match is None:
-            raise ValueError("SIGNATURE_ENDORSED signature_id is not present in candidate_signatures")
-        match["citizen_endorsement"] = "PASS"
-        updated["problem_signature"]["endorsed_signature_id"] = signature_id
-        updated["problem_signature"]["status"] = "ENDORSED"
-
-    elif event_type == "BARRIER_UPDATED":
-        barrier = _text(payload.get("barrier")).lower()
-        state = _text(payload.get("state")).upper()
-        if barrier not in BARRIER_KEYS:
-            raise ValueError(f"BARRIER_UPDATED barrier must be one of {sorted(BARRIER_KEYS)}")
-        if state not in BARRIER_STATES:
-            raise ValueError(f"BARRIER_UPDATED state must be one of {sorted(BARRIER_STATES)}")
-        updated["problem_signature"]["barrier_state"][barrier] = state
-
-    elif event_type == "CAPABILITY_REQUESTED":
-        capability = _text(payload.get("requested_capability"))
-        if not capability:
-            raise ValueError("CAPABILITY_REQUESTED requires payload.requested_capability")
-        updated["requested_capability"] = capability
-        updated["why_capability_is_needed"] = payload.get("why_capability_is_needed")
-
-    elif event_type == "INSTITUTION_SELECTED":
-        institution = _text(payload.get("institution_id") or payload.get("institution"))
-        if not institution:
-            raise ValueError("INSTITUTION_SELECTED requires institution_id")
-        updated["current_institution"] = institution
-        updated["current_actor"] = payload.get("actor") or "institution"
-        updated["external_actor_used"] = True
-
-    elif event_type == "ROUTE_FAILED":
-        reason = _text(payload.get("reason")) or "route failed"
-        institution = _text(payload.get("institution_id") or updated.get("current_institution"))
-        _append_unique(updated["failed_routes"], f"{institution}: {reason}" if institution else reason)
-        updated["current_institution"] = None
-        if payload.get("fallback_route"):
-            updated["fallback_route"] = payload.get("fallback_route")
-        updated["case_status"] = "OPEN"
-
-    elif event_type == "HANDOFF_CHECKED":
-        result = payload.get("result") or {}
-        if payload.get("external_actor_used") is True:
-            updated["external_actor_used"] = True
-        if result and result.get("valid") is False:
-            updated["case_status"] = "HOLD"
-        elif result and result.get("valid") is True and updated.get("case_status") != "CLOSED":
-            updated["case_status"] = "OPEN"
-
-    elif event_type == "RETURN_RECEIVED":
-        return_object = payload.get("return_object") if isinstance(payload.get("return_object"), dict) else payload
-        if _text(return_object.get("case_id")) not in {"", _text(updated.get("case_id"))}:
-            raise ValueError("Return Object case_id does not match Case Passport")
-        updated["external_actor_used"] = True
-        gate = evaluate_return_object(return_object)
-        updated["latest_return_gate"] = gate["state"]
-        updated["current_actor"] = return_object.get("source_actor") or updated.get("current_actor")
-        if return_object.get("source_institution"):
-            updated["current_institution"] = return_object.get("source_institution")
-        _append_unique(updated["previous_results"], return_object.get("plain_language_result"))
-        for item in return_object.get("what_is_unknown", []) or []:
-            _append_unique(updated["unknowns"], item)
-        if gate["state"] == "PASS":
-            updated["case_status"] = "OPEN"
-        else:
-            updated["case_status"] = "HOLD"
-        record["gate_result"] = gate
-
-    elif event_type == "OUTCOME_UPDATED":
-        outcome = _text(payload.get("outcome_state")).lower()
-        allowed = CLOSURE_OUTCOMES | {"ongoing", "worsened", "unknown"}
-        if outcome not in allowed:
-            raise ValueError(f"outcome_state must be one of {sorted(allowed)}")
-        updated["outcome_state"] = outcome
-        if payload.get("result"):
-            _append_unique(updated["previous_results"], payload.get("result"))
-
-        external = bool(updated.get("external_actor_used"))
-        return_gate = updated.get("latest_return_gate")
-        local_closure = (
-            not external
-            and return_gate == "NOT_APPLICABLE"
-            and updated.get("risk_state") != "HARD_ESCALATION"
+        thread_handled = apply_thread_scoped_event(
+            updated,
+            event_type,
+            payload,
+            return_gate_state=scoped_gate["state"] if scoped_gate else None,
         )
-        external_closure = (external and return_gate == "PASS")
+        if thread_handled:
+            record["thread_id"] = thread_id
+            if scoped_gate:
+                record["gate_result"] = scoped_gate
+        else:
+            legacy_return_gate_state: str | None = None
 
-        if outcome in CLOSURE_OUTCOMES and (local_closure or external_closure):
-            updated["case_status"] = "CLOSED"
-        elif outcome in CLOSURE_OUTCOMES:
-            updated["case_status"] = "HOLD"
-        elif outcome == "worsened":
-            updated["case_status"] = "OPEN"
+            if event_type == "OBSERVATION_ADDED":
+                _append_unique(updated["observations"], payload.get("value") or payload.get("observation"))
 
+            elif event_type == "UNKNOWN_ADDED":
+                _append_unique(updated["unknowns"], payload.get("value") or payload.get("unknown"))
+
+            elif event_type == "UNKNOWN_RESOLVED":
+                target = _text(payload.get("value") or payload.get("unknown"))
+                if target:
+                    updated["unknowns"] = [x for x in updated["unknowns"] if _text(x) != target]
+                resolution = _text(payload.get("resolution"))
+                if resolution:
+                    _append_unique(updated["previous_results"], resolution)
+
+            elif event_type == "HYPOTHESIS_ADDED":
+                _append_unique(updated["hypotheses"], payload.get("value") or payload.get("hypothesis"))
+
+            elif event_type == "ACTION_RECORDED":
+                _append_unique(updated["previous_actions"], payload.get("action") or payload.get("value"))
+
+            elif event_type == "RESULT_RECORDED":
+                _append_unique(updated["previous_results"], payload.get("result") or payload.get("value"))
+
+            elif event_type == "RISK_UPDATED":
+                patch = payload.get("risk") if isinstance(payload.get("risk"), dict) else payload
+                updated["risk_profile"].update(copy.deepcopy(patch))
+                updated["risk_state"] = risk_state(updated["risk_profile"])
+
+            elif event_type == "PHASE_CHANGED":
+                phase = _text(payload.get("phase")).upper()
+                if phase not in PHASES:
+                    raise ValueError("phase must be P0..P11")
+                updated["current_phase"] = phase
+
+            elif event_type == "GOAL_CONFIRMED":
+                goal = _text(payload.get("goal"))
+                if not goal:
+                    raise ValueError("GOAL_CONFIRMED requires payload.goal")
+                updated["citizen_goal"] = goal
+                updated["goal_state"] = "CONFIRMED"
+
+            elif event_type == "STRUCTURED_PROBLEM_UPDATED":
+                structured = _text(payload.get("structured_problem"))
+                if not structured:
+                    raise ValueError("STRUCTURED_PROBLEM_UPDATED requires payload.structured_problem")
+                updated["ai_structured_problem"] = structured
+                updated["meaning_preservation_state"] = _text(payload.get("meaning_preservation_state")) or "HOLD_UNKNOWN"
+
+            elif event_type == "DISCIPLINARY_PROBLEM_UPDATED":
+                disciplinary = _text(payload.get("disciplinary_problem"))
+                if not disciplinary:
+                    raise ValueError("DISCIPLINARY_PROBLEM_UPDATED requires payload.disciplinary_problem")
+                updated["disciplinary_problem"] = disciplinary
+                updated["meaning_preservation_state"] = _text(payload.get("meaning_preservation_state")) or "HOLD_UNKNOWN"
+
+            elif event_type == "SIGNATURE_CANDIDATES_UPDATED":
+                incoming = payload.get("problem_signature") if isinstance(payload.get("problem_signature"), dict) else payload
+                updated["problem_signature"] = _normalize_problem_signature(incoming)
+                if updated["problem_signature"]["candidate_signatures"] and updated["problem_signature"]["status"] == "NOT_PROVIDED":
+                    updated["problem_signature"]["status"] = "CANDIDATE"
+
+            elif event_type == "SIGNATURE_ENDORSED":
+                signature_id = _text(payload.get("signature_id"))
+                if not signature_id:
+                    raise ValueError("SIGNATURE_ENDORSED requires payload.signature_id")
+                candidates = updated["problem_signature"].get("candidate_signatures", [])
+                match = None
+                for candidate in candidates:
+                    if _text(candidate.get("signature_id")) == signature_id:
+                        match = candidate
+                        break
+                if match is None:
+                    raise ValueError("SIGNATURE_ENDORSED signature_id is not present in candidate_signatures")
+                match["citizen_endorsement"] = "PASS"
+                updated["problem_signature"]["endorsed_signature_id"] = signature_id
+                updated["problem_signature"]["status"] = "ENDORSED"
+
+            elif event_type == "BARRIER_UPDATED":
+                barrier = _text(payload.get("barrier")).lower()
+                state = _text(payload.get("state")).upper()
+                if barrier not in BARRIER_KEYS:
+                    raise ValueError(f"BARRIER_UPDATED barrier must be one of {sorted(BARRIER_KEYS)}")
+                if state not in BARRIER_STATES:
+                    raise ValueError(f"BARRIER_UPDATED state must be one of {sorted(BARRIER_STATES)}")
+                updated["problem_signature"]["barrier_state"][barrier] = state
+
+            elif event_type == "CAPABILITY_REQUESTED":
+                capability = _text(payload.get("requested_capability"))
+                if not capability:
+                    raise ValueError("CAPABILITY_REQUESTED requires payload.requested_capability")
+                updated["requested_capability"] = capability
+                updated["why_capability_is_needed"] = payload.get("why_capability_is_needed")
+
+            elif event_type == "INSTITUTION_SELECTED":
+                institution = _text(payload.get("institution_id") or payload.get("institution"))
+                if not institution:
+                    raise ValueError("INSTITUTION_SELECTED requires institution_id")
+                updated["current_institution"] = institution
+                updated["current_actor"] = payload.get("actor") or "institution"
+                updated["external_actor_used"] = True
+
+            elif event_type == "ROUTE_FAILED":
+                reason = _text(payload.get("reason")) or "route failed"
+                institution = _text(payload.get("institution_id") or updated.get("current_institution"))
+                _append_unique(updated["failed_routes"], f"{institution}: {reason}" if institution else reason)
+                updated["current_institution"] = None
+                if payload.get("fallback_route"):
+                    updated["fallback_route"] = payload.get("fallback_route")
+                updated["case_status"] = "OPEN"
+
+            elif event_type == "HANDOFF_CHECKED":
+                result = payload.get("result") or {}
+                if payload.get("external_actor_used") is True:
+                    updated["external_actor_used"] = True
+                if result and result.get("valid") is False:
+                    updated["case_status"] = "HOLD"
+                elif result and result.get("valid") is True and updated.get("case_status") != "CLOSED":
+                    updated["case_status"] = "OPEN"
+
+            elif event_type == "RETURN_RECEIVED":
+                return_object = payload.get("return_object") if isinstance(payload.get("return_object"), dict) else payload
+                if _text(return_object.get("case_id")) not in {"", _text(updated.get("case_id"))}:
+                    raise ValueError("Return Object case_id does not match Case Passport")
+                updated["external_actor_used"] = True
+                gate = evaluate_return_object(return_object)
+                legacy_return_gate_state = gate["state"]
+                updated["latest_return_gate"] = gate["state"]
+                updated["current_actor"] = return_object.get("source_actor") or updated.get("current_actor")
+                if return_object.get("source_institution"):
+                    updated["current_institution"] = return_object.get("source_institution")
+                _append_unique(updated["previous_results"], return_object.get("plain_language_result"))
+                for item in return_object.get("what_is_unknown", []) or []:
+                    _append_unique(updated["unknowns"], item)
+                if gate["state"] == "PASS":
+                    updated["case_status"] = "OPEN"
+                else:
+                    updated["case_status"] = "HOLD"
+                record["gate_result"] = gate
+
+            elif event_type == "OUTCOME_UPDATED":
+                outcome = _text(payload.get("outcome_state")).lower()
+                allowed = CLOSURE_OUTCOMES | {"ongoing", "worsened", "unknown"}
+                if outcome not in allowed:
+                    raise ValueError(f"outcome_state must be one of {sorted(allowed)}")
+                updated["outcome_state"] = outcome
+                if payload.get("result"):
+                    _append_unique(updated["previous_results"], payload.get("result"))
+
+                # Mirror first so the single legacy thread can satisfy the new
+                # RequiredThreadsClosed invariant without breaking old callers.
+                _mirror_legacy_event_to_single_thread(updated, event_type, payload)
+
+                external = bool(updated.get("external_actor_used"))
+                return_gate = updated.get("latest_return_gate")
+                local_closure = (
+                    not external
+                    and return_gate == "NOT_APPLICABLE"
+                    and updated.get("risk_state") != "HARD_ESCALATION"
+                )
+                external_closure = external and return_gate == "PASS"
+                thread_gate = required_threads_closed(updated)
+
+                if len(updated.get("decision_threads", [])) > 1:
+                    case_route_ok = thread_gate and updated.get("risk_state") != "HARD_ESCALATION"
+                else:
+                    case_route_ok = thread_gate and (local_closure or external_closure)
+
+                if outcome in CLOSURE_OUTCOMES and case_route_ok:
+                    updated["case_status"] = "CLOSED"
+                elif outcome in CLOSURE_OUTCOMES:
+                    updated["case_status"] = "HOLD"
+                elif outcome == "worsened":
+                    updated["case_status"] = "OPEN"
+
+            # For old single-decision clients, mirror the existing event into the
+            # sole primary thread. OUTCOME_UPDATED was already mirrored above.
+            if event_type != "OUTCOME_UPDATED":
+                _mirror_legacy_event_to_single_thread(
+                    updated,
+                    event_type,
+                    payload,
+                    return_gate_state=legacy_return_gate_state,
+                )
+
+    sync_primary_projection(updated)
     updated["version"] = new_version
     updated["updated_at"] = _now()
     updated["events"].append(record)
@@ -508,37 +634,44 @@ def apply_case_event(passport: dict[str, Any], event: dict[str, Any]) -> dict[st
 
 
 def case_to_compile_input(passport: dict[str, Any]) -> dict[str, Any]:
-    """Project a Case Passport into the protocol compiler's compact input shape."""
+    """Project the primary Decision Thread into the legacy compact compiler shape."""
+    ensure_decision_threads(passport)
+    primary = next(
+        x for x in passport["decision_threads"]
+        if x["thread_id"] == passport["primary_thread_id"]
+    )
     return {
         "problem": passport.get("citizen_problem_verbatim"),
         "goal": passport.get("citizen_goal"),
-        "phase": passport.get("current_phase") or "P0",
+        "phase": primary.get("phase") or passport.get("current_phase") or "P0",
         "jurisdiction": passport.get("jurisdiction") or "TH",
         "target_user": passport.get("target_user") or "citizen",
         "practice_context": passport.get("practice_context") or {},
-        "problem_signature": passport.get("problem_signature") or _empty_problem_signature(),
-        "requested_capability": passport.get("requested_capability"),
+        "problem_signature": primary.get("problem_signature") or passport.get("problem_signature") or _empty_problem_signature(),
+        "requested_capability": primary.get("requested_capability") or passport.get("requested_capability"),
         "evidence": {
-            "observations": passport.get("observations") or [],
-            "unknowns": passport.get("unknowns") or [],
+            "observations": primary.get("observations") or [],
+            "unknowns": primary.get("unknowns") or [],
         },
-        "risk": passport.get("risk_profile") or {},
+        "risk": primary.get("risk_profile") or {},
         "case_id": passport.get("case_id"),
         "case_passport_version": passport.get("version"),
         "case_status": passport.get("case_status") or "OPEN",
-        "latest_return_gate": passport.get("latest_return_gate") or "NOT_APPLICABLE",
-        "external_actor_used": bool(passport.get("external_actor_used", False)),
-        "outcome_state": passport.get("outcome_state") or "ongoing",
-        "failed_routes": passport.get("failed_routes") or [],
+        "latest_return_gate": primary.get("latest_return_gate") or passport.get("latest_return_gate") or "NOT_APPLICABLE",
+        "external_actor_used": bool(primary.get("external_actor_used", False)),
+        "outcome_state": primary.get("outcome_state") or passport.get("outcome_state") or "ongoing",
+        "failed_routes": primary.get("failed_routes") or [],
+        "dependency_blocked": bool(primary.get("blocking_threads")),
+        "dependency_reasons": [f"waiting_for:{x}" for x in primary.get("blocking_threads", [])],
     }
 
 
 def step_case(payload: dict[str, Any]) -> dict[str, Any]:
-    """Initialize/update a Case Passport and compile the next deterministic protocol step.
+    """Initialize/update a Case Passport and compile all decision subgraphs.
 
-    The function is stateless: callers hold the Case Passport and send it back on
-    each step. This keeps the public reference runtime from becoming a citizen-data
-    store while still providing a complete closed-loop state transition contract.
+    `protocol` remains the primary-thread compatibility surface. New clients also
+    receive `thread_protocols` and SHOULD inspect all of them before a material
+    decision in a multi-decision case.
     """
     passport = payload.get("passport")
     raw_case = payload.get("case")
@@ -551,6 +684,7 @@ def step_case(payload: dict[str, Any]) -> dict[str, Any]:
         raise ValueError("passport must be an object")
     else:
         passport = copy.deepcopy(passport)
+        ensure_decision_threads(passport)
 
     events: list[dict[str, Any]] = []
     if isinstance(payload.get("event"), dict):
@@ -563,18 +697,21 @@ def step_case(payload: dict[str, Any]) -> dict[str, Any]:
     for event in events:
         passport = apply_case_event(passport, event)
 
-    from .protocol import compile_protocol
-
-    protocol = compile_protocol(case_to_compile_input(passport))
-    protocol["case_id"] = passport["case_id"]
-    protocol["case_passport_version"] = passport["version"]
-    protocol["case_status"] = passport.get("case_status")
+    ensure_decision_threads(passport)
+    thread_protocols = compile_decision_threads(passport)
+    primary = next(
+        x for x in thread_protocols
+        if x["thread_id"] == passport["primary_thread_id"]
+    )
+    primary["case_status"] = passport.get("case_status")
 
     return {
         "case_id": passport["case_id"],
         "passport_version": passport["version"],
         "case_status": passport.get("case_status"),
         "closed": passport.get("case_status") == "CLOSED",
+        "primary_thread_id": passport.get("primary_thread_id"),
         "passport": passport,
-        "protocol": protocol,
+        "protocol": primary,
+        "thread_protocols": thread_protocols,
     }
