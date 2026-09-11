@@ -6,6 +6,7 @@ from datetime import datetime, timezone
 from typing import Any
 
 from .cases import evaluate_hard_risk
+from .execution import resolve_execution_route
 from .institutions import InstitutionStore
 
 PHASES = {f"P{i}" for i in range(12)}
@@ -118,6 +119,14 @@ def compile_protocol(case: dict[str, Any]) -> dict[str, Any]:
     if action == "MEASURE" and not requested_capability:
         requested_capability = "measurement or testing"
 
+    execution_case = dict(case)
+    execution_case["requested_capability"] = requested_capability
+    execution_routing = resolve_execution_route(
+        execution_case,
+        hard_escalation=hard,
+        hard_reasons=hard_reasons,
+    )
+
     jurisdiction = str(case.get("jurisdiction") or "TH")
     institutions: list[dict[str, Any]] = []
     if action in {"ESCALATE", "MEASURE"}:
@@ -161,7 +170,7 @@ def compile_protocol(case: dict[str, Any]) -> dict[str, Any]:
 
     return {
         "protocol_id": protocol_id,
-        "protocol_version": "0.4.0",
+        "protocol_version": "0.5.0",
         "generated_at": datetime.now(timezone.utc).isoformat(),
         "phase": phase,
         "citizen_problem": problem,
@@ -179,6 +188,8 @@ def compile_protocol(case: dict[str, Any]) -> dict[str, Any]:
         "problem_signature_state": problem_signature.get("status", "NOT_PROVIDED"),
         "endorsed_signature_id": problem_signature.get("endorsed_signature_id"),
         "requested_capability": requested_capability,
+        "execution_routing": execution_routing,
+        "execution_requirements": execution_routing["requirements"],
         "institution_candidates": institutions,
         "equation_refs": _ACTION_EQUATIONS.get(action, []),
         "equation_status": "proposal unless upstream registry says otherwise",
