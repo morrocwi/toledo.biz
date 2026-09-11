@@ -487,7 +487,11 @@ def apply_case_event(passport: dict[str, Any], event: dict[str, Any]) -> dict[st
 
         external = bool(updated.get("external_actor_used"))
         return_gate = updated.get("latest_return_gate")
-        local_closure = (not external and return_gate == "NOT_APPLICABLE")
+        local_closure = (
+            not external
+            and return_gate == "NOT_APPLICABLE"
+            and updated.get("risk_state") != "HARD_ESCALATION"
+        )
         external_closure = (external and return_gate == "PASS")
 
         if outcome in CLOSURE_OUTCOMES and (local_closure or external_closure):
