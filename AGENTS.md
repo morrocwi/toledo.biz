@@ -12,7 +12,8 @@ Before a material change, read:
 4. the normative document for the layer being changed
 5. `docs/EQUATION_BINDINGS.md` when behavior depends on Toledo mathematics
 6. `docs/PROTOCOL_COMPILER.md` for runtime/routing/compiler changes
-7. `docs/API.md` or `docs/MCP.md` when changing machine interfaces
+7. `docs/CASE_LIFECYCLE.md` for Case Passport/event/closure changes
+8. `docs/API.md` or `docs/MCP.md` when changing machine interfaces
 
 For institution/country data, also read `docs/DATA_GOVERNANCE.md`, `docs/INSTITUTION_REGISTRY_STANDARD.md`, and `docs/COUNTRY_ADAPTER_STANDARD.md`.
 
@@ -51,15 +52,36 @@ P_S = AI-structured problem
 P_D = disciplinary/institutional problem
 ```
 
-Never overwrite `P_C`.
+Never overwrite `P_C` through an ordinary Case Event. If a citizen genuinely corrects the original problem statement, preserve the prior representation and use an explicit migration/correction mechanism rather than silent replacement.
+
+## Closed-loop Case Passport rule
+
+A case has a stable `case_id` and monotonic `version`.
+
+```text
+Case Passport
+→ Case Event
+→ next Passport version
+→ Protocol recompile
+```
+
+A route failure must remain inside the same case unless the citizen is actually starting a materially different problem.
+
+```text
+ROUTE_FAILED != RESTART_CASE
+```
+
+The public reference runtime is stateless; caller-held passports are the transport contract. Do not add public persistence for sensitive citizen data without a separate security/privacy design review.
 
 ## Case continuity
 
 Institution routing must carry a Case Passport. A valid handoff requires meaning preservation, requested capability, decision owner, consent/data scope, return obligation, response-time fit and fallback. Do not treat a generic referral as successful handoff.
 
-## Return Gate
+## Return Gate and closure
 
 External institutional work is incomplete until a Return Object reaches the citizen/decision owner in usable form.
+
+Do not mark a case `CLOSED` merely because a project, report, consultation or institutional task is complete. The reference runtime requires a passing Return Gate plus an explicit citizen outcome state before emitting `STOP`.
 
 ## Privacy
 
@@ -79,13 +101,17 @@ A correct local fix is a valid terminal state. A useful innovation need not beco
 
 ## Runtime changes
 
-Any compiler/routing change should test at least:
+Any compiler/routing/case-lifecycle change should test at least:
 
 - low-risk citizen+AI path;
 - hard escalation path;
+- Case Passport schema validity;
+- monotonic version update;
+- `P_C` preservation;
 - inaccessible/ineligible institution fallback;
-- response-time or handoff failure where relevant;
+- no-restart rerouting;
 - Return Gate behavior;
+- citizen closure / `STOP` behavior;
 - equation provenance/status disclosure.
 
 Machine interfaces MUST expose equation references rather than copy equations as local authority.
