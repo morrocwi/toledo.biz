@@ -1,13 +1,13 @@
 # Roadmap
 
-Toledo Citizen Platform is specification-first but now includes an executable pre-alpha reference runtime. The roadmap prioritizes a small auditable routing core, data integrity, domain-neutral scaling, and governed cross-actor continuity before a polished interface.
+Toledo Citizen Platform is specification-first but now includes an executable pre-alpha reference runtime. The roadmap prioritizes a small auditable routing core, data integrity, domain-neutral scaling, multi-decision continuity, and governed cross-actor execution before a polished interface.
 
 ## Milestone status
 
 | Milestone | Status |
 |---|---|
 | M0 — Specification and governance baseline | **complete** |
-| M1 — Deterministic reference engine | **active / core loop + problem grammar implemented** |
+| M1 — Deterministic reference engine | **active / core loop + problem grammar + Decision Threads implemented** |
 | M2 — Thailand adapter hardening | next |
 | M3 — Citizen web application | planned |
 | M4 — Steward console | planned |
@@ -43,9 +43,9 @@ Exit criterion: a contributor can identify the source of truth for concepts, sch
 
 ## M1 — Deterministic reference engine
 
-Status: **active / core closed loop + domain-neutral grammar implemented**
+Status: **active / closed loop + domain-neutral grammar + multi-decision core implemented**
 
-Goal: implement a small auditable core before building a polished UI, without creating one bespoke protocol per occupation or domain.
+Goal: implement a small auditable core before building a polished UI, without creating one bespoke protocol per occupation/domain and without forcing a complex case into one scalar phase.
 
 Delivered:
 
@@ -65,22 +65,35 @@ Delivered:
 - [x] machine-readable Problem Signature schema
 - [x] multiple candidate signatures with provenance/endorsement state
 - [x] Barrier Signature state (`knowledge`, `skill`, `language`, `tool`, `resource_time`, `network`, `credential`, `permission`, `opportunity`, `unknown`)
-- [x] Practice Context preserved without occupation-specific core branching
+- [x] Practice Context preserved without occupation/industry-specific core branching
 - [x] local citizen+AI closure separated from external Return-Gate closure
 - [x] cross-domain invariance regression test
+- [x] anchor-preserved Decision Thread schema and runtime
+- [x] one Case Passport with multiple simultaneous P0-P11 decision subgraphs
+- [x] primary-thread projection preserving legacy `current_phase` / `current_decision`
+- [x] decision dependency blocking with `HOLD` / `HOLD_FOR_DEPENDENCY`
+- [x] hard safety/authority escalation precedence over dependency holds
+- [x] thread-scoped Case Events and thread-local Return Gate/outcome state
+- [x] multi-decision case closure requiring all required threads
+- [x] cosmetics regression: P1 quality + P3 regulatory + P10 scale dependency without a cosmetics-specific core protocol
+- [x] API/MCP surfaces for compiling all Decision Threads
 
 Still active:
 
-- [ ] richer P0–P11 phase classifier
+- [ ] richer automatic P0–P11 phase classifier
+- [ ] AI candidate-thread proposal layer with explicit human/evidence confirmation rather than silent thread creation
 - [ ] minimum-sufficient route scorer using full cost/fit state
 - [ ] explicit `AcademicFit != UniversityExecutability` executable check
 - [ ] meaning-preservation checkpoint beyond stored state
 - [ ] response-time/fallback evaluator using actual decision windows
 - [ ] typed `HOLD_UNKNOWN` propagation across all gate families
-- [ ] controlled reopening semantics for closed cases
+- [ ] controlled reopening semantics for closed cases and closed threads
 - [ ] domain/jurisdiction policy plug-ins for hard thresholds
 - [ ] controlled capability vocabulary with machine-readable provider capability signatures
 - [ ] domain-adapter trigger evaluator
+- [ ] thread-level decision deadline / time-fit dependency logic
+- [ ] cycle detection for Decision Thread dependency graphs
+- [ ] optional-vs-required thread policy beyond the current boolean contract
 - [ ] cross-domain falsification suite large enough to challenge generality claims
 
 Minimum test cases still to add or deepen:
@@ -98,6 +111,10 @@ non-founder knowledge-utilization route
 multi-country adapter behavior
 multiple competing signatures that remain unresolved
 optional domain adapter trigger
+Decision Thread dependency cycle
+thread deadline conflict
+optional thread cancellation
+new thread added after partial case closure
 ```
 
 Current reference loop already covers:
@@ -107,19 +124,24 @@ low-risk citizen+AI path
 hard professional escalation
 Case Passport schema validity
 Problem Signature schema validity
+Decision Thread schema validity
 versioned observation event
 candidate signature update + endorsement
 P_C preservation
 occupation/practice-context cross-domain invariance
 successful no-restart reroute
-local citizen-only closure
+local citizen-only/thread-only closure
 external route requiring Return Gate
 Return Gate PASS
-citizen outcome closure
+multi-decision dependency HOLD
+hard escalation > dependency HOLD
+multi-decision dependency release
+multi-decision citizen-level closure
+cosmetics cross-domain multi-decision regression
 STOP
 ```
 
-M1 exit criterion: a deterministic library/API/MCP runtime consumes a synthetic Case Passport, preserves the citizen's original problem, carries candidate problem/barrier signatures without forced classification, applies typed events, returns the next routing state with traceable equation/gate references, and passes the remaining hard-gate/time-fit/meaning-preservation/cross-domain test matrix.
+M1 exit criterion: a deterministic library/API/MCP runtime consumes a synthetic Case Passport, preserves the citizen's original problem, carries candidate problem/barrier signatures without forced classification, supports several concurrent decisions without replacing P0-P11, applies typed events, returns the next routing state with traceable equation/gate/dependency references, and passes the remaining hard-gate/time-fit/meaning-preservation/cross-domain test matrix.
 
 ## M2 — Thailand adapter hardening
 
@@ -134,7 +156,7 @@ Goal: turn the current reference seed into a more operational, evidence-maintain
 - [ ] freshness monitoring for calls/application windows
 - [ ] Thai-language citizen intake vocabulary
 - [ ] Thai public-service routing examples
-- [ ] synthetic Thai cases across P0–P11
+- [ ] synthetic Thai cases across P0–P11 and multi-decision combinations
 - [ ] local fallback route coverage
 - [ ] map provider capabilities independently of occupation labels
 
@@ -146,34 +168,37 @@ Exit criterion: a live-routing prototype can explain both **why** a Thai mechani
 - [ ] observation vs interpretation UI
 - [ ] candidate-signature alternatives UI
 - [ ] citizen confirmation/correction of AI reframe
+- [ ] multiple-decision confirmation UI
+- [ ] dependency/blocker explanation without exposing unnecessary backend complexity
 - [ ] unknown/context-gap display
 - [ ] barrier-state display only when useful
 - [ ] risk/escalation explanation
 - [ ] "why this route?" view
-- [ ] Case Passport timeline
+- [ ] Case Passport + Decision Thread timeline
 - [ ] Return Object view
 - [ ] private case-store interface
 - [ ] multilingual UI
 - [ ] accessibility audit
 - [ ] low-bandwidth/mobile-first review
 
-Exit criterion: a user can complete a synthetic end-to-end case without seeing institutional complexity unless escalation is needed and without being forced into an occupation taxonomy.
+Exit criterion: a user can complete a synthetic end-to-end case without seeing institutional complexity unless escalation is needed, without being forced into an occupation taxonomy, and without losing concurrent decisions.
 
 ## M4 — Steward console
 
-- [ ] pending handoffs
-- [ ] decision deadlines
+- [ ] pending handoffs by Decision Thread
+- [ ] thread and case decision deadlines
+- [ ] dependency/blocker view
 - [ ] consent/data-use scopes
 - [ ] response-time alerts
 - [ ] fallback activation
 - [ ] failed-route logging
-- [ ] Return Gate enforcement
+- [ ] Return Gate enforcement per external thread
 - [ ] candidate-signature provenance / endorsement visibility
 - [ ] context-gap and barrier visibility
 - [ ] rights/provenance checklist
 - [ ] institution capacity/status notes
 
-Exit criterion: a steward can move a case across institutions without asking the citizen to restart or losing meaning, rights, signature provenance or return obligations.
+Exit criterion: a steward can move a case and its concurrent decisions across institutions without asking the citizen to restart or losing meaning, rights, dependencies, signature provenance or return obligations.
 
 ## M5 — Institution adapters / live registry
 
@@ -201,7 +226,7 @@ Exit criterion: country adapter data can refresh independently from platform rel
 - [ ] multi-country regulator/standard representation
 - [ ] adapter comparison without collapsing local context
 
-Exit criterion: a second country adapter can be added without changing global citizen/core semantics and a new occupation can be served without adding a bespoke core protocol.
+Exit criterion: a second country adapter can be added without changing global citizen/core semantics and a new occupation/industry can be served without adding a bespoke core protocol.
 
 ## M7 — Evidence and impact
 
@@ -213,6 +238,10 @@ hard-gate correctness
 signature correction rate
 forced-classification incidents
 cross-domain routing stability
+thread decomposition usefulness
+false dependency incidents
+missed dependency incidents
+downstream-decision premature-release incidents
 handoff completion
 return-to-citizen rate
 citizen problem resolution
@@ -229,13 +258,13 @@ innovation / transfer / venture outcomes when relevant
 
 Avoid a single vanity metric.
 
-Research questions should include whether minimum-sufficient routing actually reduces citizen cost without increasing safety failures, and whether the domain-neutral grammar improves routing without erasing situated context.
+Research questions should include whether minimum-sufficient routing reduces citizen cost without increasing safety failures, whether the domain-neutral grammar improves routing without erasing situated context, and whether Decision Threads improve complex-case decisions without unnecessary fragmentation.
 
 ## Upstream dependency
 
 The citizen/cross-actor equation family is registered in `morrocwi/toledo` as governed proposals pending canonical promotion. `toledo.biz` must preserve proposal/canonical status in bindings and implementations.
 
-The Domain-Neutral Problem & Capability Grammar is currently a product/runtime architecture, not a new upstream Toledo equation family.
+The Domain-Neutral Problem & Capability Grammar and Decision Threads are currently product/runtime architecture, not new upstream Toledo equation families.
 
 ## Non-goals
 
@@ -244,7 +273,8 @@ The platform is not intended to become:
 - a replacement for professional or regulatory authority;
 - a universal truth engine;
 - an exhaustive ontology of every human problem;
-- a catalogue with one core protocol per occupation;
+- a catalogue with one core protocol per occupation or industry;
+- a second maturity scale that replaces P0-P11;
 - a mandatory innovation funnel;
 - a startup factory;
 - a centralized owner of citizen knowledge;
