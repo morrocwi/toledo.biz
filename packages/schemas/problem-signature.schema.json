@@ -1,0 +1,142 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://toledo.biz/schemas/problem-signature.schema.json",
+  "title": "Toledo Domain-Neutral Problem Signature",
+  "type": "object",
+  "additionalProperties": false,
+  "required": [
+    "status",
+    "candidate_signatures",
+    "endorsed_signature_id",
+    "context_known",
+    "context_unknown",
+    "barrier_state",
+    "domain_adapter_required"
+  ],
+  "$defs": {
+    "facet": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["value", "provenance", "confidence", "citizen_confirmed"],
+      "properties": {
+        "value": {"type": ["string", "null"]},
+        "provenance": {
+          "type": "array",
+          "items": {"type": "string", "minLength": 1}
+        },
+        "confidence": {
+          "type": "string",
+          "enum": ["LOW", "MEDIUM", "HIGH", "UNKNOWN"]
+        },
+        "citizen_confirmed": {"type": ["boolean", "null"]}
+      }
+    },
+    "barrierState": {
+      "type": "string",
+      "enum": ["PRESENT", "ABSENT", "UNKNOWN"]
+    },
+    "candidateSignature": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "signature_id",
+        "intent",
+        "object_readout",
+        "observed_difference",
+        "evidence_need",
+        "candidate_alternatives",
+        "citizen_endorsement"
+      ],
+      "properties": {
+        "signature_id": {"type": "string", "minLength": 1},
+        "intent": {"$ref": "#/$defs/facet"},
+        "object_readout": {"$ref": "#/$defs/facet"},
+        "observed_difference": {
+          "type": "array",
+          "items": {"type": "string"}
+        },
+        "evidence_need": {
+          "type": "array",
+          "items": {"type": "string"}
+        },
+        "stakes": {
+          "type": "string",
+          "enum": ["LOW", "MODERATE", "HIGH", "CRITICAL", "UNKNOWN"]
+        },
+        "irreversibility": {
+          "type": "string",
+          "enum": ["LOW", "MODERATE", "HIGH", "UNKNOWN"]
+        },
+        "third_party_exposure": {
+          "type": "string",
+          "enum": ["LOW", "MODERATE", "HIGH", "UNKNOWN"]
+        },
+        "authority_need": {
+          "type": "string",
+          "enum": ["NONE", "EXPERT", "LICENSED_PROFESSIONAL", "LAB", "REGULATOR", "UNKNOWN"]
+        },
+        "jurisdiction": {"type": ["string", "null"]},
+        "candidate_alternatives": {
+          "type": "array",
+          "items": {"type": "string"}
+        },
+        "next_discriminating_action": {"type": ["string", "null"]},
+        "citizen_endorsement": {
+          "type": "string",
+          "enum": ["PASS", "HOLD_UNKNOWN", "FAIL", "NOT_CHECKED"]
+        }
+      }
+    }
+  },
+  "properties": {
+    "status": {
+      "type": "string",
+      "enum": ["NOT_PROVIDED", "CANDIDATE", "ENDORSED", "HOLD_UNKNOWN"]
+    },
+    "candidate_signatures": {
+      "type": "array",
+      "items": {"$ref": "#/$defs/candidateSignature"}
+    },
+    "endorsed_signature_id": {"type": ["string", "null"]},
+    "context_known": {
+      "type": "array",
+      "items": {"type": "string"}
+    },
+    "context_unknown": {
+      "type": "array",
+      "items": {"type": "string"}
+    },
+    "barrier_state": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "knowledge",
+        "skill",
+        "language",
+        "tool",
+        "resource_time",
+        "network",
+        "credential",
+        "permission",
+        "opportunity",
+        "unknown"
+      ],
+      "properties": {
+        "knowledge": {"$ref": "#/$defs/barrierState"},
+        "skill": {"$ref": "#/$defs/barrierState"},
+        "language": {"$ref": "#/$defs/barrierState"},
+        "tool": {"$ref": "#/$defs/barrierState"},
+        "resource_time": {"$ref": "#/$defs/barrierState"},
+        "network": {"$ref": "#/$defs/barrierState"},
+        "credential": {"$ref": "#/$defs/barrierState"},
+        "permission": {"$ref": "#/$defs/barrierState"},
+        "opportunity": {"$ref": "#/$defs/barrierState"},
+        "unknown": {"$ref": "#/$defs/barrierState"}
+      }
+    },
+    "domain_adapter_required": {
+      "type": "string",
+      "enum": ["YES", "NO", "HOLD_UNKNOWN"]
+    }
+  }
+}
