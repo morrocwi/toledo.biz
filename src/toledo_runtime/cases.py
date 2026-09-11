@@ -21,6 +21,9 @@ EVENT_TYPES = {
     "GOAL_CONFIRMED",
     "STRUCTURED_PROBLEM_UPDATED",
     "DISCIPLINARY_PROBLEM_UPDATED",
+    "SIGNATURE_CANDIDATES_UPDATED",
+    "SIGNATURE_ENDORSED",
+    "BARRIER_UPDATED",
     "CAPABILITY_REQUESTED",
     "INSTITUTION_SELECTED",
     "ROUTE_FAILED",
@@ -37,6 +40,21 @@ CLOSURE_OUTCOMES = {
     "explicitly_rescoped_with_consent",
 }
 
+BARRIER_KEYS = {
+    "knowledge",
+    "skill",
+    "language",
+    "tool",
+    "resource_time",
+    "network",
+    "credential",
+    "permission",
+    "opportunity",
+    "unknown",
+}
+
+BARRIER_STATES = {"PRESENT", "ABSENT", "UNKNOWN"}
+
 
 def _now() -> str:
     return datetime.now(timezone.utc).isoformat()
@@ -50,6 +68,50 @@ def _append_unique(values: list[str], value: Any) -> None:
     item = _text(value)
     if item and item not in values:
         values.append(item)
+
+
+def _empty_problem_signature() -> dict[str, Any]:
+    return {
+        "status": "NOT_PROVIDED",
+        "candidate_signatures": [],
+        "endorsed_signature_id": None,
+        "context_known": [],
+        "context_unknown": [],
+        "barrier_state": {key: "UNKNOWN" for key in sorted(BARRIER_KEYS)},
+        "domain_adapter_required": "HOLD_UNKNOWN",
+    }
+
+
+def _normalize_problem_signature(value: Any) -> dict[str, Any]:
+    signature = _empty_problem_signature()
+    if not isinstance(value, dict):
+        return signature
+
+    if value.get("status") in {"NOT_PROVIDED", "CANDIDATE", "ENDORSED", "HOLD_UNKNOWN"}:
+        signature["status"] = value["status"]
+
+    if isinstance(value.get("candidate_signatures"), list):
+        signature["candidate_signatures"] = copy.deepcopy(value["candidate_signatures"])
+
+    endorsed = value.get("endorsed_signature_id")
+    signature["endorsed_signature_id"] = _text(endorsed) or None
+
+    for key in ("context_known", "context_unknown"):
+        if isinstance(value.get(key), list):
+            signature[key] = [_text(x) for x in value[key] if _text(x)]
+
+    barriers = value.get("barrier_state")
+    if isinstance(barriers, dict):
+        for key, state in barriers.items():
+            state_text = _text(state).upper()
+            if key in BARRIER_KEYS and state_text in BARRIER_STATES:
+                signature["barrier_state"][key] = state_text
+
+    domain_state = _text(value.get("domain_adapter_required")).upper()
+    if domain_state in {"YES", "NO", "HOLD_UNKNOWN"}:
+        signature["domain_adapter_required"] = domain_state
+
+    return signature
 
 
 def evaluate_hard_risk(risk: dict[str, Any] | None) -> tuple[bool, list[str]]:
@@ -113,6 +175,7 @@ def create_case_passport(case: dict[str, Any]) -> dict[str, Any]:
         "scope": ["local_protocol_compilation"],
         "expires_at": None,
     })
+    problem_signature = _normalize_problem_signature(case.get("problem_signature"))
 
     passport: dict[str, Any] = {
         "case_id": case_id,
@@ -122,6 +185,7 @@ def create_case_passport(case: dict[str, Any]) -> dict[str, Any]:
         "case_status": "OPEN",
         "jurisdiction": _text(case.get("jurisdiction")) or "TH",
         "target_user": _text(case.get("target_user")) or "citizen",
+        "practice_context": copy.deepcopy(case.get("practice_context") or {}),
         "citizen_problem_verbatim": problem,
         "citizen_goal": goal,
         "goal_state": goal_state,
@@ -129,6 +193,7 @@ def create_case_passport(case: dict[str, Any]) -> dict[str, Any]:
         "ai_structured_problem": case.get("ai_structured_problem"),
         "disciplinary_problem": case.get("disciplinary_problem"),
         "meaning_preservation_state": _text(case.get("meaning_preservation_state")) or "NOT_CHECKED",
+        "problem_signature": problem_signature,
         "observations": observations,
         "evidence_refs": [_text(x) for x in case.get("evidence_refs", []) if _text(x)],
         "unknowns": unknowns,
@@ -142,6 +207,7 @@ def create_case_passport(case: dict[str, Any]) -> dict[str, Any]:
         "why_capability_is_needed": case.get("why_capability_is_needed"),
         "current_actor": case.get("current_actor") or "citizen+ai",
         "current_institution": case.get("current_institution"),
+        "external_actor_used": bool(case.get("external_actor_used", False)),
         "decision_owner": case.get("decision_owner") or "citizen",
         "consent": consent,
         "allowed_data_use": [_text(x) for x in case.get("allowed_data_use", []) if _text(x)],
@@ -181,6 +247,7 @@ def create_case_passport(case: dict[str, Any]) -> dict[str, Any]:
             "phase": phase,
             "goal_state": goal_state,
             "risk_state": passport["risk_state"],
+            "problem_signature_state": problem_signature["status"],
         },
     }
     passport["events"].append(creation_event)
@@ -257,6 +324,9 @@ def apply_case_event(passport: dict[str, Any], event: dict[str, Any]) -> dict[st
     updated.setdefault("previous_results", [])
     updated.setdefault("failed_routes", [])
     updated.setdefault("risk_profile", {})
+    updated.setdefault("practice_context", {})
+    updated["problem_signature"] = _normalize_problem_signature(updated.get("problem_signature"))
+    updated.setdefault("external_actor_used", False)
 
     new_version = int(updated.get("version", 0)) + 1
     occurred_at = _text(event.get("occurred_at")) or _now()
@@ -323,6 +393,37 @@ def apply_case_event(passport: dict[str, Any], event: dict[str, Any]) -> dict[st
         updated["disciplinary_problem"] = disciplinary
         updated["meaning_preservation_state"] = _text(payload.get("meaning_preservation_state")) or "HOLD_UNKNOWN"
 
+    elif event_type == "SIGNATURE_CANDIDATES_UPDATED":
+        incoming = payload.get("problem_signature") if isinstance(payload.get("problem_signature"), dict) else payload
+        updated["problem_signature"] = _normalize_problem_signature(incoming)
+        if updated["problem_signature"]["candidate_signatures"] and updated["problem_signature"]["status"] == "NOT_PROVIDED":
+            updated["problem_signature"]["status"] = "CANDIDATE"
+
+    elif event_type == "SIGNATURE_ENDORSED":
+        signature_id = _text(payload.get("signature_id"))
+        if not signature_id:
+            raise ValueError("SIGNATURE_ENDORSED requires payload.signature_id")
+        candidates = updated["problem_signature"].get("candidate_signatures", [])
+        match = None
+        for candidate in candidates:
+            if _text(candidate.get("signature_id")) == signature_id:
+                match = candidate
+                break
+        if match is None:
+            raise ValueError("SIGNATURE_ENDORSED signature_id is not present in candidate_signatures")
+        match["citizen_endorsement"] = "PASS"
+        updated["problem_signature"]["endorsed_signature_id"] = signature_id
+        updated["problem_signature"]["status"] = "ENDORSED"
+
+    elif event_type == "BARRIER_UPDATED":
+        barrier = _text(payload.get("barrier")).lower()
+        state = _text(payload.get("state")).upper()
+        if barrier not in BARRIER_KEYS:
+            raise ValueError(f"BARRIER_UPDATED barrier must be one of {sorted(BARRIER_KEYS)}")
+        if state not in BARRIER_STATES:
+            raise ValueError(f"BARRIER_UPDATED state must be one of {sorted(BARRIER_STATES)}")
+        updated["problem_signature"]["barrier_state"][barrier] = state
+
     elif event_type == "CAPABILITY_REQUESTED":
         capability = _text(payload.get("requested_capability"))
         if not capability:
@@ -336,6 +437,7 @@ def apply_case_event(passport: dict[str, Any], event: dict[str, Any]) -> dict[st
             raise ValueError("INSTITUTION_SELECTED requires institution_id")
         updated["current_institution"] = institution
         updated["current_actor"] = payload.get("actor") or "institution"
+        updated["external_actor_used"] = True
 
     elif event_type == "ROUTE_FAILED":
         reason = _text(payload.get("reason")) or "route failed"
@@ -348,6 +450,8 @@ def apply_case_event(passport: dict[str, Any], event: dict[str, Any]) -> dict[st
 
     elif event_type == "HANDOFF_CHECKED":
         result = payload.get("result") or {}
+        if payload.get("external_actor_used") is True:
+            updated["external_actor_used"] = True
         if result and result.get("valid") is False:
             updated["case_status"] = "HOLD"
         elif result and result.get("valid") is True and updated.get("case_status") != "CLOSED":
@@ -357,6 +461,7 @@ def apply_case_event(passport: dict[str, Any], event: dict[str, Any]) -> dict[st
         return_object = payload.get("return_object") if isinstance(payload.get("return_object"), dict) else payload
         if _text(return_object.get("case_id")) not in {"", _text(updated.get("case_id"))}:
             raise ValueError("Return Object case_id does not match Case Passport")
+        updated["external_actor_used"] = True
         gate = evaluate_return_object(return_object)
         updated["latest_return_gate"] = gate["state"]
         updated["current_actor"] = return_object.get("source_actor") or updated.get("current_actor")
@@ -379,7 +484,13 @@ def apply_case_event(passport: dict[str, Any], event: dict[str, Any]) -> dict[st
         updated["outcome_state"] = outcome
         if payload.get("result"):
             _append_unique(updated["previous_results"], payload.get("result"))
-        if outcome in CLOSURE_OUTCOMES and updated.get("latest_return_gate") == "PASS":
+
+        external = bool(updated.get("external_actor_used"))
+        return_gate = updated.get("latest_return_gate")
+        local_closure = (not external and return_gate == "NOT_APPLICABLE")
+        external_closure = (external and return_gate == "PASS")
+
+        if outcome in CLOSURE_OUTCOMES and (local_closure or external_closure):
             updated["case_status"] = "CLOSED"
         elif outcome in CLOSURE_OUTCOMES:
             updated["case_status"] = "HOLD"
@@ -400,6 +511,8 @@ def case_to_compile_input(passport: dict[str, Any]) -> dict[str, Any]:
         "phase": passport.get("current_phase") or "P0",
         "jurisdiction": passport.get("jurisdiction") or "TH",
         "target_user": passport.get("target_user") or "citizen",
+        "practice_context": passport.get("practice_context") or {},
+        "problem_signature": passport.get("problem_signature") or _empty_problem_signature(),
         "requested_capability": passport.get("requested_capability"),
         "evidence": {
             "observations": passport.get("observations") or [],
@@ -410,6 +523,7 @@ def case_to_compile_input(passport: dict[str, Any]) -> dict[str, Any]:
         "case_passport_version": passport.get("version"),
         "case_status": passport.get("case_status") or "OPEN",
         "latest_return_gate": passport.get("latest_return_gate") or "NOT_APPLICABLE",
+        "external_actor_used": bool(passport.get("external_actor_used", False)),
         "outcome_state": passport.get("outcome_state") or "ongoing",
         "failed_routes": passport.get("failed_routes") or [],
     }
