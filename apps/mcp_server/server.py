@@ -9,7 +9,10 @@ from mcp.server import MCPServer
 from toledo_runtime import (
     EquationStore,
     InstitutionStore,
+    apply_case_event,
     compile_protocol,
+    create_case_passport,
+    step_case,
     validate_handoff,
     validate_return_gate,
 )
@@ -19,6 +22,7 @@ mcp = MCPServer(
     instructions=(
         "Use Toledo as a citizen-centered protocol and equation readout layer. "
         "Preserve equation provenance and proposal/canonical status. "
+        "Preserve P_C, Case Passport continuity, typed gates, and Return-to-Citizen. "
         "Do not treat AI as professional, regulatory, laboratory, or truth authority."
     ),
 )
@@ -45,8 +49,27 @@ def search_equations(query: str = "", domain: str = "", live: bool = False) -> d
 
 @mcp.tool()
 def compile_citizen_protocol(case: dict[str, Any]) -> dict[str, Any]:
-    """Compile a minimal deterministic Toledo protocol instance from a case state."""
+    """Compile a minimal deterministic Toledo protocol instance from a compact case state."""
     return compile_protocol(case)
+
+
+@mcp.tool()
+def initialize_case(case: dict[str, Any]) -> dict[str, Any]:
+    """Create a versioned Case Passport from a citizen problem without public persistence."""
+    passport = create_case_passport(case)
+    return {"passport": passport, "protocol": step_case({"passport": passport})["protocol"]}
+
+
+@mcp.tool()
+def update_case(passport: dict[str, Any], event: dict[str, Any]) -> dict[str, Any]:
+    """Apply one auditable event to a Case Passport and return the next version."""
+    return {"passport": apply_case_event(passport, event)}
+
+
+@mcp.tool()
+def advance_case(payload: dict[str, Any]) -> dict[str, Any]:
+    """Initialize or update a Case Passport, then compile the next protocol step."""
+    return step_case(payload)
 
 
 @mcp.tool()
@@ -97,9 +120,24 @@ def protocol_spec() -> str:
     return (_ROOT / "docs" / "PROTOCOL_COMPILER.md").read_text(encoding="utf-8")
 
 
+@mcp.resource("toledo://protocol/case-lifecycle")
+def case_lifecycle_spec() -> str:
+    return (_ROOT / "docs" / "CASE_LIFECYCLE.md").read_text(encoding="utf-8")
+
+
 @mcp.resource("toledo://schema/case-passport")
 def case_passport_schema() -> str:
     return (_ROOT / "packages" / "schemas" / "case-passport.schema.json").read_text(encoding="utf-8")
+
+
+@mcp.resource("toledo://schema/case-event")
+def case_event_schema() -> str:
+    return (_ROOT / "packages" / "schemas" / "case-event.schema.json").read_text(encoding="utf-8")
+
+
+@mcp.resource("toledo://schema/case-step-request")
+def case_step_request_schema() -> str:
+    return (_ROOT / "packages" / "schemas" / "case-step-request.schema.json").read_text(encoding="utf-8")
 
 
 @mcp.resource("toledo://schema/protocol-instance")
