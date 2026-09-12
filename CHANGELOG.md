@@ -23,6 +23,8 @@ The project follows the spirit of Keep a Changelog while remaining pre-1.0.
 
 ### Governance
 
+- adopted the central Toledo `TG-RFG-01` reuse-first gate for mathematics-dependent implementation work: `Toledo lookup -> Genesis compatibility -> reuse existing object -> derive only the missing piece -> mark PROPOSAL`;
+- unresolved/ambiguous upstream mathematics remains `HOLD`/`unbound` rather than being replaced by local equations;
 - no new Toledo mathematical equation is created by the execution-routing layer;
 - `AI != ExpertClass`, `KnowledgeLike != HumanExpert`, `InteractionExpert != FieldExpert`, `Expertise != Authority`, and `ForwardExperiment != PermissionToIgnoreHardGates` are explicit non-collapse rules.
 
