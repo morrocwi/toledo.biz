@@ -30,6 +30,28 @@ morrocwi/toledo issue #20
 Promote Toledo Citizen Bridge v0.17 proposals into canonical registry
 ```
 
+## Central reuse-first gate
+
+Every implementation change that depends on mathematics MUST follow the canonical Toledo governance order in `morrocwi/toledo/EQUATION_SOURCE_POLICY.md` (`TG-RFG-01`):
+
+```text
+Toledo lookup
+    -> Genesis compatibility
+    -> reuse existing object
+    -> derive only the missing piece
+    -> mark PROPOSAL
+```
+
+For `toledo.biz` this means:
+
+1. resolve the mathematical object against Toledo before adding a local equation binding;
+2. check `morrocwi/readout_genesis` when ontology, translation, sufficiency, quotient, lineage, or defect meaning is material;
+3. reuse the upstream canonical/proposal object when it already covers the behavior;
+4. do not create a local mathematical substitute merely to unblock implementation;
+5. if a mathematical object is genuinely missing, keep the local behavior/binding explicitly `unbound` or `proposal` until the upstream Toledo proposal path exists.
+
+`toledo.biz` MUST NOT promote a locally implemented formula to canonical status. An ambiguous lookup or unresolved upstream status is a `HOLD`, not permission to invent a replacement.
+
 ## Binding status vocabulary
 
 ```text

@@ -31,6 +31,29 @@ For institution/country data, also read `docs/DATA_GOVERNANCE.md`, `docs/INSTITU
 - Domain adapters may specialize vocabulary, hazards, measurements, professional boundaries, regulation or provider mappings; they may not redefine the global core.
 - Decision Threads and Flexible Execution Routing are runtime/product architecture. Do not present them as new canonical Toledo equations or scientific laws.
 
+## Mandatory Toledo-Genesis reuse-first gate
+
+When work depends on mathematics, every agent MUST obey the canonical `TG-RFG-01` rule from `morrocwi/toledo/EQUATION_SOURCE_POLICY.md`:
+
+```text
+Toledo lookup
+    -> Genesis compatibility
+    -> reuse existing object
+    -> derive only the missing piece
+    -> mark PROPOSAL
+```
+
+In this repository:
+
+- lookup and status resolution happen upstream in Toledo before a new equation binding is introduced;
+- ontology/translation compatibility is checked against `morrocwi/readout_genesis` when relevant;
+- existing upstream objects are reused rather than duplicated locally;
+- genuinely missing mathematics stays `unbound` or `proposal` until an upstream Toledo proposal exists;
+- ambiguous/superseded/conflicting lookup states are `HOLD`, never permission to invent a replacement;
+- bypassing this order is `DRIFT` and must not be used to justify implementation or claim promotion.
+
+This gate controls provenance only. It does not promote a proposal, validate a scientific law, or strengthen a claim tier.
+
 ## Citizen-first invariant
 
 Every feature must preserve a path back to the citizen's original problem and goal. Do not optimize for institutional completion while losing citizen outcome.
